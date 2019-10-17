@@ -1,15 +1,13 @@
-function [bestLambda, curveData] = bsBestParameterBySearch(lambdas, trueModel, inputObjFcnPkgs, xInit, Lb, Ub, options, isShowFigure)
+function [bestLambda, curveData] = bsBestParameterByGCV(lambdas, inputObjFcnPkgs, xInit, Lb, Ub, options, isShowFigure)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% calculate the crossplot of objective function value and regularization term for different lambdas
+% calculate the best regularization parameter by GCV
 %
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
-% Programming dates: May 2019
+% Programming dates: October 2019
 % -------------------------------------------------------------------------
 % INPUT
 %
 % lambdas       is a array; refers to a seris of regularization parameters.
-%
-% trueModel     true model, must give
 % 
 % inputObjFcnPkgs       is a function handel, or a cell made up by a seris of
 % functions, the data for calculating each function, and the weight
@@ -35,7 +33,7 @@ function [bestLambda, curveData] = bsBestParameterBySearch(lambdas, trueModel, i
 % -------------------------------------------------------------------------
 % OUTPUT
 %
-% bestLambda: the best lambda choosen by L-curve criteria
+% bestLambda: the best lambda choosen by GCV criteri
 % 
 % curveData is a array of size n*2, the first column corresponds to the
 % data residual error, the second column is the regularization term.
@@ -43,8 +41,11 @@ function [bestLambda, curveData] = bsBestParameterBySearch(lambdas, trueModel, i
 % -------------------------------------------------------------------------
 
     nLambdas = length(lambdas);
-    curveData = zeros(nLambdas, 2);
-    mseModel = zeros(nLambdas, 1);
+    curveData = zeros(nLambdas, 3);
+    mainData = inputObjFcnPkgs{1, 2};
+    
+    s = svd(mainData.A);
+    m = size(mainData.A, 1);
     
     for i = 1 : nLambdas
         
@@ -63,31 +64,40 @@ function [bestLambda, curveData] = bsBestParameterBySearch(lambdas, trueModel, i
         inputObjFcnPkgs = output.inputObjFcnPkgs;
         
         % save the residual error and regularization term.
-        curveData(i, 1) = inputObjFcnPkgs{1, 1}(xOut, inputObjFcnPkgs{1, 2});
+        curveData(i, 1) = inputObjFcnPkgs{1, 1}(xOut, mainData);
         curveData(i, 2) = inputObjFcnPkgs{2, 1}(xOut, inputObjFcnPkgs{2, 2});
         
-        mseModel(i) = sqrt(mse(xOut - trueModel));
+        residual = (mainData.A * xOut - mainData.B);
+        Nume = residual' * residual;
         
+        tmp1 = sum(s.^2 ./ (s.^2 + lambdas(i)));
+        Deno = (m - tmp1).^2;
+        
+        curveData(i, 3) = Nume / Deno;
     end
     
-    [~, index] = min(mseModel);
+    
+    
+    
+    [~, index] = min(curveData(:, 3));
     bestLambda = lambdas(index);
     
     
-    if nargin > 7 && isShowFigure == 1
+    if isShowFigure == 1
         
         plotSet = bsGetDefaultPlotSet();
         
         figure;
-        plot(curveData(:, 2), curveData(:, 1), 'k-*', 'linewidth', plotSet.linewidth);
-        ylabel('Residual term');
-        xlabel('Regularization term');
+        plot(log(lambdas), curveData(:, 1), 'k-*', 'linewidth', plotSet.linewidth);
+        xlabel('\lambda (log scale)');
+        ylabel('Objective function');
         bsPlotSetDefault(bsGetDefaultPlotSet());
         
         figure;
-        plot(log(lambdas), mseModel, 'k-*', 'linewidth', plotSet.linewidth);
+        plot(log(lambdas), curveData(:, 3), 'k-*', 'linewidth', plotSet.linewidth);
         xlabel('\lambda (log scale)');
-        ylabel('MSE of model');
+        ylabel('GCV(\lambda)');
+        
         bsPlotSetDefault(bsGetDefaultPlotSet());
         
     end

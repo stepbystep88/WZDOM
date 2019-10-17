@@ -7,5 +7,7 @@ function params = bsRandomGenParams(range, isASet, n)
         a = range(1);
         b = range(2);
         params = a + (b-a).*rand(1, n);
+%         params = linspace(a, b, n);
+
     end
 end
