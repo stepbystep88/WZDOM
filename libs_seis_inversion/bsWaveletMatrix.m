@@ -1,6 +1,9 @@
-function [ W ] = bsWaveletMatrix( sampNum, waveletFreq, dt)
+function [ W ] = bsWaveletMatrix(sampNum, wavelet, waveletFreq, dt)
 
-    wavelet = bsGenRickerWavelet(waveletFreq, dt);
+    if isempty(wavelet) && nargin == 4
+        % generate ricker wavelet
+        wavelet = bsGenRickerWavelet(waveletFreq, dt);
+    end
     
     [~, ix] = max(abs(wavelet));
 

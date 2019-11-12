@@ -20,6 +20,10 @@ function [options] = bsCreateSeisInv1DOptions(nDim, varargin)
     %% parse some basic parameters for this process
     parser = inputParser;
     
+    if nargin == 0
+        nDim = 100;
+    end
+    
     % some basica informations
     % for search the best lambda
     

@@ -68,20 +68,44 @@ function [bestLambda, curveData] = bsBestParameterByLCurve(lambdas, inputObjFcnP
     
 %     curvature = zeros(nLambdas - 2, 1);
 %     logCurveData = log(curveData);
-    
     eta = curveData(:, 2);
-    eta = normalize(eta, 'range');
-    
     rho = curveData(:, 1);
-    rho = normalize(rho, 'range');
     
+%     eta = bsButtLowPassFilter(eta, 0.3);
+%     A = [eta, rho];
+%     A = smoothdata(A);
+%     eta = A(:, 1);
+%     rho = A(:, 2);
+    
+    eta = log(eta);
+    eta = (normalize(eta, 'range'));
+    
+    
+%     rho = bsButtLowPassFilter(rho, 0.3);
+    rho = log(rho);
+    rho = (normalize(rho, 'range'));
+    
+
     %% locate corner based on distance
     cornerX = min(eta);
     cornerY = min(rho);
     distancesFromCorner = sqrt((eta - cornerX) .^ 2 + (rho - cornerY) .^ 2);
     % Find min distance
     [minDistance, indexOfMin] = min(distancesFromCorner);
-    bestLambda = lambdas(indexOfMin);
+	bestLambda = lambdas(indexOfMin);
+    
+%     interval = 10;
+%     try
+%         K = LineCurvature2D([eta(indexOfMin-interval:indexOfMin+interval), rho(indexOfMin-interval:indexOfMin+interval)]);
+% %         y = rho(indexOfMin-interval:indexOfMin+interval);
+% %         D = bsGen1DDiffOperator(length(y), 1, 1);
+% %         dy = D * y;
+%         [~, index] = max((K));
+%         index = indexOfMin + index - interval;
+%         bestLambda = lambdas(index);
+%     catch
+%         bestLambda = lambdas(indexOfMin);
+%     end
     
     %% locate corner based on distance]
 %     curvature = zeros(nLambdas-2, 1);
@@ -102,7 +126,7 @@ function [bestLambda, curveData] = bsBestParameterByLCurve(lambdas, inputObjFcnP
     if nargin > 2 && isShowFigure == 1
         figure;
         
-        plot(curveData(:, 2), curveData(:, 1), 'k-*', 'linewidth', 2);
+        plot(log(curveData(:, 2)), log(curveData(:, 1)), 'k-*', 'linewidth', 2);
         
         xlabel('Regularization term');
         ylabel('Residual term');

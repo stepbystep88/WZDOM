@@ -1,4 +1,4 @@
-function [outImpedances, regParam] = bsPostSeisInv1DMultiTraces(regFlag, ds, G, initImpedans, Lb, Ub, regParam, parampkgs, options, isParallel)
+function [outImpedances, regParam] = bsSeisInv1DMultiTraces(regFlag, ds, G, initImpedans, Lb, Ub, regParam, parampkgs, options, isParallel)
     
     [nSampNum, nTrace] = size(initImpedans);
     
@@ -6,12 +6,20 @@ function [outImpedances, regParam] = bsPostSeisInv1DMultiTraces(regFlag, ds, G, 
     if ~exist('Lb', 'var')
         Lb = [];
     else 
+        if size(Lb, 2) == 1
+            Lb = repmat(Lb, 1, nTrace);
+        end
+        
         Lb = log(Lb);
     end
     
     if ~exist('Ub', 'var')
         Ub = [];
     else
+        if size(Ub, 2) == 1
+            Ub = repmat(Ub, 1, nTrace);
+        end
+        
         Ub = log(Ub);
     end
     
@@ -43,7 +51,7 @@ function [outImpedances, regParam] = bsPostSeisInv1DMultiTraces(regFlag, ds, G, 
     initXs = log(initImpedans);
     outXs = zeros(nSampNum, nTrace);
     
-    % if the regularization parameter is not assigned, we search a best
+    % if the regularization parameter is not assigned, we search the best
     % parameter at first
     % select the regularization parameter from random 10 traces
     nSelectRegTrace = 10;
@@ -55,7 +63,15 @@ function [outImpedances, regParam] = bsPostSeisInv1DMultiTraces(regFlag, ds, G, 
     
     for i = 1 : nSelectRegTrace
         iTrace = randIndex(i);
-        [outXs(:, iTrace), fval, exitFlag, output] = bsSeisInv1DTrace(regFlag, ds(:, iTrace), G, initXs(:, iTrace), Lb, Ub, regParam, parampkgs, options);
+        
+        if isempty(Lb) 
+            [outXs(:, iTrace), fval, exitFlag, output] = bsSeisInv1DTrace(regFlag, ds(:, iTrace), G, initXs(:, iTrace), ...
+                [], [], regParam, parampkgs, options);
+        else
+            [outXs(:, iTrace), fval, exitFlag, output] = bsSeisInv1DTrace(regFlag, ds(:, iTrace), G, initXs(:, iTrace), ...
+                Lb(:, iTrace), Ub(:, iTrace), regParam, parampkgs, options);
+        end
+        
         regParams = [regParams, output.regParam];
         % even if the regParam is not empty, we still inverse one trace at
         % first is because we need to update the parampkgs (initial some

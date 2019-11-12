@@ -18,7 +18,7 @@ function [f, g, data] = bsReg1DTKInitModel(x, data, isInitial)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     % if the funcion is called at first time
-    if nargin == 3 && isInitial
+    if nargin == 3 && isInitial && ~isfield(data, 'xInit')
         data.xInit = x;
     end
     

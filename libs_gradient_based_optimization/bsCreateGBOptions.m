@@ -39,6 +39,10 @@ function [options] = bsCreateGBOptions(nDim, varargin)
     %% parse some basic parameters for this process
     p = inputParser;
     
+    if nargin == 0
+        nDim = 100;
+    end
+    
     % some basica informations
     p = bsAddBasicalParameters(p, nDim);
     

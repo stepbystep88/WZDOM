@@ -1,4 +1,4 @@
-function [xOut, fval, exitFlag, output] = bsSeisInv1DTrace(regFlag, d, G, xInit, Lb, Ub, regParam, parampkgs, options)
+function [xOut, fval, exitFlag, output] = bsPostInv1DTrace(regFlag, d, G, xInit, Lb, Ub, regParam, parampkgs, options)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This code is designed for 1D seismic inversion
 %
@@ -158,7 +158,11 @@ function [xOut, fval, exitFlag, output] = bsSeisInv1DTrace(regFlag, d, G, xInit,
         case 'JTT'
             % joint TV and TK
             [xOut, fval, exitFlag, output] = bsSeisInv1DTraceByRegFunc(d, G, xInit, Lb, Ub, regParam, parampkgs, options, @bsReg1DJTT);
-            
+        
+        case 'DLSR'
+            % dictionary learning and sparse representation
+            [xOut, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, Ub, regParam, parampkgs, options);
+        
         otherwise
             [xOut, fval, exitFlag, output] = bsSeisInv1DTraceByRegFunc(d, G, xInit, Lb, Ub, regParam, parampkgs, options, options.regFunc);
     end

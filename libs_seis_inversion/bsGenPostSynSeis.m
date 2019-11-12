@@ -50,7 +50,7 @@ function [poststackFreeNoise, poststackNoise, poststackBandPassNoise, G] = bsGen
         load( modelSavePath );
     else
         D = bsGen1DDiffOperator(sampNum, 1, 1);
-        W = bsWaveletMatrix(sampNum-1, waveletFreq, dt);
+        W = bsWaveletMatrix(sampNum-1, [], waveletFreq, dt);
         G = 0.5 * W * D;
         poststackFreeNoise = G * logModel;
         

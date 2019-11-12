@@ -1,4 +1,4 @@
-function stpTextSeqIdFit(i, a, b, fontsize)
+function bsTextSeqIdFit(i, a, b, fontsize)
 
     if ~exist('fontsize', 'var')
         fontsize = 12;
