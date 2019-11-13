@@ -1,4 +1,4 @@
-function bsShowPostInvLogResult(GPostInvParam, GPlotParam, GShowProfileParam, model, invVals, methodNames, trueLogFiltcoef)
+function bsShowPostInvLogResult(GPostInvParam, GPlotParam, GShowProfileParam, model, invVals, methods, trueLogFiltcoef)
 
     nItems = length(invVals);
     sampNum = size(model.trueLog, 1);
@@ -29,7 +29,7 @@ function bsShowPostInvLogResult(GPostInvParam, GPlotParam, GShowProfileParam, mo
         
         bsShowPostSubInvLogResult(GPlotParam, ...
             invVal/1000, trueLog/1000, model.initLog/1000, ...
-            t, 'I_{\it{P}} (g/cc*km/s)', methodNames{iItem}, ...
+            t, 'I_{\it{P}} (g/cc*km/s)', methods{iItem}.name, ...
             GShowProfileParam.dataRange/1000, nItems, iItem, GShowProfileParam.isLegend);
 
     end

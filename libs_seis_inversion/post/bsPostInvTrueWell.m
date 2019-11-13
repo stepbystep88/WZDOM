@@ -38,23 +38,20 @@ function [invVals, model, outputs] = bsPostInvTrueWell(GPostInvParam, wellInfo, 
     
     for i = 1 : nMethod
         
+        method = methods{i};
+        
         fprintf('Solving the trace of inline=%d and crossline=%d by using method %s...\n', ...
             wellInfo.inline, wellInfo.crossline, ...
-            methods{i, 1});
+            method.name);
         
-        regFlag = methods{i, 2};
-        regParam = methods{i, 3};
-        parampkgs = methods{i, 4};
-        seisInvOptions = methods{i, 5};
-        
-        t1 = tic;
-        [xOut, fval, exitFlag, output] = bsPostInv1DTrace(regFlag, ...  % method flag
+        tic;
+        [xOut, fval, exitFlag, output] = bsPostInv1DTrace(method.flag, ...  % method flag
             model.d, model.G, model.initX, model.Lb, model.Ub, ...      % data
-            regParam, parampkgs, seisInvOptions);                       % regularization parameters
-        t2 = toc;
-        
+            method.regParam, method.parampkgs, method.options);       
+ 
+
         invVals{i} = exp(xOut);
-        output.timeCost = t2 - t1;
+        output.timeCost = toc;
         output.MRRMSE = sqrt(mse(invVals{i} - trueLog));
         outputs{i} = output;
         

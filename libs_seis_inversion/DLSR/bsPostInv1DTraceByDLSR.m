@@ -108,11 +108,15 @@ function [x, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, U
         
         xNew = GSparseInvParam.invR * xNew;
         xNew = log(xNew);
-        xInit = xNew;
+        
+        % projection
+        xInit = bsPFunc(xNew, output_.options.bounds);
+%         xInit = xNew;
 
+            
     end
     
-    x = xNew;
+    x = xInit;
     
     output.midResults.x = midX;
     output.midResults.f = midF;

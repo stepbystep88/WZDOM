@@ -40,10 +40,28 @@ function [trData, GSegyInfo, trHeaders] = bsReadTracesByIds(fileName, GSegyInfo,
 
         if nargin > 4
             iPos = startPos(i);
-            data = data(iPos+1 : iPos+sampNum);
+            
+            % just in case the original data is too short to extract the
+            % target part
+            if iPos < 0
+                sPos = 1;
+                lsPos = abs(iPos) + 1;
+            else
+                sPos = iPos + 1;
+                lsPos = 1;
+            end
+            
+            if iPos + sampNum > length(data)
+                ePos = length(data);
+                lePos = sampNum - (iPos + sampNum - length(data));
+            else
+                ePos = iPos+sampNum;
+                lePos = sampNum;
+            end
+            
         end
 
-        trData(:, i) = data;
+        trData(lsPos : lePos, i) = data(sPos : ePos);
     end
 
     fclose(GSegyInfo.fid);                                        
