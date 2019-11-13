@@ -83,6 +83,13 @@ function [invResults, horizonTimes] = bsPostInvTrueMultiTraces(GPostInvParam, in
         res.horizon = horizonTimes;
         res.name = method.name;
         res.type = 'IP';
+        
+        if isfield(method, 'showFiltCoef')
+            res.showFiltCoef = method.showFiltCoef;
+        else
+            res.showFiltCoef = 0;
+        end
+        
         invResults{i} = res;
         
         % save mat file

@@ -53,7 +53,7 @@ function [trData, GSegyInfo, trHeaders] = bsReadTracesByIds(fileName, GSegyInfo,
             
             if iPos + sampNum > length(data)
                 ePos = length(data);
-                lePos = sampNum - (iPos + sampNum - length(data));
+                lePos = length(data) - iPos;
             else
                 ePos = iPos+sampNum;
                 lePos = sampNum;

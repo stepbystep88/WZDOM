@@ -79,8 +79,7 @@ function bsShowInvProfiles(GPostInvParam, GShowProfileParam, profiles, wellLogs)
                     profile.inIds, ...
                     profile.crossIds, ...
                     profile.horizon, ...
-                    1, ...
-                    2, ...
+                    1,...
                     GShowProfileParam.showProfileFiltCoef);
                 if ~isempty(wellData)
                     wellData = wellData / 1000;
@@ -115,7 +114,7 @@ function bsShowInvProfiles(GPostInvParam, GShowProfileParam, profiles, wellLogs)
     end
 end
 
-function [wellPos, wellData] = bsFindWellLocation(GPostInvParam, wellLogs, inIds, crossIds, horizon, dataIndex, timeIndex, showWellFiltCoef)
+function [wellPos, wellData] = bsFindWellLocation(GPostInvParam, wellLogs, inIds, crossIds, horizon, indexInWellLog, showWellFiltCoef)
     wells = cell2mat(wellLogs);
     wellInIds = [wells.inline];
     wellCrossIds = [wells.crossline];
@@ -127,17 +126,11 @@ function [wellPos, wellData] = bsFindWellLocation(GPostInvParam, wellLogs, inIds
         for j = 1 : length(wellInIds)
             if wellInIds(j) == inIds(i) && wellCrossIds(j) == crossIds(i)
                 wellPos = [wellPos, i];
-                data = wellLogs{j}.wellLog(:, dataIndex);
+                data = wellLogs{j}.wellLog(:, indexInWellLog);
                 data = bsButtLowPassFilter(data, showWellFiltCoef);
-                
-                time = wellLogs{j}.wellLog(:, timeIndex);
-                dist = horizon(i) - time;
-                [~, index] = min(abs(dist));
-                iPos = index - GPostInvParam.upNum;
-    
                 tmp = zeros(sampNum, 1);
-%                 t0 = horizon(i) - GPostInvParam.upNum * GPostInvParam.dt;
-%                 iPos = round((wellLogs{j}.t0 - t0) / GPostInvParam.dt);
+                t0 = horizon(i) - GPostInvParam.upNum * GPostInvParam.dt;
+                iPos = round((wellLogs{j}.t0 - t0) / GPostInvParam.dt);
                 
                 if iPos < 0
                     % start time of origianl welllog data is below the
@@ -236,7 +229,7 @@ function bsShowHorizonedData(GShowProfileParam, profileData, horizon, minTime, d
     h = imagesc(profileData); hold on;
     set(gca, 'clim', range);
     set(gcf, 'colormap', colorTbl);
-    set(h, 'AlphaData', ~isnan(profileData));
+    set(gca, 'AlphaData', ~isnan(profileData));
     colorbar;
     
     % set labels of x and y axises

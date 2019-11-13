@@ -1,4 +1,4 @@
-function bsShowSubProfile(GPostInvParam, GPlotParam, GShowProfileParam, ...
+function bsShowSubProfile(GPostInvParam, GShowProfileParam, ...
     profileData, horizon, firstCdp, ... 
     isShowHorizon, filtCoef, tstr, range, color, wellPos, wellData)
 
@@ -15,7 +15,7 @@ function bsShowSubProfile(GPostInvParam, GPlotParam, GShowProfileParam, ...
         options.downNum = GShowProfileParam.downNum;
     end
     
-    options.plotParam = GPlotParam;
+    options.plotParam = GShowProfileParam.plotParam;
     
     options.title = '';                                 % БъЬт
     options.xlabel = tstr;
