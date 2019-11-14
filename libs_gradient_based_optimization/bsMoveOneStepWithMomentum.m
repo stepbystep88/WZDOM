@@ -52,7 +52,7 @@ function [data, algInfo] = bsMoveOneStepWithMomentum(optAlgFcn, objFcn, optAlgPa
                 data.v = mu * data.v + (xNew - data.xOld);
                 data.xNew = data.xOld + data.v;
 
-            case "NAG"
+            case 'NAG'
                 if iter == 1
                     data.v = data.xOld;
                 end
@@ -67,7 +67,7 @@ function [data, algInfo] = bsMoveOneStepWithMomentum(optAlgFcn, objFcn, optAlgPa
                 end
 
 
-            case "Sutskever"
+            case 'Sutskever'
                 yOld = data.xOld + mu * data.v;
 
                 [yNew, data.fNew, data.gNew, data.pk, data.stp, nfev, algInfo] ...
@@ -79,7 +79,7 @@ function [data, algInfo] = bsMoveOneStepWithMomentum(optAlgFcn, objFcn, optAlgPa
                 [data.fNew, data.gNew] = objFcn(data.xNew);
                 nfev = nfev + 1;
 
-            case "Bengio"
+            case 'Bengio'
 
                 [xNew, data.fNew, data.gNew, data.pk, data.stp, nfev, algInfo] ...
                     = bsMoveOneStepWithDDM(optAlgFcn, objFcn, optAlgParam, data.xOld, algInfo, iter, DDM, data.stp);
@@ -91,7 +91,7 @@ function [data, algInfo] = bsMoveOneStepWithMomentum(optAlgFcn, objFcn, optAlgPa
                 [data.fNew, data.gNew] = objFcn(data.xNew);
                 nfev = nfev + 1;
 
-            case "AMNAGE"
+            case 'AMNAGE'
                 [xNew, data.fNew, data.gNew, data.pk, data.stp, nfev, algInfo] ...
                     = bsMoveOneStepWithDDM(optAlgFcn, objFcn, optAlgParam, data.xOld, algInfo, iter, DDM, data.stp);
                 gd_step = xNew - data.xOld;
@@ -102,7 +102,7 @@ function [data, algInfo] = bsMoveOneStepWithMomentum(optAlgFcn, objFcn, optAlgPa
                 [data.fNew, data.gNew] = objFcn(data.xNew);
                 nfev = nfev + 1;
 
-            case ""
+            case ''
             otherwise
                  % using linear research subroutine to find the best step alpha which satisfies the Wolfe condition.
                 error('options.momentum.methodFlag is invalid. Choices are ("CM", "NAG", "Sutskever", "Bengio")');

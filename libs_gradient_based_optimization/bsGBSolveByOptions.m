@@ -72,7 +72,7 @@ function  [x,fval,exitFlag,output] = bsGBSolveByOptions(inputObjFcnPkgs, xInit, 
     if options.bounds.active
 %         validateattributes(options.bounds.weight, {'double'}, {'<=', 1});
         validateattributes(options.bounds.weight, {'double'}, {'>=', 0});
-        validatestring(string(options.bounds.methodFlag), ["simpleProj", "linearPenalty", "quadPenalty"]);
+        validatestring(options.bounds.methodFlag, {'simpleProj', 'linearPenalty', 'quadPenalty'});
     end
     
     %% -------------------------------------------------------------------------

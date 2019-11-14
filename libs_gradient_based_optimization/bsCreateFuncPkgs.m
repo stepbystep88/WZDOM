@@ -36,7 +36,7 @@ function [fcnpkgs, objFunc] = bsCreateFuncPkgs(xInit, objFunc)
        
         
         if ~isa(fcnpkgs.objFunc, 'function_handle')
-            error("When objective function is single, 'objFunc' has to be a function_handle.");
+            error('When objective function is single, objFunc has to be a function_handle.');
         end
             
         if nargin(fcnpkgs.objFunc) == 3

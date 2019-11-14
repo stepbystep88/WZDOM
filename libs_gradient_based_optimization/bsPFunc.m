@@ -31,7 +31,7 @@ function [px, gpx] = bsPFunc(x, bounds)
     gpx = ones(length(x), 1);
     
     % perform projection operation
-    if(bounds.active && strcmp(bounds.methodFlag, "simpleProj"))
+    if(bounds.active && strcmp(bounds.methodFlag, 'simpleProj'))
         
         xLowerBound = bounds.lower;
         xUpperBound = bounds.upper;
