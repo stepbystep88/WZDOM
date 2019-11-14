@@ -1,4 +1,4 @@
-function [trData, GSegyInfo, trHeaders] = bsReadTracesByIds(fileName, GSegyInfo, inIds, crossIds, startPos, sampNum)
+function [trData, GSegyInfo, trHeader] = bsReadTracesByIds(fileName, GSegyInfo, inIds, crossIds, startPos, sampNum)
 %% read traces from a segy file with given inline and crossline ids
 %
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
@@ -25,7 +25,7 @@ function [trData, GSegyInfo, trHeaders] = bsReadTracesByIds(fileName, GSegyInfo,
 
 %     volHeader.dataForm = 5;
     
-    trHeaders = cell(1, trNum);
+    trHeader = [];
     for i = 1 : trNum
         
         inId = inIds(i);
@@ -34,8 +34,10 @@ function [trData, GSegyInfo, trHeaders] = bsReadTracesByIds(fileName, GSegyInfo,
         index = bsIndexOfTraceSetOnInIdAndCrossId(GSegyInfo, inId, crossId);
         fseek(GSegyInfo.fid, 3600 + (index-1)*(240+GSegyInfo.volHeader.sizeTrace), -1);
         
+        if isempty(trHeader)
+            trHeader = bsReadTraceHeader(GSegyInfo);
+        end
         
-        trHeaders{i} = bsReadTraceHeader(GSegyInfo);
         data = bsReadTraceData(GSegyInfo);
 
         if nargin > 4

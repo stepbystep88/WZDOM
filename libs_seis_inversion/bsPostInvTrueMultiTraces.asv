@@ -98,19 +98,12 @@ function [invResults, horizonTimes] = bsPostInvTrueMultiTraces(GPostInvParam, in
         invResults{i} = res;
         
         % save mat file
-        save(matFileName, 'data', 'horizonTimes', 'inIds', 'crossIds', 'GPostInvParam');
+        save(matFileName, 'data', 'horizonTimes', 'inIds', 'crossIds', 'GPostInvParam', 'method');
         fprintf('Write mat file:%s\n', matFileName);
         
         % save sgy file
-        if isfield(method, 'isSaveSegy') && method.isSaveSegy
-            segyFileName = bsGetFileName('segy');
-            bsWriteInvResultIntoSegyFile(res, ...
-                GPostInvParam.postSeisData.segyFileName, ...
-                GPostInvParam.postSeisData.segyInfo, ...
-                segyFileName, ...
-                GPostInvParam.upNum, ...
-                GPostInvParam.dt);
-            fprintf('Write mat file:%s\n', segyFileName);
+        if isfield(GPostInvParam, 'isSaveSegy') && GPostInvParam.isSaveSegy
+            bsWriteInvResultIntoSegyFile(res, sourceFileName, sourceSegyInfo, dstFileName, upNum, dt)
         end
     end
     
@@ -120,7 +113,7 @@ function [invResults, horizonTimes] = bsPostInvTrueMultiTraces(GPostInvParam, in
                 fileName = sprintf('%s/mat_results/Ip_%s_inline_[%d_%d]_crossline_[%d_%d].mat', ...
                     GPostInvParam.modelSavePath, methodName, rangeIn(1), rangeIn(2), rangeCross(1), rangeCross(2));
             case 'segy'
-                fileName = sprintf('%s/sgy_results/Ip_%s_inline_[%d_%d]_crossline_[%d_%d].sgy', ...
+                fileName = sprintf('%s/sgy_results/Ip_%s_inline_[%d_%d]_crossline_[%d_%d].mat', ...
                     GPostInvParam.modelSavePath, methodName, rangeIn(1), rangeIn(2), rangeCross(1), rangeCross(2));
         end
         

@@ -107,7 +107,7 @@ function bsShowInvProfiles(GPostInvParam, GShowProfileParam, profiles, wellLogs)
         profileData = bsReplaceWellLocationData(GShowProfileParam, profileData, wellPos, wellData);
         
         % fill data by using horion information
-        [newProfileData, minTime] = bsHorizonRestoreData(GPostInvParam, profileData, profile.horizon);
+        [newProfileData, minTime] = bsHorizonRestoreData(profileData, profile.horizon, GPostInvParam.upNum, GPostInvParam.dt);
 
         [newProfileData, newDt, newTraceIds, newHorizon] = bsReScaleData(GShowProfileParam.scaleFactor, ...
             newProfileData, GPostInvParam.dt, traceIds, profile.horizon);
@@ -219,24 +219,7 @@ function profileData = bsFilterData(profileData, showFiltCoef)
     end
 end
 
-function [newProfileData, minTime] = bsHorizonRestoreData(GPostInvParam, profileData, horizon)
-    [sampNum, trNum] = size(profileData);
-    
-    % fill data based on horizon
-    time0 = horizon - GPostInvParam.upNum * GPostInvParam.dt;
-    minTime = min(time0) - 5 * GPostInvParam.dt;
-    maxTime = max(time0) + sampNum * GPostInvParam.dt + 5 * GPostInvParam.dt;
-    newSampNum = round((maxTime - minTime)/GPostInvParam.dt);
-    
-    poses = round((time0 - minTime)/GPostInvParam.dt);
-    newProfileData = zeros(newSampNum, trNum);
-    newProfileData(:) = nan;
-    
-    for i = 1 : trNum
-        newProfileData(poses(i):poses(i)+sampNum-1, i) = profileData(:, i);
-    end
-    
-end
+
 
 function [newProfileData, newDt, newTraceIds, newHorizon] = bsReScaleData(scaleFactor, profileData, dt, traceIds, horizon)
     if exist('scaleFactor', 'var') && scaleFactor > 1

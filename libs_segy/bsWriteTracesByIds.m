@@ -15,18 +15,18 @@ function GSegyInfo = bsWriteTracesByIds(fileName, GSegyInfo, trDatas, inIds, cro
     GSegyInfo.sampNum = size(trDatas, 1);
     GOutSegyInfo = bsWriteVolHeader(fileName, GSegyInfo);
  
-    if ~iscell(trHeaders) || length(trHeaders) ~= size(trDatas, 2)
+    if ~isstruct(trHeaders) && (~iscell(trHeaders) || length(trHeaders) ~= size(trDatas, 2))
         error('Header must be a struct or a cell with the same length of trace data.');
     end
         
     for i = 1 : size(trDatas, 2)
         if iscell(trHeaders)
-            bsWriteTrace(GOutSegyInfo, trHeaders{i}, trDatas{i});
+            bsWriteTrace(GOutSegyInfo, trHeaders{i}, trDatas(:, i));
         else
             trHeaders.inId = inIds(i);
             trHeaders.crossId = crossIds(i);
             
-            bsWriteTrace(GOutSegyInfo, trHeaders, trDatas{i});
+            bsWriteTrace(GOutSegyInfo, trHeaders, trDatas(:, i));
         end
     end
     
