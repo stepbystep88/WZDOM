@@ -13,5 +13,5 @@ function bsWriteInvResultIntoSegyFile(res, sourceFileName, sourceSegyInfo, dstFi
     [newProfileData, minTime] = bsHorizonRestoreData(data, horizon, upNum, dt, 1);
     outSegInfo = bsWriteTracesByIds(dstFileName, sourceSegyInfo, newProfileData, inIds, crossIds, traceHeader);
     
-    fprintf('\nStart time of file %s is %.2f \n', dstFileName, minTime);
+    fprintf('\nStart time of file %s is %.2f \n\n', dstFileName, minTime);
 end

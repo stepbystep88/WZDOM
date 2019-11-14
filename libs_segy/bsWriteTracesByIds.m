@@ -12,7 +12,7 @@ function GSegyInfo = bsWriteTracesByIds(fileName, GSegyInfo, trDatas, inIds, cro
 % trDatas           a matrix saving the traceData of each 
 % -------------------------------------------------------------------------
 
-    GSegyInfo.sampNum = size(trDatas, 1);
+    GSegyInfo.volHeader.sampNum = size(trDatas, 1);
     GOutSegyInfo = bsWriteVolHeader(fileName, GSegyInfo);
  
     if ~isstruct(trHeaders) && (~iscell(trHeaders) || length(trHeaders) ~= size(trDatas, 2))

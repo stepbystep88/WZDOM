@@ -97,9 +97,6 @@ function [invResults, horizonTimes] = bsPostInvTrueMultiTraces(GPostInvParam, in
         
         invResults{i} = res;
         
-        % save mat file
-        save(matFileName, 'data', 'horizonTimes', 'inIds', 'crossIds', 'GPostInvParam');
-        fprintf('Write mat file:%s\n', matFileName);
         
         % save sgy file
         if isfield(method, 'isSaveSegy') && method.isSaveSegy
@@ -110,8 +107,19 @@ function [invResults, horizonTimes] = bsPostInvTrueMultiTraces(GPostInvParam, in
                 segyFileName, ...
                 GPostInvParam.upNum, ...
                 GPostInvParam.dt);
-            fprintf('Write mat file:%s\n', segyFileName);
+            fprintf('\nWrite segy file:%s\n', segyFileName);
         end
+        
+        % save mat file
+        if isfield(method, 'isSaveMat') && method.isSaveMat
+            try
+                save(matFileName, 'data', 'horizonTimes', 'inIds', 'crossIds', 'GPostInvParam');
+            catch
+                save(matFileName, 'data', 'horizonTimes', 'inIds', 'crossIds', 'GPostInvParam', '-v7.3');
+            end
+            fprintf('Write mat file:%s\n', matFileName);
+        end
+        
     end
     
     function fileName = bsGetFileName(type)
