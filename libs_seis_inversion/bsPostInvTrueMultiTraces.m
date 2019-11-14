@@ -82,7 +82,12 @@ function [invResults, horizonTimes] = bsPostInvTrueMultiTraces(GPostInvParam, in
         res.crossIds = crossIds;
         res.horizon = horizonTimes;
         res.name = method.name;
-        res.type = 'IP';
+        
+        if isfield(method, 'type')
+            res.type = method.type;
+        else
+            res.type = 'IP';
+        end
         
         if isfield(method, 'showFiltCoef')
             res.showFiltCoef = method.showFiltCoef;

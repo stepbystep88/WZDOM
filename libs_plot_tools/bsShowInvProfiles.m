@@ -34,6 +34,11 @@ function bsShowInvProfiles(GPostInvParam, GShowProfileParam, profiles, wellLogs)
             nRow = 3;
             nCol = 2;
             loc = [0.98, 0.96, 0.05, 0.06, 0.04, 0.01];
+        case {7, 8}
+            bsSetPosition(0.95, 0.75);
+            nRow = 3;
+            nCol = 3;
+            loc = [0.98, 0.96, 0.03, 0.06, 0.04, 0.01];
     end
     
     % show profiles
@@ -91,6 +96,7 @@ function bsShowInvProfiles(GPostInvParam, GShowProfileParam, profiles, wellLogs)
                 attName = 'Seismic (Amplitude)';
                 wellPos = [];
                 wellData = [];
+                range = GShowProfileParam.rangeSeismic;
                 
         end
         
@@ -261,8 +267,17 @@ function bsShowHorizonedData(GShowProfileParam, profileData, horizon, minTime, d
     
     h = imagesc(profileData); hold on;
     
-    set(gca, 'clim', range);
-    set(gcf, 'colormap', colorTbl);
+    if ~isempty(range)
+        set(gca, 'clim', range);
+    end
+    
+    if GShowProfileParam.isColorReverse
+        colorTbl = flipud(colorTbl);
+        set(gcf, 'colormap', colorTbl);
+    else
+        set(gcf, 'colormap', colorTbl);
+    end
+    
     set(h, 'AlphaData', ~isnan(profileData));
     colorbar;
     
