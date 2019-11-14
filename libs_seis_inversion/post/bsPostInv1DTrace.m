@@ -1,4 +1,4 @@
-function [xOut, fval, exitFlag, output] = bsPostInv1DTrace(regFlag, d, G, xInit, Lb, Ub, regParam, parampkgs, options)
+function [xOut, fval, exitFlag, output] = bsPostInv1DTrace(d, G, xInit, Lb, Ub, method)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This code is designed for 1D seismic inversion
 %
@@ -8,7 +8,7 @@ function [xOut, fval, exitFlag, output] = bsPostInv1DTrace(regFlag, d, G, xInit,
 % Input
 % 
 % -------------------------------------------------------------------------
-% regFlag: regularization flag, it could be the following terms:
+% method.regFlag: regularization flag, it could be the following terms:
 % "TV-SB": corresponds to total variation regularization method. The
 % objective function looks like 
 % f(x) + lambda |Dx|_1 + rho |x-x0|_2^2.
@@ -77,12 +77,12 @@ function [xOut, fval, exitFlag, output] = bsPostInv1DTrace(regFlag, d, G, xInit,
 % 
 % Ub: upper boundary of x
 % 
-% regParam: regularization parameter. If it is empty, I will start a search
+% method.regParam: regularization parameter. If it is empty, I will start a search
 % process to find the optimal regParam.
 %
-% parampkgs: specail parameter for diffrent methods.
+% method.parampkgs: specail parameter for diffrent methods.
 % 
-% options: options parameters for 1D seismic inversion. See function
+% method.options: options parameters for 1D seismic inversion. See function
 % bsCreateSeisInv1DOptions
 %
 % -------------------------------------------------------------------------
@@ -114,23 +114,27 @@ function [xOut, fval, exitFlag, output] = bsPostInv1DTrace(regFlag, d, G, xInit,
     end
     
     if ~exist('regParam', 'var')
-        regParam = [];
+        
     end
     
-    if ~exist('parampkgs', 'var') || isempty(parampkgs)
-        parampkgs = [];
-    end
+    [~, method]  = bsGetFieldsWithDefaults(method, ...
+        {'parampkgs', []; 
+         'options', bsCreateSeisInv1DOptions(length(xInit));
+         'regParam', [];
+         'flag', 'OLF';
+         });
     
-    if ~exist('options', 'var') || isempty(options)
-        options = bsCreateSeisInv1DOptions(length(xInit));
-    end
+    regParam = method.regParam;
+    parampkgs = method.parampkgs;
+    options = method.options;
+    flag = method.flag;
     
     if ~strcmp(options.GBOptions.display, 'off')
         fprintf('Runing 1D seismic inversion method %s\n', regFlag);
     end
     
     
-    switch regFlag
+    switch flag
         case 'TV-SB'
             % TV solved by Split-Bregman algorithm
             [xOut, fval, exitFlag, output] = bsSeisInv1DByTVAndSplitBregman(d, G, xInit, Lb, Ub, regParam, parampkgs, options);
@@ -163,6 +167,10 @@ function [xOut, fval, exitFlag, output] = bsPostInv1DTrace(regFlag, d, G, xInit,
             % dictionary learning and sparse representation
             [xOut, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, Ub, regParam, parampkgs, options);
         
+        case 'LFC'
+            % only low frequency component constraint
+            options.addLowFreqConstraint = 0;
+            [xOut, fval, exitFlag, output] = bsSeisInv1DTraceByRegFunc(d, G, xInit, Lb, Ub, regParam, parampkgs, options, @bsReg1DTKInitModel);
         otherwise
             [xOut, fval, exitFlag, output] = bsSeisInv1DTraceByRegFunc(d, G, xInit, Lb, Ub, regParam, parampkgs, options, options.regFunc);
     end

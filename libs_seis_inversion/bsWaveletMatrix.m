@@ -1,4 +1,4 @@
-function [ W ] = bsWaveletMatrix(sampNum, wavelet, waveletFreq, dt)
+function [ W, wavelet ] = bsWaveletMatrix(sampNum, wavelet, waveletFreq, dt)
 
     if isempty(wavelet) && nargin == 4
         % generate ricker wavelet
@@ -13,7 +13,7 @@ function [ W ] = bsWaveletMatrix(sampNum, wavelet, waveletFreq, dt)
 end
 
 function [wavelet] = bsGenRickerWavelet(freq, dt)
-    wave = s_create_wavelet({'type','ricker'}, {'frequencies', freq}, {'step', dt}, {'wlength', 120});   
+    wave = s_create_wavelet({'type','ricker'}, {'frequencies', freq}, {'step', dt}, {'wlength', 80});   
     wavelet = wave.traces;                                      
 end
 

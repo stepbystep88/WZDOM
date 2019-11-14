@@ -59,7 +59,7 @@ function [x, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, U
     
     % if the regParam is not given, I search it by a search subroutine
     % which is save in options.searchRegParamFcn. 
-    if ~isfield(regParam, 'lambda') || regParam.lambda <= 0
+    if ~isfield(regParam, 'lambda') || regParam.lambda < 0
         % find the best regularization parameter
         regParam.lambda = bsFindBestRegParameter(options, inputObjFcnPkgs, xInit, Lb, Ub);
     end
@@ -113,10 +113,17 @@ function [x, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, U
         xInit = bsPFunc(xNew, output_.options.bounds);
 %         xInit = xNew;
 
+%         figure;
+%         plot(1:length(xNew), exp(xNew), 'r'); hold on;
+%         plot(1:length(xNew), exp(xOut), 'g');
             
     end
     
-    x = xInit;
+    if GSparseInvParam.isSparseRebuild
+        x = xInit;
+    else
+        x = xOut;
+    end
     
     output.midResults.x = midX;
     output.midResults.f = midF;

@@ -5,9 +5,7 @@ function bsShowInvProfiles(GPostInvParam, GShowProfileParam, profiles, wellLogs)
 % -------------------------------------------------------------------------
     
     nProfile = length(profiles);
-    [~, traceNum] = size(profiles{1}.data);
-
-    
+ 
     figure;
     % set the screen size
     switch nProfile
@@ -15,24 +13,27 @@ function bsShowInvProfiles(GPostInvParam, GShowProfileParam, profiles, wellLogs)
             bsSetPosition(0.4, 0.25);
             nRow = 1;
             nCol = 1;
-            
+            loc = [0.9, 0.9, 0.01, 0.08, 0.07, 0.01];
         case 2
             bsSetPosition(0.4, 0.5);
             nRow = 2;
             nCol = 1;
-            
+            loc = [0.9, 0.95, 0.01, 0.08, 0.07, 0.02];
         case 3
             bsSetPosition(0.4, 0.75);
             nRow = 3;
             nCol = 1;
+            loc = [0.9, 0.96, 0.01, 0.06, 0.07, 0.01];
         case 4
             bsSetPosition(0.8, 0.5);
             nRow = 2;
             nCol = 2;
+            loc = [0.98, 0.95, 0.05, 0.08, 0.04, 0.02];
         case {5, 6}
             bsSetPosition(0.8, 0.75);
             nRow = 3;
             nCol = 2;
+            loc = [0.98, 0.96, 0.05, 0.06, 0.04, 0.01];
     end
     
     % show profiles
@@ -40,8 +41,10 @@ function bsShowInvProfiles(GPostInvParam, GShowProfileParam, profiles, wellLogs)
         
         profile = profiles{iProfile};
         
-        subplot(nRow, nCol, iProfile);
+        bsSubPlotFit(nRow, nCol, iProfile, loc(1), loc(2), loc(3), loc(4), loc(5), loc(6));
         
+        % change the name
+        profile.name = sprintf('(%s) %s', 'a'+iProfile-1, profile.name);
         bsShowOneProfile(profile);
     end
     
@@ -55,8 +58,6 @@ function bsShowInvProfiles(GPostInvParam, GShowProfileParam, profiles, wellLogs)
         else
             traceIds = profile.inIds;
         end
-        
-        [sampNum, ~] = size(profileData);
         
         % data preprocessing base on the type of profile
         switch profile.type
@@ -81,7 +82,7 @@ function bsShowInvProfiles(GPostInvParam, GShowProfileParam, profiles, wellLogs)
                     profile.horizon, ...
                     1, ...
                     2, ...
-                    GShowProfileParam.showProfileFiltCoef);
+                    GShowProfileParam.showWellFiltCoef);
                 if ~isempty(wellData)
                     wellData = wellData / 1000;
                 end
@@ -102,16 +103,21 @@ function bsShowInvProfiles(GPostInvParam, GShowProfileParam, profiles, wellLogs)
         % fill data by using horion information
         [newProfileData, minTime] = bsHorizonRestoreData(GPostInvParam, profileData, profile.horizon);
 
+        [newProfileData, newDt, newTraceIds, newHorizon] = bsReScaleData(GShowProfileParam.scaleFactor, ...
+            newProfileData, GPostInvParam.dt, traceIds, profile.horizon);
+        
         % show the filled data by using imagesc
         bsShowHorizonedData(GShowProfileParam, ...
             newProfileData, ...
-            profile.horizon, minTime, GPostInvParam.dt, profile.name, traceIds, range, GShowProfileParam.dataColorTbl);
+            newHorizon, minTime, newDt, profile.name, newTraceIds, range, GShowProfileParam.dataColorTbl);
         
         % set attribute name of colorbar
-        ylabel(colorbar(), attName);
+        ylabel(colorbar(), attName, ...
+            'fontsize', GShowProfileParam.plotParam.fontsize, ...
+            'fontweight', 'bold', ...
+            'fontname', GShowProfileParam.plotParam.fontname);
         bsSetDefaultPlotSet(GShowProfileParam.plotParam);
-%         ylabel(colorbar('fontsize', GPlotParam.fontsize,'fontweight', GPlotParam.fontweight, 'fontname', GPlotParam.fontname), ...
-%                     'Impedance (g/cm^3\cdotkm/s)', 'fontsize', GPlotParam.fontsize,'fontweight', GPlotParam.fontweight, 'fontname', GPlotParam.fontname);
+        
     end
 end
 
@@ -226,6 +232,25 @@ function [newProfileData, minTime] = bsHorizonRestoreData(GPostInvParam, profile
     
 end
 
+function [newProfileData, newDt, newTraceIds, newHorizon] = bsReScaleData(scaleFactor, profileData, dt, traceIds, horizon)
+    if exist('scaleFactor', 'var') && scaleFactor > 1
+        scaleFactor = round(scaleFactor);
+        [sampNum, traceNum] = size(profileData);
+        
+        newDt = dt / scaleFactor;
+        newTraceIds = linspace(traceIds(1), traceIds(end), traceNum * scaleFactor);
+        [X, Y] = meshgrid(traceIds, linspace(1, sampNum, sampNum));
+        [Xq,Yq] = meshgrid(newTraceIds, linspace(1, sampNum, sampNum * scaleFactor));
+        
+        newProfileData = interp2(X, Y, profileData, Xq, Yq,'cubic');
+        newHorizon = interp1(traceIds, horizon, newTraceIds, 'spline');
+    else
+        newProfileData = profileData;
+        newDt = dt;
+        newTraceIds = traceIds;
+    end
+end
+
 function bsShowHorizonedData(GShowProfileParam, profileData, horizon, minTime, dt, name, traceIds, range, colorTbl)
     
     [sampNum, traceNum] = size(profileData);
@@ -233,7 +258,9 @@ function bsShowHorizonedData(GShowProfileParam, profileData, horizon, minTime, d
 %     min_val = min_val - abs(min_val)*10;
 %     profileData(isnan(profileData )) = min_val;
     profileData(isinf(profileData )) = nan;
+    
     h = imagesc(profileData); hold on;
+    
     set(gca, 'clim', range);
     set(gcf, 'colormap', colorTbl);
     set(h, 'AlphaData', ~isnan(profileData));
@@ -255,7 +282,7 @@ function bsShowHorizonedData(GShowProfileParam, profileData, horizon, minTime, d
     ylabel('Time (s)');
     
 %     set(gca, 'ydir', 'reverse');
-    set(gca, 'xlim', [traceIds(1), traceIds(end)]);
+%     set(gca, 'xlim', [traceIds(1), traceIds(end)]);
     
     % show horizon
     if( GShowProfileParam.isShowHorizon)

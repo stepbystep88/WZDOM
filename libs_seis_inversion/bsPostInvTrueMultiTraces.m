@@ -164,9 +164,7 @@ function [idata] = bsPostInvOneTrace(GPostInvParam, horizonTime, method, inId, c
         end
     end
 
-    [xOut, ~, ~, ~] = bsPostInv1DTrace(method.flag, ...  % method flag
-        model.d, model.G, model.initX, model.Lb, model.Ub, ...      % data
-        method.regParam, method.parampkgs, method.options);                       % regularization parameters
+    [xOut, ~, ~, ~] = bsPostInv1DTrace(model.d, model.G, model.initX, model.Lb, model.Ub, method);                       
 
     idata = exp(xOut);
 end

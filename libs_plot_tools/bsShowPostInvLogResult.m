@@ -29,8 +29,8 @@ function bsShowPostInvLogResult(GPostInvParam, GPlotParam, GShowProfileParam, mo
         
         bsShowPostSubInvLogResult(GPlotParam, ...
             invVal/1000, trueLog/1000, model.initLog/1000, ...
-            t, 'I_{\it{P}} (g/cc*km/s)', methods{iItem}.name, ...
-            GShowProfileParam.dataRange/1000, nItems, iItem, GShowProfileParam.isLegend);
+            t, methods{iItem}.name, ...
+            GShowProfileParam.rangeIP/1000, nItems, iItem, GShowProfileParam.isLegend);
 
     end
 
@@ -43,16 +43,19 @@ function bsShowPostInvLogResult(GPostInvParam, GPlotParam, GShowProfileParam, mo
     
 
     lgd = legend(hL, 'Initial model', 'Real model', 'Inversion result');
-
+    
     set(lgd,'Orientation','horizon', 'fontsize', GPlotParam.fontsize,'fontweight', 'bold', 'fontname', GPlotParam.fontname);
     set(lgd,'position',poshL);      % Adjusting legend's position
     axis(hL,'off');                 % Turning its axis off
+    annotation('textbox', [0.05, 0.07, 0, 0], 'string', 'I_{\it{P}} (g/cc*km/s)', ...
+        'edgecolor', 'none', 'fitboxtotext', 'on', ...
+        'fontsize', GPlotParam.fontsize,'fontweight', 'bold', 'fontname', GPlotParam.fontname);
 end
 
 
 function bsShowPostSubInvLogResult(GPlotParam, ...
     invVal, trueVal, initVal, ...
-    t, xstr, tmethod, range, nItems, iItem, isLegend)
+    t, tmethod, range, nItems, iItem, isLegend)
 
     ichar = char( 'a' + (iItem-1) );
     switch nItems
@@ -76,10 +79,10 @@ function bsShowPostSubInvLogResult(GPlotParam, ...
         legend('Initial model', 'Real model', 'Inversion result');
     end
     
-    title(sprintf('%s %s', tmethod, xstr));
+    title(sprintf('(%s) %s', ichar, tmethod));
     set(gca, 'xlim', range) ; 
     set(gca, 'ylim', [t(1) t(end)]);
-    bsTextSeqIdFit(ichar - 'a' + 1, 0, 0, 12);
+%     bsTextSeqIdFit(ichar - 'a' + 1, 0, 0, 12);
 
     set(gca , 'fontsize', GPlotParam.fontsize,'fontweight', GPlotParam.fontweight, 'fontname', GPlotParam.fontname);
 end

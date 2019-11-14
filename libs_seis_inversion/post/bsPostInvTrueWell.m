@@ -45,9 +45,8 @@ function [invVals, model, outputs] = bsPostInvTrueWell(GPostInvParam, wellInfo, 
             method.name);
         
         tic;
-        [xOut, fval, exitFlag, output] = bsPostInv1DTrace(method.flag, ...  % method flag
-            model.d, model.G, model.initX, model.Lb, model.Ub, ...      % data
-            method.regParam, method.parampkgs, method.options);       
+        [xOut, fval, exitFlag, output] = bsPostInv1DTrace(...
+            model.d, model.G, model.initX, model.Lb, model.Ub, method);       
  
 
         invVals{i} = exp(xOut);
