@@ -37,7 +37,7 @@ function p = bsAddBasicalParameters(p, nDim)
     % off: do't print any information
     % final: print the final information 
     % iter: print the iteration information
-    addParameter(p, 'display', 'off', @(x) ~isempty(validatestring(x, ["notify", "off", "final", "iter"])));
+    addParameter(p, 'display', 'off', @(x) ~isempty(validatestring(x, ['notify', 'off', 'final', 'iter'])));
     
     % whether to save the middle results during the iteration process
     addParameter(p, 'isSaveMiddleRes', 0);
