@@ -34,10 +34,7 @@ function [trData, GSegyInfo, trHeader] = bsReadTracesByIds(fileName, GSegyInfo, 
         index = bsIndexOfTraceSetOnInIdAndCrossId(GSegyInfo, inId, crossId);
         fseek(GSegyInfo.fid, 3600 + (index-1)*(240+GSegyInfo.volHeader.sizeTrace), -1);
         
-        if isempty(trHeader)
-            trHeader = bsReadTraceHeader(GSegyInfo);
-        end
-        
+        trHeader = bsReadTraceHeader(GSegyInfo);
         data = bsReadTraceData(GSegyInfo);
 
         if nargin > 4
