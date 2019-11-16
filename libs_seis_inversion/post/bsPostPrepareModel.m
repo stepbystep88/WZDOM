@@ -53,6 +53,11 @@ function model = bsPostPrepareModel(GPostInvParam, inline, crossline, horizonTim
             initLog = bsButtLowPassFilter(trueLog, GPostInvParam.initModel.filtCoef);
         case 'directly' % get initial model from an initial data directly
             initLog = GPostInvParam.initModel.initLog;
+            if isempty(initLog)
+                error('When GPostInvParam.initModel.mode is directly, the GPostInvParam.initModel.initLog could not be empty!\n');
+            end
+        otherwise
+            validatestring(GPostInvParam.initModel.mode, ['segy', 'filter_from_true_log', 'directly']);
     end
     
     if exist('trueLog', 'var') && ~isempty(trueLog)
@@ -81,6 +86,8 @@ function model = bsPostPrepareModel(GPostInvParam, inline, crossline, horizonTim
         case 'based_on_init'
             model.Lb = log(model.initLog - GPostInvParam.bound.offset_init);
             model.Ub = log(model.initLog + GPostInvParam.bound.offset_init);
+        otherwise
+            validatestring(GPostInvParam.bound.mode, ['off', 'fixed', 'based_on_init']);
     end
     
     % normalize

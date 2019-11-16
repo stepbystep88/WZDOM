@@ -54,12 +54,14 @@ function [bestRegParam] = bsFindBestRegParameter(options, inputObjFcnPkgs, xInit
     end
         
     %% perform regularization parameter searching process 
-    switch func2str(options.searchRegParamFcn)
-        case strSearchRegParamFcn
+    switch strSearchRegParamFcn
+        case 'bsBestParameterByLCurve'
             % get the best regParam by L-curve method
             bestRegParam = bsBestParameterByLCurve(lambdas, inputObjFcnPkgs, xInit, Lb, Ub, GBOptions, 0);
 %             cprintf('*red', sprintf('The best regularization choosen by L-curve is %d\n', bestRegParam));
             
+        case 'bsBestParameterByGCV'
+            bestRegParam = bsBestParameterByGCV(lambdas, inputObjFcnPkgs, xInit, Lb, Ub, GBOptions, 0);
         case 'bsBestParameterByBisection'
             % get the best regParam by bisection method
             bestRegParam = bsBestParameterByBisection(...

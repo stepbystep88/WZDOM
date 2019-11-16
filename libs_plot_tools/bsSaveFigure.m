@@ -31,8 +31,8 @@ function bsSaveFigure(path, name)
     
     fig.PaperSize = [fig_pos(3) fig_pos(4)];
 
-    fileName = sprintf('%s/figure/%s.fig', path, name);
-    saveas(gcf, fileName, 'fig');
+%     fileName = sprintf('%s/figure/%s.fig', path, name);
+%     saveas(gcf, fileName, 'fig');
     
 %     fileName = sprintf('%s/jpg/%s.jpg', path, name);
 % %     imwrite(img, fileName, 'jpg', 'Resolution', 600);
@@ -49,11 +49,11 @@ function bsSaveFigure(path, name)
 %     imwrite(img, fileName, 'tiff', 'Resolution', 600);
     print('-dpng', '-r600', fileName);
 %     
-    fileName = sprintf('%s/eps/%s.eps', path, name);
-    print('-depsc', fileName);
-%     
-    fileName = sprintf('%s/pdf/%s.pdf', path, name);
-%     print('-dpdf', '-bestfit', fileName);
-    saveas(gcf, fileName);
+%     fileName = sprintf('%s/eps/%s.eps', path, name);
+%     print('-depsc', fileName);
+% %     
+%     fileName = sprintf('%s/pdf/%s.pdf', path, name);
+% %     print('-dpdf', '-bestfit', fileName);
+%     saveas(gcf, fileName);
     
 end

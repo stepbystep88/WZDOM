@@ -100,13 +100,24 @@ function [x, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, U
         end
         
         gammas = omp(GSparseInvParam.DIC'*vps, GSparseInvParam.omp_G, GSparseInvParam.sparsity);
-        new_vps = GSparseInvParam.DIC *  gammas;
+        new_ips = GSparseInvParam.DIC *  gammas;
         
-        for j = 1 : ncell
-            xNew = xNew + GSparseInvParam.R{j}' * new_vps(:, j);
+        %% reconstruct model by equations
+        switch GSparseInvParam.reconstructType
+            case 'equation'
+                % get reconstructed results by equation
+                for j = 1 : ncell
+                    xNew = xNew + GSparseInvParam.R{j}' * new_ips(:, j);
+                end
+
+                xNew = GSparseInvParam.invR * xNew;
+            case 'simpleAvg'
+                % get reconstructed results by averaging patches
+                reconstruct_ips = bsAvgPatches(new_ips, GSparseInvParam.index, sampNum);
+                xNew = reconstruct_ips * regParam.gamma + xI * (1 - regParam.gamma);
         end
-        
-        xNew = GSparseInvParam.invR * xNew;
+
+        %% reconstruct model by 
         xNew = log(xNew);
         
         % projection
@@ -119,10 +130,13 @@ function [x, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, U
             
     end
     
-    if GSparseInvParam.isSparseRebuild
-        x = xInit;
-    else
-        x = xOut;
+    switch GSparseInvParam.isSparseRebuild
+        case 1
+            x = xInit;
+        case 0 
+            x = xOut;
+        otherwise
+            error('GSparseInvParam.isSparseRebuild must either 1 or 0. \n');
     end
     
     output.midResults.x = midX;
@@ -134,12 +148,14 @@ end
 
 function parampkgs = bsInitDLSRPkgs(parampkgs, lambda, gamma, sampNum, G)
     
-    if isfield(parampkgs.GSparseInvParam, 'invR')
+    if isfield(parampkgs.GSparseInvParam, 'omp_G')
         return;
     else
         GSparseInvParam = parampkgs.GSparseInvParam;
     end
 
+    validatestring(string(GSparseInvParam.reconstructType), {'equation', 'simpleAvg'});
+    validateattributes(gamma, {'double'}, {'>=', 0, '<=', 1});
     
     [sizeAtom, nAtom] = size(GSparseInvParam.DIC);
     GSparseInvParam.sizeAtom = sizeAtom;
@@ -161,9 +177,23 @@ function parampkgs = bsInitDLSRPkgs(parampkgs, lambda, gamma, sampNum, G)
     end
     GSparseInvParam.invTmp = tmp;
     GSparseInvParam.invR = inv(gamma * eye(sampNum) + GSparseInvParam.invTmp);
-    GSparseInvParam.invG = inv(G' * G + gamma * tmp + lambda * eye(sampNum));
+%     GSparseInvParam.invG = inv(G' * G + gamma * tmp + lambda * eye(sampNum));
     GSparseInvParam.omp_G = GSparseInvParam.DIC' * GSparseInvParam.DIC;
     
     parampkgs.GSparseInvParam = GSparseInvParam;
 end
 
+
+function v = bsAvgPatches(vs, index, sampNum)
+    
+    v = zeros(sampNum, 1);
+    count = zeros(sampNum, 1);
+    [sizeAtom, ncell] = size(vs);
+    
+    for i = 1 : ncell
+        pos = index(i);
+        v(pos : pos+sizeAtom-1) = v(pos : pos+sizeAtom-1) + vs(:, i);
+        count(pos : pos+sizeAtom-1) = count(pos : pos+sizeAtom-1) + 1;
+    end
+    v = v ./ count;
+end

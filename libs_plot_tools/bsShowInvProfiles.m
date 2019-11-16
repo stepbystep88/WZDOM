@@ -34,7 +34,7 @@ function bsShowInvProfiles(GPostInvParam, GShowProfileParam, profiles, wellLogs)
             nRow = 3;
             nCol = 2;
             loc = [0.98, 0.96, 0.05, 0.06, 0.04, 0.01];
-        case {7, 8}
+        case {7, 8, 9}
             bsSetPosition(0.95, 0.75);
             nRow = 3;
             nCol = 3;

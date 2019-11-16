@@ -1,4 +1,4 @@
-function [invResults, horizonTimes] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds, timeLine, methods)
+function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds, timeLine, methods)
 %% inverse multiple traces
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
 % Programming dates: Nov 2019
@@ -9,13 +9,12 @@ function [invResults, horizonTimes] = bsPostInvTrueMultiTraces(GPostInvParam, in
 % inIds      	inline ids to be inverted
 % crossIds      crossline ids to be inverted
 % timeLine      horizon information
-% methods       the methods to solve the inverse task
+% methods       the methods to solve the inverse task, each method is a
+% struct depicting the details of the methods. For example, method.load
+% indicates whether load the result from mat or segy directly.
 % 
 % Output
-% invVals       inverted results
-% model         the data including d, G, m, m_0 of the inverse task
-% outputs       outputs of the iteration process including some intermediate
-% results
+% invVals       inverted results, a cell includ
 % -------------------------------------------------------------------------
     
     assert(length(inIds) == length(crossIds), 'The length of inline ids and crossline ids must be the same.');
@@ -45,19 +44,26 @@ function [invResults, horizonTimes] = bsPostInvTrueMultiTraces(GPostInvParam, in
         methodName = method.name;
         matFileName = bsGetFileName('mat');
         
+        res.source = [];
+        
         if isfield(method, 'load')
             loadInfo = method.load;
             switch loadInfo.mode
                 % load results directly
                 case 'mat'
-                    % from mat file
-                    if isfield(loadInfo, 'fileName') && ~isempty(loadInfo.fileName)
-                        load(GPostInvParam.load.fileName);
-                    else
-                        load(matFileName);
+                    try
+                        % from mat file
+                        if isfield(loadInfo, 'fileName') && ~isempty(loadInfo.fileName)
+                            load(GPostInvParam.load.fileName);
+                        else
+                            load(matFileName);
+                        end
+
+                        res.source = 'mat';
+                    catch
+                        warning('load mat file failed.');
                     end
                     
-                    res.source = 'mat';
                 case 'segy'
                     % from sgy file
                     poses = bsCalcT0Pos(GPostInvParam, loadInfo.segyInfo, horizonTimes);
@@ -67,23 +73,23 @@ function [invResults, horizonTimes] = bsPostInvTrueMultiTraces(GPostInvParam, in
                         inIds, crossIds, poses, sampNum);
                     
                     res.source = 'segy';
-                    
-                otherwise
-                    data = bsCallInvFcn();
-                    res.source = 'compution';
             end
-        else
+            
+        end
+        
+        if isempty(res.source)
+            % obtain results by computing
             data = bsCallInvFcn();
             res.source = 'compution';
         end
         
-        res.data = data;
-        res.inIds = inIds;
-        res.crossIds = crossIds;
-        res.horizon = horizonTimes;
-        res.name = method.name;
+        res.data = data;            % inverted results
+        res.inIds = inIds;          % inverted inline ids 
+        res.crossIds = crossIds;    % inverted crossline ids
+        res.horizon = horizonTimes; % the horizon of inverted traces
+        res.name = method.name;     % the name of this method
         
-        if isfield(method, 'type')
+        if isfield(method, 'type')  % the type of inverted volume, IP, Seismic, VP, VS, Rho
             res.type = method.type;
         else
             res.type = 'IP';
@@ -111,14 +117,12 @@ function [invResults, horizonTimes] = bsPostInvTrueMultiTraces(GPostInvParam, in
         end
         
         % save mat file
-        if isfield(method, 'isSaveMat') && method.isSaveMat
-            try
-                save(matFileName, 'data', 'horizonTimes', 'inIds', 'crossIds', 'GPostInvParam');
-            catch
-                save(matFileName, 'data', 'horizonTimes', 'inIds', 'crossIds', 'GPostInvParam', '-v7.3');
-            end
-            fprintf('Write mat file:%s\n', matFileName);
+        try
+            save(matFileName, 'data', 'horizonTimes', 'inIds', 'crossIds', 'GPostInvParam', 'method');
+        catch
+            save(matFileName, 'data', 'horizonTimes', 'inIds', 'crossIds', 'GPostInvParam', 'method', '-v7.3');
         end
+        fprintf('Write mat file:%s\n', matFileName);
         
     end
     
@@ -135,9 +139,11 @@ function [invResults, horizonTimes] = bsPostInvTrueMultiTraces(GPostInvParam, in
     end
 
     function data = bsCallInvFcn()
+        % tackle the inverse task
+        
         data = zeros(sampNum, nTrace);
         
-        % obtain an initial model avoid calculating matrix G again and again.
+        % obtain a preModel avoid calculating matrix G again and again.
         % see line 20 of function bsPostPrepareModel for details
         preModel = bsPostPrepareModel(GPostInvParam, inIds(1), crossIds(1), horizonTimes(1), [], []);
             
@@ -152,7 +158,7 @@ function [invResults, horizonTimes] = bsPostInvTrueMultiTraces(GPostInvParam, in
             for iTrace = 1 : nTrace
                 data(:, iTrace) = bsPostInvOneTrace(GPostInvParam, horizonTimes(iTrace), method, inIds(iTrace), crossIds(iTrace), preModel);
                 
-                if GPostInvParam.showITraceResult
+                if isfield(GPostInvParam, 'showITraceResult') && GPostInvParam.showITraceResult
                     bsShowITrace(model, data(:, iTrace));
                 end
             end
@@ -163,7 +169,7 @@ function [invResults, horizonTimes] = bsPostInvTrueMultiTraces(GPostInvParam, in
 end
 
 function fileName = bsGetModelFileName(modelSavePath, inId, crossId)
-
+    % get the file name of model (to save the )
     fileName = sprintf('%s/models/model_inline_%d_crossline_%d.mat', ...
         modelSavePath, inId, crossId);
 
@@ -180,6 +186,10 @@ function [idata] = bsPostInvOneTrace(GPostInvParam, horizonTime, method, inId, c
         modelFileName = bsGetModelFileName(GPostInvParam.modelSavePath, inId, crossId);
         parLoad(matFileName);
     else
+        % otherwise, create the model by computing. Note that we input
+        % argment preModel is a pre-calculated model, by doing this, we
+        % avoid wasting time on calculating the common data of different
+        % traces such as forward matrix G.
         model = bsPostPrepareModel(GPostInvParam, inId, crossId, horizonTime, [], preModel);
         if GPostInvParam.isSaveMode
             % in save mode, mode should be saved as local file
@@ -193,15 +203,6 @@ function [idata] = bsPostInvOneTrace(GPostInvParam, horizonTime, method, inId, c
     idata = exp(xOut);
 end
 
-function [horizonTimes] = bsCalcHorizonTime(usedTimeLine, inIds, crossIds)
-    nTrace = length(inIds);
-    horizonTimes = zeros(1, nTrace);
-    
-    for i = 1 : nTrace
-        [~, ~, horizonTimes(i)] = bsCalcWellBaseInfo(usedTimeLine, ...
-            inIds(i), crossIds(i), 1, 2, 1, 2, 3);
-    end
-end
 
 function bsShowITrace(model, imp)
     figure(10000);

@@ -13,7 +13,7 @@ function [breakFlag, msg] = bsCheckStopCriteria(data, params)
 % If the solver attempts to take a step that is smaller than StepTolerance, the iterations end.
 
 % params.functionTolerance is a lower bound on the change in the value of the objective function during a step. 
-% For those algorithms, if |f(xi) – f(xi+1)| < FunctionTolerance, the iterations end.
+% For those algorithms, if |f(xi) ? f(xi+1)| < FunctionTolerance, the iterations end.
 
 % params.optimalFunctionTolerance is a lower bound on the residual error in the value of 
 % the objective function between f(xi) and the minimum objective function
@@ -43,6 +43,7 @@ function [breakFlag, msg] = bsCheckStopCriteria(data, params)
 
     breakFlag = 0;
     msg = '';
+    
     
     %% check whether to print iteration information
     if strcmp(params.display, 'iter')

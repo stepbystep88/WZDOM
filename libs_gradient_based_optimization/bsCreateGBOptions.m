@@ -65,7 +65,7 @@ function [options] = bsCreateGBOptions(nDim, varargin)
             
         case {'bsOptQCG', 'bsOptCG'}
             [~, options.optAlgParam]  = bsGetFieldsWithDefaults(options.optAlgParam, {'updateFlag', 'PR'});
-            validatestring(string(options.optAlgParam.updateFlag), ['PR', 'FR', 'HS', 'DY']);
+            validatestring(string(options.optAlgParam.updateFlag), {'PR', 'FR', 'HS', 'DY'});
     end
     
     %% check bound constraint, the information is saved in options.bounds
