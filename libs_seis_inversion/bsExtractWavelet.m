@@ -38,6 +38,7 @@ function [wavelet, GPostInvParam] = bsExtractWavelet(GPostInvParam, timeLine, we
             wave = s_create_wavelet({'type','zero-phase'}, {'frequencies', freq-20,freq-10,freq+10,freq+10}, {'step', GPostInvParam.dt}, {'wlength', 120});
     end
     wavelet = wave.traces;          
+    GPostInvParam.wavelet = wavelet;
     
     % get synthetic data
     scaleFactors = zeros(wellNum, 1);
@@ -46,10 +47,10 @@ function [wavelet, GPostInvParam] = bsExtractWavelet(GPostInvParam, timeLine, we
     for i = 1 : wellNum
         synData = bsGetSynthetic(GPostInvParam, wellLogs{i}, horizon(i));
         
-%         figure;
-%         plot(1:sampNum-1, synData/max(abs(synData)), 'r', 'linewidth', 2); hold on;
-%         plot(1:sampNum-1, postSeisData(:, i)/max(abs(postSeisData(:, i))), 'k', 'linewidth', 2);
-%         legend('Synthetic', 'Real seismic data');
+        figure;
+        plot(1:sampNum-1, synData/max(abs(synData)), 'r', 'linewidth', 2); hold on;
+        plot(1:sampNum-1, postSeisData(:, i)/max(abs(postSeisData(:, i))), 'k', 'linewidth', 2);
+        legend('Synthetic', 'Real seismic data');
         
 %         scaleFactors(i) = bsCalcScaleFactor(postSeisData(:, i), synData);
         scaleFactors(i) = bsComputeGain(postSeisData(:, i), synData);
@@ -57,12 +58,24 @@ function [wavelet, GPostInvParam] = bsExtractWavelet(GPostInvParam, timeLine, we
         similarities(i) = correlation(1, 2);
     end
     
-    [~, index] = topkrows(similarities, ceil(0.8*wellNum));
+    [~, index] = bsMaxK(similarities, ceil(0.8*wellNum));
     meanScaleFactor = mean(scaleFactors(index));
 
     wavelet = wavelet * meanScaleFactor;
     
 
+end
+
+
+function [B, index] = bsMaxK(A, k, dim)
+    
+    if ~exist('dim', 'var')
+        dim = -1;
+    end
+        
+    [B, I] = sortrows(A, dim);
+    B = B(1:k, :);
+    index = I(1:k);
 end
 
 function freq = bsGetMainFreq(postSeisData, dt)
