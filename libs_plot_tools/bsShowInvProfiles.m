@@ -100,6 +100,8 @@ function bsShowInvProfiles(GPostInvParam, GShowProfileParam, profiles, wellLogs)
                 
         end
         
+        profile.horizon = bsButtLowPassFilter(profile.horizon, 0.1);
+        
         % filter data along with horizon
         profileData = bsFilterData(profileData, profile.showFiltCoef);
         

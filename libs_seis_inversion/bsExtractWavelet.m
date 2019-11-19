@@ -47,10 +47,10 @@ function [wavelet, GPostInvParam] = bsExtractWavelet(GPostInvParam, timeLine, we
     for i = 1 : wellNum
         synData = bsGetSynthetic(GPostInvParam, wellLogs{i}, horizon(i));
         
-        figure;
-        plot(1:sampNum-1, synData/max(abs(synData)), 'r', 'linewidth', 2); hold on;
-        plot(1:sampNum-1, postSeisData(:, i)/max(abs(postSeisData(:, i))), 'k', 'linewidth', 2);
-        legend('Synthetic', 'Real seismic data');
+%         figure;
+%         plot(1:sampNum-1, synData/max(abs(synData)), 'r', 'linewidth', 2); hold on;
+%         plot(1:sampNum-1, postSeisData(:, i)/max(abs(postSeisData(:, i))), 'k', 'linewidth', 2);
+%         legend('Synthetic', 'Real seismic data');
         
 %         scaleFactors(i) = bsCalcScaleFactor(postSeisData(:, i), synData);
         scaleFactors(i) = bsComputeGain(postSeisData(:, i), synData);

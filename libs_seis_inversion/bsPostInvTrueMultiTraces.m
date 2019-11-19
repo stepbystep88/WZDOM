@@ -37,7 +37,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
     
     invResults = cell(1, nMethod);
     % horizon of given traces
-    horizonTimes = bsCalcHorizonTime(usedTimeLine, inIds, crossIds);
+    horizonTimes = bsCalcHorizonTime(usedTimeLine, inIds, crossIds, 1);
                 
     for i = 1 : nMethod
         method = methods{i};

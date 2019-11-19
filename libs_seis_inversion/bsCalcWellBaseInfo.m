@@ -21,10 +21,12 @@ function [inline, crossline, time] = bsCalcWellBaseInfo(timeLine, X, Y, xId, yId
 % time      the time information of the target trace
 % -------------------------------------------------------------------------
 
+%     tic
+%     dist = sqrt( (timeLine(:, xId) - X).^2 + (timeLine(:,yId) - Y).^2 );
+%     [~, index] = min(dist);
+%     toc
 
-    dist = sqrt( (timeLine(:, xId) - X).^2 + (timeLine(:,yId) - Y).^2 );
-    [~, index] = min(dist);
-    
+    index = find(timeLine(:, xId) == X & timeLine(:, yId) == Y);
     inline = timeLine(index, inId);
     crossline = timeLine(index, crossId);
     time = timeLine(index, timeId);
