@@ -28,7 +28,7 @@ function [wavelet, GPostInvParam] = bsExtractWavelet(GPostInvParam, timeLine, we
     
     freq = bsGetMainFreq(postSeisData, GPostInvParam.dt);
     GPostInvParam.waveletFreq = freq;
-    
+    GPostInvParam.isNormal = 0;
     
     % create wavelet
     switch type
@@ -38,6 +38,7 @@ function [wavelet, GPostInvParam] = bsExtractWavelet(GPostInvParam, timeLine, we
             wave = s_create_wavelet({'type','zero-phase'}, {'frequencies', freq-20,freq-10,freq+10,freq+10}, {'step', GPostInvParam.dt}, {'wlength', 120});
     end
     wavelet = wave.traces;          
+    GPostInvParam.wavelet = wavelet;
     
     % get synthetic data
     scaleFactors = zeros(wellNum, 1);
@@ -62,7 +63,16 @@ function [wavelet, GPostInvParam] = bsExtractWavelet(GPostInvParam, timeLine, we
 
     wavelet = wavelet * meanScaleFactor;
     
-
+%     for i = 1 : wellNum
+%         synData = bsGetSynthetic(GPostInvParam, wellLogs{i}, horizon(i));
+%         
+%         figure;
+%         plot(1:sampNum-1, synData*meanScaleFactor, 'r', 'linewidth', 2); hold on;
+%         plot(1:sampNum-1, postSeisData(:, i), 'k', 'linewidth', 2);
+%         legend('Synthetic', 'Real seismic data');
+%         
+%     end
+    
 end
 
 function freq = bsGetMainFreq(postSeisData, dt)

@@ -17,7 +17,7 @@ function [trData, GSegyInfo, trHeader] = bsReadTracesByIds(fileName, GSegyInfo, 
 
     [~, trNum] = size(inIds);                            
     
-    if nargin > 3
+    if nargin > 4
         trData = zeros(sampNum, trNum);
     else
         trData = zeros(GSegyInfo.volHeader.sampNum, trNum);
@@ -57,10 +57,12 @@ function [trData, GSegyInfo, trHeader] = bsReadTracesByIds(fileName, GSegyInfo, 
                 ePos = iPos+sampNum;
                 lePos = sampNum;
             end
-            
+            trData(lsPos : lePos, i) = data(sPos : ePos);
+        else
+            trData(:, i) = data(sPos : ePos);
         end
 
-        trData(lsPos : lePos, i) = data(sPos : ePos);
+        
     end
 
     fclose(GSegyInfo.fid);                                        
