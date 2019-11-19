@@ -9,8 +9,13 @@ function [horizonTimes] = bsCalcHorizonTime(usedTimeLine, inIds, crossIds, isPri
     horizonTimes = zeros(1, nTrace);
     
     for i = 1 : nTrace
-        [~, ~, horizonTimes(i)] = bsCalcWellBaseInfo(usedTimeLine, ...
-            inIds(i), crossIds(i), 1, 2, 1, 2, 3);
+        
+        try
+            [~, ~, horizonTimes(i)] = bsCalcWellBaseInfo(usedTimeLine, ...
+                inIds(i), crossIds(i), 1, 2, 1, 2, 3);
+        catch
+            error('%d trace is failed!!!', i);
+        end
         
         percent = i/nTrace*100;
         if isPrintInfo
