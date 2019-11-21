@@ -163,7 +163,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
                 
                 bsIncParforProgress(pbm);
                 
-                if mod(iTrace, 100) == 0
+                if mod(iTrace, 50) == 0
                     bsPrintParforProgress(pbm);
                 end
             end
