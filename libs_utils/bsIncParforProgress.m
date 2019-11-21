@@ -1,8 +1,7 @@
-function bsIncParforProgress(pbm)
+function pbm = bsIncParforProgress(pbm)
     
-    id = get(getCurrentTask(), 'ID');
-    if pbm.fids(id) == 0
-        pbm.fids(id) = fopen(pbm.name, 'a');
-        fwrite(pbm.fids(id), uint8(0), 'uint8');
-    end
+%     id = get(getCurrentTask(), 'ID');
+    fid = fopen(pbm.name, 'a');
+    fwrite(fid, uint8(0), 'uint8');
+    fclose(fid);
 end

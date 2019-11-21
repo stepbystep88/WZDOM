@@ -167,7 +167,6 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
                     bsPrintParforProgress(pbm);
                 end
             end
-            bsDeleteParforProgress(pbm);
             
         else
             % non-parallel computing 
