@@ -36,9 +36,27 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
     end
     
     invResults = cell(1, nMethod);
-    % horizon of given traces
-    horizonTimes = bsCalcHorizonTime(usedTimeLine, inIds, crossIds, 1);
+    
+    % start parallel pool
+    if GPostInvParam.isParallel
+        GPostInvParam.numWorkers = bsInitParallelPool(GPostInvParam.numWorkers);
+        fcn = @(groupData)(bsCalcHorizonTime(usedTimeLine, ...
+                    groupData{1, labindex}, ...
+                    groupData{2, labindex}, 1));
                 
+        % horizon of given traces obtained by parallel computing 
+        horizonTimes = bsSpmdModule(fcn, {inIds, crossIds}, GPostInvParam.numWorkers);
+            
+    else
+        % horizon of given traces
+        horizonTimes = bsCalcHorizonTime(usedTimeLine, inIds, crossIds, 1);
+    end
+    
+    
+    
+                
+    
+    
     for i = 1 : nMethod
         method = methods{i};
         methodName = method.name;
@@ -146,19 +164,23 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
         
         
         if GPostInvParam.isParallel
+%             [groupData, ~] = bsSeparateData({horizonTimes, inIds, crossIds}, GPostInvParam.numWorkers);
             
-            GPostInvParam.numWorkers = bsInitParallelPool(GPostInvParam.numWorkers);
-
-            [groupData, ~] = bsSeparateData({horizonTimes, inIds, crossIds}, GPostInvParam.numWorkers);
-            
-            spmd
-                cdata = bsInvSubTraces(GPostInvParam, method, ...
+            fcn = @(groupData)(bsInvSubTraces(GPostInvParam, method, ...
                     groupData{1, labindex}, ...
                     groupData{2, labindex}, ...
-                    groupData{3, labindex});
-            end
+                    groupData{3, labindex}));
+                
+            data = bsSpmdModule(fcn, {horizonTimes, inIds, crossIds}, GPostInvParam.numWorkers);
             
-            data = bsJointData(cdata);
+%             spmd
+%                 cdata = bsInvSubTraces(GPostInvParam, method, ...
+%                     groupData{1, labindex}, ...
+%                     groupData{2, labindex}, ...
+%                     groupData{3, labindex});
+%             end
+%             
+%             data = bsJointData(cdata);
         else
             % non-parallel computing 
             data = bsInvSubTraces(GPostInvParam, method, horizonTimes, inIds, crossIds);

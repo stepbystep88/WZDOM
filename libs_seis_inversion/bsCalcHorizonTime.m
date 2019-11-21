@@ -1,7 +1,7 @@
 function [horizonTimes] = bsCalcHorizonTime(usedTimeLine, inIds, crossIds, isPrintInfo)
 %% get the horizon of given traces
 
-    if nargin < 4
+    if ~exist('isPrintInfo', 'var')
         isPrintInfo = 0;
     end
     
@@ -9,14 +9,13 @@ function [horizonTimes] = bsCalcHorizonTime(usedTimeLine, inIds, crossIds, isPri
     horizonTimes = zeros(1, nTrace);
     
     for i = 1 : nTrace
-        
         try
             [~, ~, horizonTimes(i)] = bsCalcWellBaseInfo(usedTimeLine, ...
                 inIds(i), crossIds(i), 1, 2, 1, 2, 3);
         catch
             error('%d trace is failed!!!', i);
         end
-        
+
         percent = i/nTrace*100;
         if isPrintInfo
             if mod(i, 100) == 0
@@ -25,4 +24,7 @@ function [horizonTimes] = bsCalcHorizonTime(usedTimeLine, inIds, crossIds, isPri
         end
         
     end
+    
+    
+    
 end
