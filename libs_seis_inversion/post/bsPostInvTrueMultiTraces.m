@@ -18,8 +18,8 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
 % -------------------------------------------------------------------------
     
     assert(length(inIds) == length(crossIds), 'The length of inline ids and crossline ids must be the same.');
-    nTrace = length(inIds);
     nMethod = size(methods, 1);
+    nTrace = length(inIds);
     sampNum = GPostInvParam.upNum + GPostInvParam.downNum;
     % save the inverted results
     rangeIn = [min(inIds), max(inIds)];
@@ -144,46 +144,77 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
     function data = bsCallInvFcn()
         % tackle the inverse task
         
-        data = zeros(sampNum, nTrace);
         
-        % obtain a preModel avoid calculating matrix G again and again.
-        % see line 20 of function bsPostPrepareModel for details
-        preModel = bsPostPrepareModel(GPostInvParam, inIds(1), crossIds(1), horizonTimes(1), [], []);
-            
         if GPostInvParam.isParallel
             
-            
-            bsInitParallelPool(GPostInvParam.numWorkers);
-            pbm = bsInitParforProgress(nTrace, sprintf('Post inversion progress information by method %s', method.name));
-            
-            % parallel computing
-            parfor iTrace = 1 : nTrace
+            GPostInvParam.numWorkers = bsInitParallelPool(GPostInvParam.numWorkers);
 
-                data(:, iTrace) = bsPostInvOneTrace(GPostInvParam, horizonTimes(iTrace), method, inIds(iTrace), crossIds(iTrace), preModel, 0);
-                
-                bsIncParforProgress(pbm);
-                
-                if mod(iTrace, 50) == 0
-                    bsPrintParforProgress(pbm);
-                end
+            [groupData, ~] = bsSeparateData({horizonTimes, inIds, crossIds}, GPostInvParam.numWorkers);
+            
+            spmd
+                cdata = bsInvSubTraces(GPostInvParam, method, ...
+                    groupData{1, labindex}, ...
+                    groupData{2, labindex}, ...
+                    groupData{3, labindex});
             end
             
+            data = bsJointData(cdata);
         else
             % non-parallel computing 
-            for iTrace = 1 : nTrace
-                data(:, iTrace) = bsPostInvOneTrace(GPostInvParam, horizonTimes(iTrace), method, inIds(iTrace), crossIds(iTrace), preModel, 1);
-                
-                if isfield(GPostInvParam, 'showITraceResult') && GPostInvParam.showITraceResult
-                    bsShowITrace(model, data(:, iTrace));
-                end
+            data = bsInvSubTraces(GPostInvParam, method, horizonTimes, inIds, crossIds);
+        end
+    end
+    
+end
+
+function data = bsInvSubTraces(GPostInvParam, method, horizonTimes, inIds, crossIds)
+
+    nTrace = length(inIds);
+    sampNum = GPostInvParam.upNum + GPostInvParam.downNum;
+    data = zeros(sampNum, nTrace);
+    
+    % obtain a preModel avoid calculating matrix G again and again.
+    % see line 20 of function bsPostPrepareModel for details  
+    preModel = bsPostPrepareModel(GPostInvParam, inIds(1), crossIds(1), horizonTimes(1), [], []);
+            
+    for iTrace = 1 : nTrace
+        
+        horizonTime = horizonTimes(iTrace);
+        inId = inIds(iTrace);
+        crossId = crossIds(iTrace);
+        
+        if mod(iTrace, 10) == 0
+            % print progress information for each 10 traces
+            fprintf('Post inversion progress information by method %s: wokder [%d] has finished %.2f%% of %d traces.\n', ...
+                method.name, labindex, iTrace/nTrace*100, nTrace);
+        end
+        
+        % create model data
+        if GPostInvParam.isReadMode
+            % in read mode, model is loaded from local file
+            modelFileName = bsGetModelFileName(GPostInvParam.modelSavePath, inId, crossId);
+            parLoad(modelFileName);
+        else
+            % otherwise, create the model by computing. Note that we input
+            % argment preModel is a pre-calculated model, by doing this, we
+            % avoid wasting time on calculating the common data of different
+            % traces such as forward matrix G.
+            model = bsPostPrepareModel(GPostInvParam, inId, crossId, horizonTime, [], preModel);
+            if GPostInvParam.isSaveMode
+                % in save mode, mode should be saved as local file
+                modelFileName = bsGetModelFileName(GPostInvParam.modelSavePath, inId, crossId);
+                parSave(modelFileName, model);
             end
         end
+        
+        [xOut, ~, ~, ~] = bsPostInv1DTrace(model.d, model.G, model.initX, model.Lb, model.Ub, method);                       
+
+        data(:, iTrace) = exp(xOut);
+    
     end
 
     
 end
-
-
 
 function fileName = bsGetModelFileName(modelSavePath, inId, crossId)
     % get the file name of model (to save the )
@@ -203,7 +234,7 @@ function [idata] = bsPostInvOneTrace(GPostInvParam, horizonTime, method, inId, c
     if GPostInvParam.isReadMode
         % in read mode, model is loaded from local file
         modelFileName = bsGetModelFileName(GPostInvParam.modelSavePath, inId, crossId);
-        parLoad(matFileName);
+        parLoad(modelFileName);
     else
         % otherwise, create the model by computing. Note that we input
         % argment preModel is a pre-calculated model, by doing this, we
@@ -220,20 +251,4 @@ function [idata] = bsPostInvOneTrace(GPostInvParam, horizonTime, method, inId, c
     [xOut, ~, ~, ~] = bsPostInv1DTrace(model.d, model.G, model.initX, model.Lb, model.Ub, method);                       
 
     idata = exp(xOut);
-end
-
-
-function bsShowITrace(model, imp)
-    figure(10000);
-    subplot(1, 2, 1);
-    plot(1:length(model.d), model.d, 'r', 'linewidth', 2);
-    set(gca, 'ydir', 'reverse');
-    title('Seismic');
-    bsSetDefaultPlotSet(bsGetDefaultPlotSet());
-    subplot(1, 2, 2);
-    plot(1:length(model.initLog), model.initLog, 'g', 'linewidth', 2);
-    plot(1:length(imp), imp, 'r', 'linewidth', 2);
-    set(gca, 'ydir', 'reverse');
-    title('Impedance');
-    bsSetDefaultPlotSet(bsGetDefaultPlotSet());
 end

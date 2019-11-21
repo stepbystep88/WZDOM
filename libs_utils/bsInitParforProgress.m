@@ -10,7 +10,7 @@ function pbm = bsInitParforProgress(nLoop, title)
     p = gcp('nocreate');
     pbm.nWorkers = p.NumWorkers;
     pbm.nLoop = nLoop;
-    pbm.fids = zeros(1, p.NumWorkers);
+    pbm.fid = 0;
     
     fid = fopen(pbm.name, 'w');
     fclose(fid);

@@ -1,4 +1,4 @@
-function bsInitParallelPool(numWorkers)
+function numWorkers = bsInitParallelPool(numWorkers)
     
     p = gcp('nocreate');
     
@@ -9,5 +9,6 @@ function bsInitParallelPool(numWorkers)
         parpool('local', numWorkers);
     end
     
-    
+    p = gcp('nocreate');
+    numWorkers = p.NumWorkers;
 end
