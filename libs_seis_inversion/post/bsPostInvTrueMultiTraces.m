@@ -107,23 +107,26 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
         % save sgy file
         if isfield(method, 'isSaveSegy') && method.isSaveSegy
             segyFileName = bsGetFileName('segy');
+            fprintf('Writing segy file:%s ....\n', segyFileName);
             bsWriteInvResultIntoSegyFile(res, ...
                 GPostInvParam.postSeisData.segyFileName, ...
                 GPostInvParam.postSeisData.segyInfo, ...
                 segyFileName, ...
                 GPostInvParam.upNum, ...
                 GPostInvParam.dt);
-            fprintf('\nWrite segy file:%s\n', segyFileName);
+            fprintf('Write segy file:%s successfully!\n', segyFileName);
         end
         
         % save mat file
-        try
-            save(matFileName, 'data', 'horizonTimes', 'inIds', 'crossIds', 'GPostInvParam', 'method');
-        catch
-            save(matFileName, 'data', 'horizonTimes', 'inIds', 'crossIds', 'GPostInvParam', 'method', '-v7.3');
+        if ~isfield(method, 'isSaveMat') || method.isSaveMat
+            fprintf('Writing mat file:%s...\n', matFileName);
+            try
+                save(matFileName, 'data', 'horizonTimes', 'inIds', 'crossIds', 'GPostInvParam', 'method');
+            catch
+                save(matFileName, 'data', 'horizonTimes', 'inIds', 'crossIds', 'GPostInvParam', 'method', '-v7.3');
+            end
+            fprintf('Write mat file:%s successfully!\n', matFileName);
         end
-        fprintf('Write mat file:%s\n', matFileName);
-        
     end
     
     function fileName = bsGetFileName(type)
@@ -148,15 +151,28 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
         preModel = bsPostPrepareModel(GPostInvParam, inIds(1), crossIds(1), horizonTimes(1), [], []);
             
         if GPostInvParam.isParallel
+            
+            
+            bsInitParallelPool(GPostInvParam.numWorkers);
+            pbm = bsInitParforProgress(nTrace, sprintf('Post inversion progress information by method %s', method.name));
+            
             % parallel computing
             parfor iTrace = 1 : nTrace
 
-                data(:, iTrace) = bsPostInvOneTrace(GPostInvParam, horizonTimes(iTrace), method, inIds(iTrace), crossIds(iTrace), preModel);
+                data(:, iTrace) = bsPostInvOneTrace(GPostInvParam, horizonTimes(iTrace), method, inIds(iTrace), crossIds(iTrace), preModel, 0);
+                
+                bsIncParforProgress(pbm);
+                
+                if mod(iTrace, 100) == 0
+                    bsPrintParforProgress(pbm);
+                end
             end
+            bsDeleteParforProgress(pbm);
+            
         else
             % non-parallel computing 
             for iTrace = 1 : nTrace
-                data(:, iTrace) = bsPostInvOneTrace(GPostInvParam, horizonTimes(iTrace), method, inIds(iTrace), crossIds(iTrace), preModel);
+                data(:, iTrace) = bsPostInvOneTrace(GPostInvParam, horizonTimes(iTrace), method, inIds(iTrace), crossIds(iTrace), preModel, 1);
                 
                 if isfield(GPostInvParam, 'showITraceResult') && GPostInvParam.showITraceResult
                     bsShowITrace(model, data(:, iTrace));
@@ -168,6 +184,8 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
     
 end
 
+
+
 function fileName = bsGetModelFileName(modelSavePath, inId, crossId)
     % get the file name of model (to save the )
     fileName = sprintf('%s/models/model_inline_%d_crossline_%d.mat', ...
@@ -175,11 +193,13 @@ function fileName = bsGetModelFileName(modelSavePath, inId, crossId)
 
 end
 
-function [idata] = bsPostInvOneTrace(GPostInvParam, horizonTime, method, inId, crossId, preModel)
-    fprintf('Solving the trace of inline=%d and crossline=%d by using method %s...\n', ...
-        inId, crossId, method.name);
+function [idata] = bsPostInvOneTrace(GPostInvParam, horizonTime, method, inId, crossId, preModel, isprint)
 
-
+    if isprint
+        fprintf('Solving the trace of inline=%d and crossline=%d by using method %s...\n', ...
+            inId, crossId, method.name);
+    end
+    
     % create model data
     if GPostInvParam.isReadMode
         % in read mode, model is loaded from local file

@@ -6,7 +6,7 @@ function bsWriteInvResultIntoSegyFile(res, sourceFileName, sourceSegyInfo, dstFi
     horizon = res.horizon;
     
    
-    [newProfileData, minTime] = bsHorizonRestoreData(data, horizon, upNum, dt, 1);
+    [newProfileData, minTime] = bsHorizonRestoreData(data, horizon, upNum, dt, sourceSegyInfo.t0, 1);
     newProfileData(isnan(newProfileData)) = -99999;
     
     bsWriteTracesByRefFileAndIds(sourceFileName, dstFileName, sourceSegyInfo, newProfileData, inIds, crossIds);

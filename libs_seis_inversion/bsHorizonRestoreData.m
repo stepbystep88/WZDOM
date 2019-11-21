@@ -1,16 +1,14 @@
-function [newProfileData, minTime] = bsHorizonRestoreData(profileData, horizon, upNum, dt, isZeroMinTime)
+function [newProfileData, minTime] = bsHorizonRestoreData(profileData, horizon, upNum, dt, minTime, isShowProgress)
 
-    if ~exist('isZeroMinTime', 'var')
-        isZeroMinTime = 0;
+    if ~exist('isShowProgress', 'var')
+        isShowProgress = 0;
     end
     
     [sampNum, trNum] = size(profileData);
     
     % fill data based on horizon
     time0 = horizon - upNum * dt;
-    if isZeroMinTime 
-        minTime = 0;
-    else
+    if ~exist('minTime', 'var')
         minTime = min(time0) - 5 * dt;
     end
     maxTime = max(time0) + sampNum * dt + 5 * dt;
@@ -21,6 +19,10 @@ function [newProfileData, minTime] = bsHorizonRestoreData(profileData, horizon, 
     newProfileData(:) = nan;
     
     for i = 1 : trNum
+        if isShowProgress && mod(i, 200) == 0
+            % print information
+            fprintf('Restring data %d%%...\n', round(i/trNum*100));
+        end
         newProfileData(poses(i):poses(i)+sampNum-1, i) = profileData(:, i);
     end
     

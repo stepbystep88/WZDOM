@@ -25,8 +25,13 @@ function [inline, crossline, time] = bsCalcWellBaseInfo(timeLine, X, Y, xId, yId
 %     dist = sqrt( (timeLine(:, xId) - X).^2 + (timeLine(:,yId) - Y).^2 );
 %     [~, index] = min(dist);
 %     toc
-
+    
     index = find(timeLine(:, xId) == X & timeLine(:, yId) == Y);
+    if isempty(index)
+        dist = sqrt( (timeLine(:, xId) - X).^2 + (timeLine(:,yId) - Y).^2 );
+        [~, index] = min(dist);
+    end
+    
     inline = timeLine(index, inId);
     crossline = timeLine(index, crossId);
     time = timeLine(index, timeId);

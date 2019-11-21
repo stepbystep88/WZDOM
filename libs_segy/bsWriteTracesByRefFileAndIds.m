@@ -19,7 +19,13 @@ function bsWriteTracesByRefFileAndIds(refFileName, dstfileName, GSegyInfo, trDat
     outSegyInfo.volHeader.sampNum = size(trDatas, 1);
     outSegyInfo = bsWriteVolHeader(dstfileName, outSegyInfo);
     
-    for i = 1 : length(inIds)
+    trNum = length(inIds);
+    for i = 1 : trNum
+        if mod(i, 100) == 0
+            % print information
+            fprintf('Writing %d%% data into segy file %s...\n', round(i/trNum*100), dstfileName);
+        end
+        
         index = bsIndexOfTraceSetOnInIdAndCrossId(sourceSegyInfo, inIds(i), crossIds(i));
         
         if index > 0

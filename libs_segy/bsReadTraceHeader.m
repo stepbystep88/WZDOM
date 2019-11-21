@@ -11,11 +11,13 @@ function [traceHeader] = bsReadTraceHeader(GSegyInfo)
 % traceHeader   trace header information
 % -------------------------------------------------------------------------
     
-    traceHeader.fullInfo = fread(GSegyInfo.fid, 60, 'int32');                       
+    bytes = fread(GSegyInfo.fid, 60, 'int32');                       
     
-    traceHeader.inId = traceHeader.fullInfo(GSegyInfo.inlineId, 1);                 % inline id
-    traceHeader.crossId = traceHeader.fullInfo(GSegyInfo.crosslineId, 1);           % crossline id
-    traceHeader.X = traceHeader.fullInfo(GSegyInfo.xCoordId, 1);
-    traceHeader.Y = traceHeader.fullInfo(GSegyInfo.yCoordId, 1);
-    traceHeader.offset = traceHeader.fullInfo(GSegyInfo.offsetId, 1);               % offsetId
+    traceHeader.inId = bytes(bsGetIntId(GSegyInfo.inlineId));
+    traceHeader.crossId = bytes(bsGetIntId(GSegyInfo.crosslineId));
+    traceHeader.X = bytes(bsGetIntId(GSegyInfo.xCoordId));
+    traceHeader.Y = bytes(bsGetIntId(GSegyInfo.yCoordId));
+    traceHeader.offset = bytes(bsGetIntId(GSegyInfo.offsetId));
+    
+    traceHeader.fullInfo = bytes;
 end

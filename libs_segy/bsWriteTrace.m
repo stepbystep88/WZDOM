@@ -11,16 +11,17 @@ function bsWriteTrace(GSegyInfo, traceHeader, data)
 % -------------------------------------------------------------------------
 
     if(~GSegyInfo.isSaveCoordInfo)
-        traceHeader.fullInfo(GSegyInfo.xCoordId, 1) = 0;
-        traceHeader.fullInfo(GSegyInfo.yCoordId, 1) = 0;
+        traceHeader.fullInfo(bsGetIntId(GSegyInfo.xCoordId)) = 0;
+        traceHeader.fullInfo(bsGetIntId(GSegyInfo.yCoordId)) = 0;
     end
     
-    traceHeader.fullInfo(GSegyInfo.inlineId, 1) = traceHeader.inId;                         % 读取inline号
-    traceHeader.fullInfo(GSegyInfo.crosslineId, 1) = traceHeader.crossId;                   % 读取crossline号
-    traceHeader.fullInfo(GSegyInfo.offsetId, 1) = traceHeader.offset;                       % 读取炮检距信息
+    traceHeader.fullInfo(bsGetIntId(GSegyInfo.inlineId)) = traceHeader.inId;                         
+    traceHeader.fullInfo(bsGetIntId(GSegyInfo.crosslineId)) = traceHeader.crossId;                   
+    traceHeader.fullInfo(bsGetIntId(GSegyInfo.offsetId)) = traceHeader.offset;                       
+    traceHeader.fullInfo(bsGetIntId(GSegyInfo.traceSampNumId)) = length(data);
     
-    traceHeader.fullInfo(GSegyInfo.traceSampNumId) = length(data);
     fwrite(GSegyInfo.fid, traceHeader.fullInfo, 'int32');
     
     fwrite(GSegyInfo.fid, data, 'float32');
 end
+
