@@ -1,5 +1,7 @@
-function pbm = bsInitParforProgress(nLoop, title)
+function pbm = bsInitParforProgress(numWorkers, nLoop, title)
 
+    bsInitParallelPool(numWorkers);
+    
     if ~exist('title', 'var')
         pbm.title = 'Progress information';
     else
@@ -12,7 +14,8 @@ function pbm = bsInitParforProgress(nLoop, title)
     pbm.nLoop = nLoop;
     pbm.fid = 0;
     
+%     parfor_progress = 0;
+%     assignin('base', 'parfor_progress', parfor_progress);
     fid = fopen(pbm.name, 'w');
     fclose(fid);
-    
 end

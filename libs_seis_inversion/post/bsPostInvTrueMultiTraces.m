@@ -19,7 +19,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
     
     assert(length(inIds) == length(crossIds), 'The length of inline ids and crossline ids must be the same.');
     nMethod = size(methods, 1);
-    nTrace = length(inIds);
+    traceNum = length(inIds);
     sampNum = GPostInvParam.upNum + GPostInvParam.downNum;
     % save the inverted results
     rangeIn = [min(inIds), max(inIds)];
@@ -36,26 +36,12 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
     end
     
     invResults = cell(1, nMethod);
-    
-    % start parallel pool
+    % horizon of given traces
     if GPostInvParam.isParallel
-        GPostInvParam.numWorkers = bsInitParallelPool(GPostInvParam.numWorkers);
-        fcn = @(groupData)(bsCalcHorizonTime(usedTimeLine, ...
-                    groupData{1, labindex}, ...
-                    groupData{2, labindex}, 1));
-                
-        % horizon of given traces obtained by parallel computing 
-        horizonTimes = bsSpmdModule(fcn, {inIds, crossIds}, GPostInvParam.numWorkers);
-            
+        horizonTimes = bsCalcHorizonTimeParallel(usedTimeLine, inIds, crossIds, GPostInvParam.numWorkers);
     else
-        % horizon of given traces
-        horizonTimes = bsCalcHorizonTime(usedTimeLine, inIds, crossIds, 1);
+        horizonTimes = bsCalcHorizonTime(usedTimeLine, inIds, crossIds);
     end
-    
-    
-    
-                
-    
     
     for i = 1 : nMethod
         method = methods{i};
@@ -161,82 +147,35 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
 
     function data = bsCallInvFcn()
         % tackle the inverse task
+        data = zeros(sampNum, traceNum);
         
+        
+        % obtain a preModel avoid calculating matrix G again and again.
+        % see line 20 of function bsPostPrepareModel for details
+        preModel = bsPostPrepareModel(GPostInvParam, inIds(1), crossIds(1), horizonTimes(1), [], []);
         
         if GPostInvParam.isParallel
-%             [groupData, ~] = bsSeparateData({horizonTimes, inIds, crossIds}, GPostInvParam.numWorkers);
             
-            fcn = @(groupData)(bsInvSubTraces(GPostInvParam, method, ...
-                    groupData{1, labindex}, ...
-                    groupData{2, labindex}, ...
-                    groupData{3, labindex}));
+            pbm = bsInitParforProgress(GPostInvParam.numWorkers, traceNum, sprintf('Post inversion progress information by method %s', method.name));
+            
+            % parallel computing
+            parfor iTrace = 1 : traceNum
                 
-            data = bsSpmdModule(fcn, {horizonTimes, inIds, crossIds}, GPostInvParam.numWorkers);
-            
-%             spmd
-%                 cdata = bsInvSubTraces(GPostInvParam, method, ...
-%                     groupData{1, labindex}, ...
-%                     groupData{2, labindex}, ...
-%                     groupData{3, labindex});
-%             end
-%             
-%             data = bsJointData(cdata);
+                data(:, iTrace) = bsPostInvOneTrace(GPostInvParam, horizonTimes(iTrace), method, inIds(iTrace), crossIds(iTrace), preModel, 0);
+                
+                bsIncParforProgress(pbm, iTrace, 50);
+            end
+
         else
             % non-parallel computing 
-            data = bsInvSubTraces(GPostInvParam, method, horizonTimes, inIds, crossIds);
-        end
-    end
-    
-end
-
-function data = bsInvSubTraces(GPostInvParam, method, horizonTimes, inIds, crossIds)
-
-    nTrace = length(inIds);
-    sampNum = GPostInvParam.upNum + GPostInvParam.downNum;
-    data = zeros(sampNum, nTrace);
-    
-    % obtain a preModel avoid calculating matrix G again and again.
-    % see line 20 of function bsPostPrepareModel for details  
-    preModel = bsPostPrepareModel(GPostInvParam, inIds(1), crossIds(1), horizonTimes(1), [], []);
-            
-    for iTrace = 1 : nTrace
-        
-        horizonTime = horizonTimes(iTrace);
-        inId = inIds(iTrace);
-        crossId = crossIds(iTrace);
-        
-        if mod(iTrace, 10) == 0
-            % print progress information for each 10 traces
-            fprintf('Post inversion progress information by method %s: wokder [%d] has finished %.2f%% of %d traces.\n', ...
-                method.name, labindex, iTrace/nTrace*100, nTrace);
-        end
-        
-        % create model data
-        if GPostInvParam.isReadMode
-            % in read mode, model is loaded from local file
-            modelFileName = bsGetModelFileName(GPostInvParam.modelSavePath, inId, crossId);
-            parLoad(modelFileName);
-        else
-            % otherwise, create the model by computing. Note that we input
-            % argment preModel is a pre-calculated model, by doing this, we
-            % avoid wasting time on calculating the common data of different
-            % traces such as forward matrix G.
-            model = bsPostPrepareModel(GPostInvParam, inId, crossId, horizonTime, [], preModel);
-            if GPostInvParam.isSaveMode
-                % in save mode, mode should be saved as local file
-                modelFileName = bsGetModelFileName(GPostInvParam.modelSavePath, inId, crossId);
-                parSave(modelFileName, model);
+            for iTrace = 1 : traceNum
+                data(:, iTrace) = bsPostInvOneTrace(GPostInvParam, horizonTimes(iTrace), method, inIds(iTrace), crossIds(iTrace), preModel, 1);
             end
         end
-        
-        [xOut, ~, ~, ~] = bsPostInv1DTrace(model.d, model.G, model.initX, model.Lb, model.Ub, method);                       
-
-        data(:, iTrace) = exp(xOut);
-    
     end
-
     
 end
+
 
 function fileName = bsGetModelFileName(modelSavePath, inId, crossId)
     % get the file name of model (to save the )
