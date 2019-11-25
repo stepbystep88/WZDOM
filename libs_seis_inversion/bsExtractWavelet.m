@@ -109,7 +109,7 @@ end
 function synseis = bsGetSynthetic(GPostInvParam, wellInfo, horizon)
     sampNum = GPostInvParam.upNum + GPostInvParam.downNum; 
     welllog = wellInfo.wellLog;
-    dist = horizon - welllog(:, GPostInvParam.indexOfTimeInWellData);
+    dist = horizon - welllog(:, GPostInvParam.indexInWellData.time);
     [~, index] = min(abs(dist));
     s = index - GPostInvParam.upNum;
     trueLog = welllog(s : s+sampNum-1, 1);

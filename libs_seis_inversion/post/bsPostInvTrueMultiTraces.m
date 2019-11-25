@@ -122,7 +122,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
         end
         
         % save mat file
-        if ~isfield(method, 'isSaveMat') || method.isSaveMat
+        if isfield(method, 'isSaveMat') && method.isSaveMat
             fprintf('Writing mat file:%s...\n', matFileName);
             try
                 save(matFileName, 'data', 'horizonTimes', 'inIds', 'crossIds', 'GPostInvParam', 'method');
@@ -152,23 +152,28 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
         
         % obtain a preModel avoid calculating matrix G again and again.
         % see line 20 of function bsPostPrepareModel for details
-        preModel = bsPostPrepareModel(GPostInvParam, inIds(1), crossIds(1), horizonTimes(1), [], []);
+        [data(:, 1), preModel, output] = bsPostInvOneTrace(GPostInvParam, horizonTimes(1), method, inIds(1), crossIds(1), [], 0);
+        method.parampkgs = output.parampkgs;
         
         if GPostInvParam.isParallel
             
-            pbm = bsInitParforProgress(GPostInvParam.numWorkers, traceNum, sprintf('Post inversion progress information by method %s', method.name));
+            pbm = bsInitParforProgress(GPostInvParam.numWorkers, ...
+                traceNum, ...
+                sprintf('Post inversion progress information by method %s', method.name), ...
+                GPostInvParam.isPrintBySavingFile);
             
             % parallel computing
-            parfor iTrace = 1 : traceNum
+            parfor iTrace = 2 : traceNum
                 
                 data(:, iTrace) = bsPostInvOneTrace(GPostInvParam, horizonTimes(iTrace), method, inIds(iTrace), crossIds(iTrace), preModel, 0);
                 
                 bsIncParforProgress(pbm, iTrace, 50);
             end
+            
 
         else
             % non-parallel computing 
-            for iTrace = 1 : traceNum
+            for iTrace = 2 : traceNum
                 data(:, iTrace) = bsPostInvOneTrace(GPostInvParam, horizonTimes(iTrace), method, inIds(iTrace), crossIds(iTrace), preModel, 1);
             end
         end
@@ -184,7 +189,7 @@ function fileName = bsGetModelFileName(modelSavePath, inId, crossId)
 
 end
 
-function [idata] = bsPostInvOneTrace(GPostInvParam, horizonTime, method, inId, crossId, preModel, isprint)
+function [idata, model, output] = bsPostInvOneTrace(GPostInvParam, horizonTime, method, inId, crossId, preModel, isprint)
 
     if isprint
         fprintf('Solving the trace of inline=%d and crossline=%d by using method %s...\n', ...
@@ -209,7 +214,7 @@ function [idata] = bsPostInvOneTrace(GPostInvParam, horizonTime, method, inId, c
         end
     end
 
-    [xOut, ~, ~, ~] = bsPostInv1DTrace(model.d, model.G, model.initX, model.Lb, model.Ub, method);                       
+    [xOut, ~, ~, output] = bsPostInv1DTrace(model.d, model.G, model.initX, model.Lb, model.Ub, method);                       
 
     idata = exp(xOut);
 end

@@ -20,8 +20,8 @@ function model = bsPostPrepareModel(GPostInvParam, inline, crossline, horizonTim
     if isempty(model)
         D = bsGen1DDiffOperator(sampNum, 1, 1);
         W = bsWaveletMatrix(sampNum-1, GPostInvParam.wavelet);
-        model.orgig_G = 0.5 * W * D;
-        model.G = model.orgig_G;
+        model.orginal_G = 0.5 * W * D;
+        model.G = model.orginal_G;
     end
     
     % start time of the inverted time interval
@@ -49,15 +49,19 @@ function model = bsPostPrepareModel(GPostInvParam, inline, crossline, horizonTim
                 initPos, ...
                 sampNum);
             initLog = bsButtLowPassFilter(initLog, GPostInvParam.initModel.filtCoef);
+            
         case 'filter_from_true_log' % get initial model by filtering the true model
             initLog = bsButtLowPassFilter(trueLog, GPostInvParam.initModel.filtCoef);
-        case 'directly' % get initial model from an initial data directly
-            initLog = GPostInvParam.initModel.initLog;
-            if isempty(initLog)
-                error('When GPostInvParam.initModel.mode is directly, the GPostInvParam.initModel.initLog could not be empty!\n');
+            
+        case 'function' % get initial model by calling a function
+            
+            if isempty(GPreInvParam.initModel.fcn)
+                error('When GPreInvParam.initModel.mode is function, the GPreInvParam.initModel.fcn could not be empty!\n');
             end
+            initLog = GPostInvParam.initModel.fcn(GPostInvParam, inline, crossline);
+            
         otherwise
-            validatestring(GPostInvParam.initModel.mode, ['segy', 'filter_from_true_log', 'directly']);
+            validatestring(GPostInvParam.initModel.mode, ['segy', 'filter_from_true_log', 'function']);
     end
     
     if exist('trueLog', 'var') && ~isempty(trueLog)
@@ -94,6 +98,6 @@ function model = bsPostPrepareModel(GPostInvParam, inline, crossline, horizonTim
     if GPostInvParam.isNormal
         model.maxAbsD = max(abs(model.d));
         model.d = model.d / model.maxAbsD;
-        model.G = model.orgig_G / model.maxAbsD;    % we have to use the original G to normalize
+        model.G = model.orginal_G / model.maxAbsD;    % we have to use the original G to normalize
     end
 end

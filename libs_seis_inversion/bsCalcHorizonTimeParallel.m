@@ -4,7 +4,7 @@ function [horizonTimes] = bsCalcHorizonTimeParallel(usedTimeLine, inIds, crossId
     nTrace = length(inIds);
     horizonTimes = zeros(1, nTrace);
     
-    pbm = bsInitParforProgress(numWorkers, nTrace, 'Calculating horizon information');
+    pbm = bsInitParforProgress(numWorkers, nTrace, 'Calculating horizon information', 0);
             
     
     parfor i = 1 : nTrace
@@ -18,7 +18,5 @@ function [horizonTimes] = bsCalcHorizonTimeParallel(usedTimeLine, inIds, crossId
         bsIncParforProgress(pbm, i, 100);
         
     end
-    
-    
     
 end

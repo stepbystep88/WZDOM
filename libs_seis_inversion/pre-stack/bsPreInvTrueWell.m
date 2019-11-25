@@ -1,11 +1,11 @@
-function [invVals, model, outputs] = bsPostInvTrueWell(GPostInvParam, wellInfo, timeLine, methods)
-%% inverse welllog data
+function [invVals, model, outputs] = bsPreInvTrueWell(GPreInvParam, wellInfo, timeLine, methods)
+%% prestack inversion of welllog data
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
 % Programming dates: Nov 2019
 % -------------------------------------------------------------------------
 %
 % Input 
-% GPostInvParam     all information of the inverse task
+% GPreInvParam     all information of the inverse task
 % wellInfo      information and data of target well
 % timeLine      horizon information
 % methods       the methods to solve the inverse task
@@ -17,28 +17,28 @@ function [invVals, model, outputs] = bsPostInvTrueWell(GPostInvParam, wellInfo, 
 % results
 % -------------------------------------------------------------------------
 
-    sampNum = GPostInvParam.upNum + GPostInvParam.downNum;
-    [~, ~, horizonTime] = bsCalcWellBaseInfo(timeLine{GPostInvParam.usedTimeLineId}, ...
+    sampNum = GPreInvParam.upNum + GPreInvParam.downNum;
+    [~, ~, horizonTime] = bsCalcWellBaseInfo(timeLine{GPreInvParam.usedTimeLineId}, ...
         wellInfo.inline, wellInfo.crossline, 1, 2, 1, 2, 3);
     
+    % obtain target welllog data
     % obtain target welllog data based on horizon information
+    indexInWellData = GPreInvParam.indexInWellData;
+    
     trueLog = bsExtractWellDataByHorizon(...
                     wellInfo.wellLog, ...
                     horizonTime, ...
-                    GPostInvParam.indexInWellData.Ip, ...
-                    GPostInvParam.indexInWellData.time, ...
-                    GPostInvParam.upNum, ...
-                    GPostInvParam.downNum, ...
+                    [   indexInWellData.depth, ...
+                        indexInWellData.vp, ...
+                        indexInWellData.vs, ...
+                        indexInWellData.rho], ...
+                    indexInWellData.time, ...
+                    GPreInvParam.upNum, ...
+                    GPreInvParam.downNum, ...
                     1);
-                
-%     welllog = wellInfo.wellLog;
-%     dist = horizonTime - welllog(:, GPostInvParam.indexOfTimeInWellData);
-%     [~, index] = min(abs(dist));
-%     s = index - GPostInvParam.upNum;
-%     trueLog = welllog(s : s+sampNum-1, 1);
     
     % create model data
-    model = bsPostPrepareModel(GPostInvParam, wellInfo.inline, wellInfo.crossline, horizonTime, trueLog, []);
+    model = bsPrePrepareModel(GPreInvParam, wellInfo.inline, wellInfo.crossline, horizonTime, trueLog, []);
     
     %% perform invsersion process
     nMethod = size(methods, 1);

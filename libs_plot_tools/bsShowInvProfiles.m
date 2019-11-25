@@ -133,7 +133,6 @@ function [wellPos, wellData] = bsFindWellLocation(GPostInvParam, wellLogs, inIds
     wells = cell2mat(wellLogs);
     wellInIds = [wells.inline];
     wellCrossIds = [wells.crossline];
-    sampNum = GPostInvParam.upNum + GPostInvParam.downNum;
     
     wellPos = [];
     wellData = [];
@@ -141,43 +140,12 @@ function [wellPos, wellData] = bsFindWellLocation(GPostInvParam, wellLogs, inIds
         for j = 1 : length(wellInIds)
             if wellInIds(j) == inIds(i) && wellCrossIds(j) == crossIds(i)
                 wellPos = [wellPos, i];
-                data = wellLogs{j}.wellLog(:, dataIndex);
-                data = bsButtLowPassFilter(data, showWellFiltCoef);
                 
-                time = wellLogs{j}.wellLog(:, timeIndex);
-                dist = horizon(i) - time;
-                [~, index] = min(abs(dist));
-                iPos = index - GPostInvParam.upNum;
-    
-                tmp = zeros(sampNum, 1);
-%                 t0 = horizon(i) - GPostInvParam.upNum * GPostInvParam.dt;
-%                 iPos = round((wellLogs{j}.t0 - t0) / GPostInvParam.dt);
+                subWellData = bsExtractWellDataByHorizon(...
+                    wellLogs{j}.wellLog, horizon(i), dataIndex, timeIndex, ...
+                    GPostInvParam.upNum, GPostInvParam.downNum, showWellFiltCoef);
                 
-                if iPos < 0
-                    % start time of origianl welllog data is below the
-                    % start time of the profile to be shown
-                    sPos = 1;
-                    lsPos = abs(iPos) + 1;
-                else
-                    sPos = iPos + 1;
-                    lsPos = 1;
-                end
-
-                if iPos + sampNum > length(data)
-                    % end time of origianl welllog data is above the
-                    % end time of the profile to be shown
-                    ePos = length(data);
-                    lePos = length(data) - iPos;
-                else
-                    ePos = iPos+sampNum;
-                    lePos = sampNum;
-                end
-            
-                tmp(lsPos : lePos) = data(sPos : ePos);
-                tmp(1:lsPos) = data(sPos);
-                tmp(lePos:end) = data(ePos);
-                
-                wellData = [wellData, tmp];
+                wellData = [wellData, subWellData];
             end
         end
     end
