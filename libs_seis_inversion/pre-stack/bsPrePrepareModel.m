@@ -7,6 +7,7 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
     
     
     sampNum = GPreInvParam.upNum + GPreInvParam.downNum; 
+    startTime = horizonTime - GPreInvParam.dt * GPreInvParam.upNum;
     
     % load model
     initModel = GPreInvParam.initModel;
@@ -18,7 +19,7 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
             % start location of the inverted time interval
             initLog = bsReadMultiSegyFiles(GPreInvParam, ...
                 [initModel.depth, initModel.vp, initModel.vs, initModel.rho], ...
-                inId, crossId, horizonTime, sampNum);
+                inId, crossId, startTime, sampNum, GPreInvParam.dt);
  
             initLog = bsFiltWelllog(initLog, initModel.filtCoef);
             
@@ -37,21 +38,20 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
     end
     
     % load prestack seismic data
-    switch GPreInvParam.preSeisData.mode
+    preDataInfo = GPreInvParam.preSeisData;
+    switch preSeisData.mode
         case 'angle_separate_files'
-            separates = GPreInvParam.preSeisData.separates;
-            angleSeisData = bsReadMultiSegyFiles(GPreInvParam, separates, inId, crossId, horizonTime, sampNum-1);
+            separates = preDataInfo.separates;
+            angleSeisData = bsReadMultiSegyFiles(separates, inId, crossId, startTime, sampNum-1, GPreInvParam.dt);
             angleData = GPreInvParam.angleData;
             
         case 'angle_one_file'
-            pos = bsCalcT0Pos(GPreInvParam, GPreInvParam.preSeisData.segyInfo, horizonTime);
-            gather = bsReadGathersByIds(GPreInvParam.preSeisData.fileName, inId, crossId, pos, sampNum-1);
+            gather = bsReadGathersByIds(preDataInfo.segyFileName, preDataInfo.segyInfo, inId, crossId, startTime, sampNum-1, GPreInvParam.dt);
             angleSeisData = gather{1}.data;
             angleData = GPreInvParam.angleData;
             
         case 'offset_one_file'
-            pos = bsCalcT0Pos(GPreInvParam, GPreInvParam.preSeisData.segyInfo, horizonTime);
-            gather = bsReadGathersByIds(GPreInvParam.preSeisData.fileName, inId, crossId, pos, sampNum);
+            gather = bsReadGathersByIds(preDataInfo.segyFileName, preDataInfo.segyInfo, inId, crossId, startTime, sampNum, GPreInvParam.dt);
             preData = gather{1}.data;
             offsets = gather{1}.offsets;
             
@@ -82,7 +82,7 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
 % -------------------------------------------------------------------------            
     
     % start time of the inverted time interval
-    model.t0 = round(horizonTime / GPreInvParam.dt) * GPreInvParam.dt - GPreInvParam.upNum * GPreInvParam.dt;
+    model.t0 = round(startTime / GPreInvParam.dt) * GPreInvParam.dt;
     model.inId = inline;
     model.crossId = crossline;
     model.initLog = initLog;
@@ -104,13 +104,12 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
     end
 end
 
-function seisData = bsReadMultiSegyFiles(GPreInvParam, separates, inId, crossId, horizonTime, sampNum)
+function seisData = bsReadMultiSegyFiles(separates, inId, crossId, startTime, sampNum, dt)
     nFile = length(separates);
     seisData = size(sampNum, nFile);
     for i = 1 : nFile
         separate = separates(i);
-        pos = bsCalcT0Pos(GPreInvParam, separate.segyInfo, horizonTime);
-        seisData(:, i) = stpReadTracesByIds(separate.fileName, inId, crossId, pos, sampNum);
+        seisData(:, i) = bsReadTracesByIds(separate.fileName, separate.segyInfo, inId, crossId, startTime, sampNum, dt);
     end
 end
 

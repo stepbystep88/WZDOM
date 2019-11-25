@@ -42,6 +42,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
     else
         horizonTimes = bsCalcHorizonTime(usedTimeLine, inIds, crossIds);
     end
+    startTimes = horizonTimes - GPostInvParam.dt * GPostInvParam.upNum;
     
     for i = 1 : nMethod
         method = methods{i};
@@ -70,11 +71,10 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
                     
                 case 'segy'
                     % from sgy file
-                    poses = bsCalcT0Pos(GPostInvParam, loadInfo.segyInfo, horizonTimes);
                     [data, loadInfo.segyInfo, ~] = bsReadTracesByIds(...
                         loadInfo.fileName, ...
                         loadInfo.segyInfo, ...
-                        inIds, crossIds, poses, sampNum);
+                        inIds, crossIds, startTimes, sampNum, GPostInvParam.dt);
                     
                     res.source = 'segy';
             end

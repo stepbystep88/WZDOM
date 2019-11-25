@@ -54,7 +54,7 @@ function [invVals, model, outputs] = bsPreInvTrueWell(GPreInvParam, wellInfo, ti
             method.name);
         
         tic;
-        [xOut, fval, exitFlag, output] = bsPostInv1DTrace(...
+        [xOut, fval, exitFlag, output] = bsPreInv1DTrace(...
             model.d, model.G, model.initX, model.Lb, model.Ub, method);       
  
 

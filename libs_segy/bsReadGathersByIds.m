@@ -1,4 +1,4 @@
-function gathers = bsReadGathersByIds(fileName, GSegyInfo, inIds, crossIds, startPos, sampNum)
+function gathers = bsReadGathersByIds(fileName, GSegyInfo, inIds, crossIds, startTime, sampNum, dt)
 %% read gathers from a segy file with given inline and crossline ids
 %
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
@@ -13,15 +13,18 @@ function gathers = bsReadGathersByIds(fileName, GSegyInfo, inIds, crossIds, star
 % sampNum       how many sample points we would extract from a trace
 % -------------------------------------------------------------------------
 
-    GSegyInfo = bsReadVolHeader(fileName, GSegyInfo);       
-
+    GSegyInfo = bsReadVolHeader(fileName, GSegyInfo);
+    if nargin > 4
+        startPos = bsCalcT0Pos(GSegyInfo, startTime, dt);
+    end
+    
     [~, pointNum] = size(inIds);
     gathers = cell(1, pointNum);
     
     for i = 1 : pointNum
         inId = inIds(i);
         crossId = crossIds(i);
-        index = stpIndexOfTraceSetOnInIdAndCrossId(GSegyInfo, inId, crossId);
+        index = bsIndexOfTraceSetOnInIdAndCrossId(GSegyInfo, inId, crossId);
         
         data = [];
         offsets = [];
@@ -49,14 +52,15 @@ function gathers = bsReadGathersByIds(fileName, GSegyInfo, inIds, crossIds, star
             if nargin > 4
                 iPos = startPos(i);
                 trData = trData(iPos+1 : iPos+sampNum);
+                data = [data, trData];
             else
                 data = [data, trData];
             end
             
         end
         
-        gathers{i}.data = trData;
-        gathers{i}.offsets = offset;
+        gathers{i}.data = data;
+        gathers{i}.offsets = offsets;
     end
     
     fclose(GSegyInfo.fid);                                        % 读取完毕之后需要关闭fin

@@ -1,4 +1,4 @@
-function [invVals, model, outputs] = bsPostInvTrueWell(GPostInvParam, wellInfo, timeLine, methods)
+function [invVals, outputs] = bsPostInvTrueWell(GPostInvParam, wellInfo, timeLine, methods)
 %% inverse welllog data
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
 % Programming dates: Nov 2019
@@ -12,12 +12,11 @@ function [invVals, model, outputs] = bsPostInvTrueWell(GPostInvParam, wellInfo, 
 % 
 % Output
 % invVals       inverted results
-% model         the data including d, G, m, m_0 of the inverse task
 % outputs       outputs of the iteration process including some intermediate
 % results
 % -------------------------------------------------------------------------
 
-    sampNum = GPostInvParam.upNum + GPostInvParam.downNum;
+%     sampNum = GPostInvParam.upNum + GPostInvParam.downNum;
     [~, ~, horizonTime] = bsCalcWellBaseInfo(timeLine{GPostInvParam.usedTimeLineId}, ...
         wellInfo.inline, wellInfo.crossline, 1, 2, 1, 2, 3);
     
@@ -58,9 +57,11 @@ function [invVals, model, outputs] = bsPostInvTrueWell(GPostInvParam, wellInfo, 
             model.d, model.G, model.initX, model.Lb, model.Ub, method);       
  
 
-        invVals{i} = exp(xOut);
+        invVals{i}.Ip = exp(xOut);
+        invVals{i}.model = model;
+        invVals{i}.name = method.name;
         output.timeCost = toc;
-        output.MRRMSE = sqrt(mse(invVals{i} - trueLog));
+        output.MRRMSE = sqrt(mse(invVals{i}.Ip - trueLog));
         outputs{i} = output;
         
         fprintf('[RRMSE=%.2e, fval=%.3e, timeCost=%.2f, exitFlag=%d]\n', output.MRRMSE, fval, output.timeCost, exitFlag);

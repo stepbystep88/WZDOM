@@ -1,4 +1,4 @@
-function [trData, GSegyInfo, trHeader] = bsReadTracesByIds(fileName, GSegyInfo, inIds, crossIds, startPos, sampNum)
+function [trData, GSegyInfo, trHeader] = bsReadTracesByIds(fileName, GSegyInfo, inIds, crossIds, startTime, sampNum, dt)
 %% read traces from a segy file with given inline and crossline ids
 %
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
@@ -9,7 +9,7 @@ function [trData, GSegyInfo, trHeader] = bsReadTracesByIds(fileName, GSegyInfo, 
 % GSegyInfo     basical infomation of the segy file
 % inIds         inline ids
 % crossIds      crossline ids
-% startPos      the start position of a trace where we extract the data from
+% startTime     the start time of a trace that we extract the data from
 % sampNum       how many sample points we would extract from a trace
 % -------------------------------------------------------------------------
             
@@ -19,6 +19,8 @@ function [trData, GSegyInfo, trHeader] = bsReadTracesByIds(fileName, GSegyInfo, 
     
     if nargin > 4
         trData = zeros(sampNum, trNum);
+        % the start position of a trace that we extract the data from
+        startPos = bsCalcT0Pos(GSegyInfo, startTime, dt);
     else
         trData = zeros(GSegyInfo.volHeader.sampNum, trNum);
     end

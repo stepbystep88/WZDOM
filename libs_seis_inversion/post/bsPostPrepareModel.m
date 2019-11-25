@@ -7,28 +7,28 @@ function model = bsPostPrepareModel(GPostInvParam, inline, crossline, horizonTim
     
     
     sampNum = GPostInvParam.upNum + GPostInvParam.downNum; 
-    pos = bsCalcT0Pos(GPostInvParam, GPostInvParam.postSeisData.segyInfo, horizonTime);
+    startTime = horizonTime - GPostInvParam.dt * GPostInvParam.upNum;
     
     [postSeisData, GPostInvParam.postSeisData.segyInfo] = bsReadTracesByIds(...
         GPostInvParam.postSeisData.segyFileName, ...
         GPostInvParam.postSeisData.segyInfo, ...
         inline, ...
         crossline, ...
-        pos, ...
-        sampNum);
+        startTime, ...
+        sampNum,...
+        GPostInvParam.dt);
     
     if isempty(model)
-        D = bsGen1DDiffOperator(sampNum, 1, 1);
-        W = bsWaveletMatrix(sampNum-1, GPostInvParam.wavelet);
-        model.orginal_G = 0.5 * W * D;
+        model.orginal_G = bsPostGenGMatrix(GPostInvParam.wavelet, sampNum);
         model.G = model.orginal_G;
     end
     
     % start time of the inverted time interval
-    model.t0 = round(horizonTime / GPostInvParam.dt) * GPostInvParam.dt - GPostInvParam.upNum * GPostInvParam.dt;
+    model.t0 = round(startTime / GPostInvParam.dt) * GPostInvParam.dt;
     model.inId = inline;
     model.crossId = crossline;
     model.d = postSeisData(1 : end-1);
+    model.origianl_d = model.d;
     
     if isfield(GPostInvParam, 'seismicFiltCoef') && ~isempty(GPostInvParam.seismicFiltCoef)
         [b, a] = butter(10, GPostInvParam.seismicFiltCoef);
@@ -40,14 +40,14 @@ function model = bsPostPrepareModel(GPostInvParam, inline, crossline, horizonTim
         
         case 'segy' % get initial model from segy file
             % start location of the inverted time interval
-            initPos = bsCalcT0Pos(GPostInvParam, GPostInvParam.initModel.segyInfo, horizonTime);
             [initLog, GPostInvParam.initModel.segyInfo] = bsReadTracesByIds(...
                 GPostInvParam.initModel.segyFileName, ...
                 GPostInvParam.initModel.segyInfo, ...
                 inline, ...
                 crossline, ...
-                initPos, ...
-                sampNum);
+                startTime, ...
+                sampNum, ...
+                GPostInvParam.dt);
             initLog = bsButtLowPassFilter(initLog, GPostInvParam.initModel.filtCoef);
             
         case 'filter_from_true_log' % get initial model by filtering the true model
@@ -72,7 +72,6 @@ function model = bsPostPrepareModel(GPostInvParam, inline, crossline, horizonTim
     model.dTrue = model.d;
     model.initLog = initLog;
     model.initX = log(model.initLog);
-    model.pos = pos;
        
     % set boundary information
     switch GPostInvParam.bound.mode

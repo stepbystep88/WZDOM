@@ -1,7 +1,7 @@
-function pos = bsCalcT0Pos(GInvParam, GSegyInfo, time)
+function pos = bsCalcT0Pos(GSegyInfo, startTime, dt)
     if( GSegyInfo.isPosZero )
-        pos = ones(size(time)) * 0;
+        pos = ones(size(startTime)) * 0;
     else
-        pos = round((time - GSegyInfo.t0) / GInvParam.dt) - GInvParam.upNum;
+        pos = round((startTime - GSegyInfo.t0) / dt);
     end
 end
