@@ -53,17 +53,30 @@ function [invVals, model, outputs] = bsPreInvTrueWell(GPreInvParam, wellInfo, ti
             wellInfo.inline, wellInfo.crossline, ...
             method.name);
         
+        method.mode = GPreInvParam.mode;
+        method.lsdCoef = model.lsdCoef;
+        
         tic;
         [xOut, fval, exitFlag, output] = bsPreInv1DTrace(...
             model.d, model.G, model.initX, model.Lb, model.Ub, method);       
  
-
-        invVals{i} = exp(xOut);
+        [res.vp, res.vs, res.rho] = bsPreRecoverElasticParam(xOut, GPreInvParam.mode, model.lsdCoef);
+        res.t0 = model.t0;
+        res.name = method.name;
+        res.model = model;
+        res.inline = wellInfo.inline;
+        res.crossline = wellInfo.crossline;
+        
+        invVals{i} = res;
+        
         output.timeCost = toc;
-        output.MRRMSE = sqrt(mse(invVals{i} - trueLog));
+        output.RMSEVp = sqrt(mse(res.vp - trueLog(:, 2)));
+        output.RMSEVs = sqrt(mse(res.vs - trueLog(:, 3)));
+        output.RMSERho = sqrt(mse(res.rho - trueLog(:, 4)));
         outputs{i} = output;
         
-        fprintf('[RRMSE=%.2e, fval=%.3e, timeCost=%.2f, exitFlag=%d]\n', output.MRRMSE, fval, output.timeCost, exitFlag);
+        fprintf('[RMSEVp=%.2e, RMSEVs=%.2e, RMSERho=%.2e, fval=%.3e, timeCost=%.2f, exitFlag=%d]\n', ...
+            output.RMSEVp, output.RMSEVs, output.RMSERho, fval, output.timeCost, exitFlag);
     end
     
 end

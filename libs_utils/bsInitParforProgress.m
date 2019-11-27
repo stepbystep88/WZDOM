@@ -1,4 +1,4 @@
-function pbm = bsInitParforProgress(numWorkers, nLoop, title, isPrintBySavingFile)
+function pbm = bsInitParforProgress(numWorkers, nLoop, title, basePath, isPrintBySavingFile)
 
     bsInitParallelPool(numWorkers);
     
@@ -14,7 +14,7 @@ function pbm = bsInitParforProgress(numWorkers, nLoop, title, isPrintBySavingFil
         pbm.isPrintBySavingFile = isPrintBySavingFile;
     end
     
-    pbm.name = './parfor_progress.txt';
+    pbm.name = [basePath, '/parfor_progress.txt'];
     p = gcp('nocreate');
     pbm.numWorkers = p.NumWorkers;
     pbm.nLoop = nLoop;

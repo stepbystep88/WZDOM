@@ -125,7 +125,7 @@ function [xOut, fval, exitFlag, output] = bsPreInv1DTrace(d, G, xInit, Lb, Ub, m
          });
     
     regParam = method.regParam;
-    parampkgs = bsGetFieldsWithDefaults(method.parampkgs, ...
+    [~, parampkgs] = bsGetFieldsWithDefaults(method.parampkgs, ...
         {'nSegments', 3;} ...
     );
     
@@ -137,7 +137,7 @@ function [xOut, fval, exitFlag, output] = bsPreInv1DTrace(d, G, xInit, Lb, Ub, m
     end
     
     
-    switch flag
+    switch upper(flag)
         case 'TV-SB'
             % TV solved by Split-Bregman algorithm
             [xOut, fval, exitFlag, output] = bsSeisInv1DByTVAndSplitBregman(d, G, xInit, Lb, Ub, regParam, parampkgs, options);
@@ -152,7 +152,7 @@ function [xOut, fval, exitFlag, output] = bsPreInv1DTrace(d, G, xInit, Lb, Ub, m
             
         case 'DLSR'
             % dictionary learning and sparse representation
-%             [xOut, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, Ub, regParam, parampkgs, options);
+            [xOut, fval, exitFlag, output] = bsPreInv1DTraceByDLSR(d, G, xInit, Lb, Ub, regParam, parampkgs, options, method.mode, method.lsdCoef);
         
         case 'LFC'
             % only low frequency component constraint

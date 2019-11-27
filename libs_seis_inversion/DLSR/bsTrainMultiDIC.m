@@ -1,11 +1,11 @@
-function [DIC, trainIndex] = bsTrainOneDIC(trueModel, trainIndex, GTrainDICParam)
+function [DIC, trainIndex] = bsTrainMultiDIC(trueModel, trainIndex, attIndex, GTrainDICParam)
 %% This function is used to learn one dictionary from given model
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
 % Programming dates: Nov 2019
 % -------------------------------------------------------------------------
 
     % create a folder to save the trained dictionary
-    if ~exist(GTrainDICParam.dicSavePath,'dir')
+    if ~exist(GTrainDICParam.dicSavePath, 'dir')
        mkdir(GTrainDICParam.dicSavePath);
     end
     
@@ -15,7 +15,7 @@ function [DIC, trainIndex] = bsTrainOneDIC(trueModel, trainIndex, GTrainDICParam
     
     %% set a file name automatically based on the trianing parameter and stop the training
     % progress if the file already exits
-    fileName = sprintf('%s/DIC_trainNum_%d_sizeAtom_%d_nAtom_%d_filtCoef_%.2f.mat', ...
+    fileName = sprintf('%s/MDIC_trainNum_%d_sizeAtom_%d_nAtom_%d_filtCoef_%.2f.mat', ...
         GTrainDICParam.dicSavePath, ...
         trainNum, ...
         GTrainDICParam.sizeAtom, ...
@@ -28,20 +28,19 @@ function [DIC, trainIndex] = bsTrainOneDIC(trueModel, trainIndex, GTrainDICParam
     end
     
     %% cut the welllog data into pieces and train a dictionary
-    GTrainDICParam.iterNum = 5;        
-
-    trainLogs = cell(1, trainNum);
-    for i = 1 : trainNum
-        if iscell(trueModel)
-            trainLogs{i} = trueModel{i}.wellLog(:, 1);
-        else
-            trainLogs{i} = trueModel(:, i);
-        end
-    end
-
+    GTrainDICParam.iterNum = 5; 
+    nAtt = length(attIndex);
     
-    % learn dictionary 
-    [DIC] = bsLearn1DSparseDIC(trainLogs, GTrainDICParam);
+    DIC = cell(1, nAtt);
+    for k = 1 : nAtt
+        trainLogs = cell(1, trainNum);
+        for i = 1 : trainNum
+            trainLogs{i} = trueModel{i}.wellLog(:, attIndex(k));
+        end
+        
+        % learn dictionary 
+        [DIC{k}] = bsLearn1DSparseDIC(trainLogs, GTrainDICParam);
+    end
     
     % save the results
     save(fileName, 'DIC', 'trainIndex');

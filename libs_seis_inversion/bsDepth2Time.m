@@ -106,7 +106,7 @@ function [GInvParam, outputWelllogs, wavelet] = bsDepth2Time(GInvParam, timeLine
     end
     
     % re-scale wavelet
-    [~, index] = bsMaxK(similarities, ceil(0.8*wellNum));
+    [~, index] = bsMaxK(similarities, ceil(0.3*wellNum));
     meanScaleFactor = mean(scaleFactors(index));
 
     wavelet = GInvParam.wavelet * meanScaleFactor;

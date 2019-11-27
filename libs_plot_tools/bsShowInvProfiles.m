@@ -1,4 +1,4 @@
-function bsShowInvProfiles(GPostInvParam, GShowProfileParam, profiles, wellLogs)
+function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs)
 %% Show the inversion results
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
 % Programming dates: Nov 2019
@@ -65,34 +65,60 @@ function bsShowInvProfiles(GPostInvParam, GShowProfileParam, profiles, wellLogs)
         end
         
         % data preprocessing base on the type of profile
-        switch profile.type
-            case 'IP'
+        switch lower(profile.type)
+            case 'ip'
                 
-                profileData(profileData<=0) = nan;
-                
-                if(max(max(profileData)) > 1000)
-                    profileData = profileData / 1000;
-                end
-                
-                range = GShowProfileParam.rangeIP;
-                if range(1) > 1000
-                    range = range / 1000;
-                end
-                
-                attName = 'Impedance (g/cm^3\cdotkm/s)';
-                [wellPos, wellData] = bsFindWellLocation(GPostInvParam, ...
+                [profileData, range, wellPos, wellData, wellTime] = bsGetRangeByType(...
+                    profile, ...
                     wellLogs, ...
-                    profile.inIds, ...
-                    profile.crossIds, ...
-                    profile.horizon, ...
-                    1, ...
-                    2, ...
+                    GShowProfileParam.rangeIP, ...
+                    1000, ...
+                    GInvParam.indexInWellData.Ip, ...
+                    GInvParam.indexInWellData.time, ...
                     GShowProfileParam.showWellFiltCoef);
-                if ~isempty(wellData)
-                    wellData = wellData / 1000;
-                end
+
+                attName = 'Impedance (g/cm^3\cdotkm/s)';
                 
-            case 'Seismic'
+            case 'vp'
+                
+                [profileData, range, wellPos, wellData, wellTime] = bsGetRangeByType(...
+                    profile, ...
+                    wellLogs, ...
+                    GShowProfileParam.rangeVP, ...
+                    1000, ...
+                    GInvParam.indexInWellData.vp, ...
+                    GInvParam.indexInWellData.time, ...
+                    GShowProfileParam.showWellFiltCoef);
+
+                attName = 'V_P km/s';
+                
+            case 'vs'
+                
+                [profileData, range, wellPos, wellData, wellTime] = bsGetRangeByType(...
+                    profile, ...
+                    wellLogs, ...
+                    GShowProfileParam.rangeVS, ...
+                    1000, ...
+                    GInvParam.indexInWellData.vs, ...
+                    GInvParam.indexInWellData.time, ...
+                    GShowProfileParam.showWellFiltCoef);
+
+                attName = 'Density g/cm^3';
+                
+            case 'rho'
+                
+                [profileData, range, wellPos, wellData, wellTime] = bsGetRangeByType(...
+                    profile, ...
+                    wellLogs, ...
+                    GShowProfileParam.rangeRho, ...
+                    1, ...
+                    GInvParam.indexInWellData.rho, ...
+                    GInvParam.indexInWellData.time, ...
+                    GShowProfileParam.showWellFiltCoef);
+
+                attName = ' km/s';
+                
+            case 'seismic'
                 attName = 'Seismic (Amplitude)';
                 wellPos = [];
                 wellData = [];
@@ -105,14 +131,31 @@ function bsShowInvProfiles(GPostInvParam, GShowProfileParam, profiles, wellLogs)
         % filter data along with horizon
         profileData = bsFilterData(profileData, profile.showFiltCoef);
         
-        % replace the traces that are near by well location as welllog data
-        profileData = bsReplaceWellLocationData(GShowProfileParam, profileData, wellPos, wellData);
-        
         % fill data by using horion information
-        [newProfileData, minTime] = bsHorizonRestoreData(profileData, profile.horizon, GPostInvParam.upNum, GPostInvParam.dt);
+%         [newProfileData, minTime] = bsHorizonRestoreData(profileData, profile.horizon, GInvParam.upNum, GInvParam.dt);
 
-        [newProfileData, newDt, newTraceIds, newHorizon] = bsReScaleData(GShowProfileParam.scaleFactor, ...
-            newProfileData, GPostInvParam.dt, traceIds, profile.horizon);
+%         [newProfileData, newDt, newTraceIds, newHorizon] = bsReScaleData(GShowProfileParam.scaleFactor, ...
+%             newProfileData, GInvParam.dt, traceIds, profile.horizon);
+        
+        [newProfileData, newDt, newTraceIds, newHorizon, minTime] = bsReScaleAndRestoreData(...
+                GShowProfileParam.scaleFactor, ...
+                profileData, ...
+                profile.horizon, ...
+                traceIds, ...
+                GInvParam.upNum, ...
+                GInvParam.dt);
+
+                % replace the traces that are near by well location as welllog data
+        newProfileData = bsReplaceWellLocationData(GShowProfileParam, ...
+            newProfileData, ...
+            traceIds, ...
+            newTraceIds, ...
+            wellPos, ...
+            wellData, ...
+            wellTime, ...
+            minTime, ...
+            newDt);
+        
         
         % show the filled data by using imagesc
         bsShowHorizonedData(GShowProfileParam, ...
@@ -129,47 +172,99 @@ function bsShowInvProfiles(GPostInvParam, GShowProfileParam, profiles, wellLogs)
     end
 end
 
-function [wellPos, wellData] = bsFindWellLocation(GPostInvParam, wellLogs, inIds, crossIds, horizon, dataIndex, timeIndex, showWellFiltCoef)
+function [profileData, range, wellPos, wellData, wellTime] ...
+    = bsGetRangeByType(profile, wellLogs, range, scale, dataIndex, timeIndex, showWellFiltCoef)
+    
+    profileData = profile.data;
+    profileData(profileData<=0) = nan;    
+    profileData = profileData / scale;
+
+    range = range / scale;
+
+    [wellPos, wellData, wellTime] = bsFindWellLocation(...
+        wellLogs, ...
+        profile.inIds, ...
+        profile.crossIds, ...
+        dataIndex, ...
+        timeIndex, ...
+        showWellFiltCoef);
+    
+    if ~isempty(wellData)
+        wellData = wellData / scale;
+    end
+end
+
+function [wellPos, wellData, wellTime] = bsFindWellLocation(wellLogs, inIds, crossIds, dataIndex, timeIndex, showWellFiltCoef)
     wells = cell2mat(wellLogs);
     wellInIds = [wells.inline];
     wellCrossIds = [wells.crossline];
     
     wellPos = [];
     wellData = [];
+    wellTime = [];
+    
     for i = 1 : length(inIds)
         for j = 1 : length(wellInIds)
             if wellInIds(j) == inIds(i) && wellCrossIds(j) == crossIds(i)
                 wellPos = [wellPos, i];
                 
-                subWellData = bsExtractWellDataByHorizon(...
-                    wellLogs{j}.wellLog, horizon(i), dataIndex, timeIndex, ...
-                    GPostInvParam.upNum, GPostInvParam.downNum, showWellFiltCoef);
+                data = wellLogs{j}.wellLog;
+                for k = dataIndex
+                    data(:, k) = bsButtLowPassFilter(data(:, k), showWellFiltCoef);
+                end
+    
+%                 subWellData = bsExtractWellDataByHorizon(...
+%                     wellLogs{j}.wellLog, horizon(i), dataIndex, timeIndex, ...
+%                     GInvParam.upNum, GInvParam.downNum, showWellFiltCoef);
                 
-                wellData = [wellData, subWellData];
+                wellData = [wellData, data(:, dataIndex)];
+                wellTime = [wellTime, data(:, timeIndex)];
             end
         end
     end
 end
 
-function profileData = bsReplaceWellLocationData(GShowProfileParam, profileData, wellPos, wellData)
-    [~, trNum] = size(profileData);
+function profileData = bsReplaceWellLocationData(GShowProfileParam, ...
+    profileData, traceIds, newTraceIds, ...
+    wellPos, wellData, time, t0, dt)
+    [newSampNum, trNum] = size(profileData);
     
+    offsetNum = GShowProfileParam.showWellOffset * GShowProfileParam.scaleFactor;
     if ~isempty(wellPos)
         % replace the data at well location by wellData
         for i = 1 : length(wellPos)
-            s = wellPos(i) - GShowProfileParam.showWellOffset;
+            
+            traceId = traceIds(wellPos(i));
+            [~, index] = min(abs(traceId - newTraceIds));
+            s = index - offsetNum;
             if s < 1
                 s = 1;
             end
             
-            e = wellPos(i) + GShowProfileParam.showWellOffset;
+            e = index + offsetNum;
             if e > trNum
                 e = trNum;
             end
             
+            z = zeros(newSampNum, 1);
+            
+            for j = 1 : newSampNum
+                tj = t0 + dt * (j-1);
+                
+                if tj < time(1, i)
+                    z(j) = wellData(1, i);
+                elseif tj > time(end, i)
+                    z(j) = wellData(end, i);
+                else
+                    z(j) = bsCalVal(tj, time(:, i), wellData(:, i));
+                end
+            end
+            
+            
+            
             % replace serveral traces neary by the current well as the
             % corresponding welllog data
-            profileData(:, s:e) = repmat(wellData(:, i), [1, e-s+1]);
+            profileData(:, s:e) = repmat(z, [1, e-s+1]);
         end
     end
     
@@ -197,7 +292,7 @@ function [newProfileData, newDt, newTraceIds, newHorizon] = bsReScaleData(scaleF
         [sampNum, traceNum] = size(profileData);
         
         newDt = dt / scaleFactor;
-        newTraceIds = linspace(traceIds(1), traceIds(end), traceNum * scaleFactor);
+        newTraceIds = linspace(traceIds(1), traceIds(end), traceNum * 1);
         [X, Y] = meshgrid(traceIds, linspace(1, sampNum, sampNum));
         [Xq,Yq] = meshgrid(newTraceIds, linspace(1, sampNum, sampNum * scaleFactor));
         
@@ -207,7 +302,49 @@ function [newProfileData, newDt, newTraceIds, newHorizon] = bsReScaleData(scaleF
         newProfileData = profileData;
         newDt = dt;
         newTraceIds = traceIds;
+        newHorizon = horizon;
     end
+end
+
+function [newProfileData, newDt, newTraceIds, newHorizon, minTime] = bsReScaleAndRestoreData(...
+    scaleFactor, profileData, horizon, traceIds, ...
+    upNum, dt, minTime)
+
+    scaleFactor = round(scaleFactor);
+    [sampNum, traceNum] = size(profileData);
+
+    newDt = dt / scaleFactor;
+    newTraceIds = linspace(traceIds(1), traceIds(end), traceNum * scaleFactor);
+    
+    time0 = horizon - upNum * dt;
+    if ~exist('minTime', 'var')
+        minTime = min(time0) - 5 * dt;
+    end
+    maxTime = max(time0) + sampNum * dt + 5 * dt;
+%     t = minTime : dt : maxTime;
+    newT = minTime : newDt : maxTime;
+    
+    [X, Y] = meshgrid(traceIds, newT);
+    Z = inf(size(X));
+    [Xq,Yq] = meshgrid(newTraceIds, newT);
+    
+    sequence = linspace(0, dt*(sampNum-1), sampNum);
+    time = repmat(sequence', 1, traceNum)...
+        + repmat(time0, sampNum, 1);
+    newSampNum = length(newT);
+    
+    for j = 1 : traceNum
+        for i = 1 : newSampNum
+            ti = newT(i);
+
+            if ti >= time(1, j) && ti<= time(sampNum, j)
+                Z(i, j) = bsCalVal(ti, time(:, j), profileData(:, j));
+            end
+        end
+    end
+    
+    newProfileData = interp2(X, Y, Z, Xq, Yq,'cubic');
+    newHorizon = interp1(traceIds, horizon, newTraceIds, 'spline');
 end
 
 function bsShowHorizonedData(GShowProfileParam, profileData, horizon, minTime, dt, name, traceIds, range, colorTbl)

@@ -11,7 +11,7 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
     
     % load model
     initModel = GPreInvParam.initModel;
-    switch initModel.mode
+    switch lower(initModel.mode)
         % the source of initial model
         % return initLog: 2D matrix, first-fourth columns are depth, vp,
         % vs, rho, respectively.
@@ -19,7 +19,7 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
             % start location of the inverted time interval
             initLog = bsReadMultiSegyFiles(GPreInvParam, ...
                 [initModel.depth, initModel.vp, initModel.vs, initModel.rho], ...
-                inId, crossId, startTime, sampNum, GPreInvParam.dt);
+                inline, crossline, startTime, sampNum, GPreInvParam.dt);
  
             initLog = bsFiltWelllog(initLog, initModel.filtCoef);
             
@@ -31,7 +31,7 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
             if isempty(initModel.fcn)
                 error('When GPreInvParam.initModel.mode is function, the GPreInvParam.initModel.fcn could not be empty!\n');
             end
-            initLog = initModel.fcn(GPreInvParam, inline, crossline);
+            initLog = initModel.fcn(GPreInvParam, inline, crossline, startTime);
             
         otherwise
             validatestring(GPreInvParam.initModel.mode, ['segy', 'filter_from_true_log', 'function']);
@@ -39,23 +39,27 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
     
     % load prestack seismic data
     preDataInfo = GPreInvParam.preSeisData;
-    switch preSeisData.mode
+    switch lower(preDataInfo.mode)
         case 'angle_separate_files'
             separates = preDataInfo.separates;
-            angleSeisData = bsReadMultiSegyFiles(separates, inId, crossId, startTime, sampNum-1, GPreInvParam.dt);
+            angleSeisData = bsReadMultiSegyFiles(separates, inline, crossline, ...
+                startTime, sampNum-1, GPreInvParam.dt);
             angleData = GPreInvParam.angleData;
             
         case 'angle_one_file'
-            gather = bsReadGathersByIds(preDataInfo.segyFileName, preDataInfo.segyInfo, inId, crossId, startTime, sampNum-1, GPreInvParam.dt);
+            gather = bsReadGathersByIds(preDataInfo.segyFileName, preDataInfo.segyInfo, ...
+                inline, crossline, startTime, sampNum-1, GPreInvParam.dt);
             angleSeisData = gather{1}.data;
             angleData = GPreInvParam.angleData;
             
         case 'offset_one_file'
-            gather = bsReadGathersByIds(preDataInfo.segyFileName, preDataInfo.segyInfo, inId, crossId, startTime, sampNum, GPreInvParam.dt);
+            gather = bsReadGathersByIds(preDataInfo.segyFileName, preDataInfo.segyInfo, ...
+                inline, crossline, startTime, sampNum, GPreInvParam.dt);
             preData = gather{1}.data;
             offsets = gather{1}.offsets;
             
-            [angleSeisData, angleData, ~] = bsOffsetData2AngleData(GPreInvParam, preData, offsets, depth, initVp, initVs, initRho);
+            [angleSeisData, angleData, ~] = bsOffsetData2AngleData(GPreInvParam, preData, offsets, ...
+                initLog(:, 1), initLog(:, 2), initLog(:, 3), initLog(:, 4));
    
         otherwise
             validatestring(GPreInvParam.preSeisData.mode, ...
@@ -63,6 +67,13 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
     end
 
 % -------------------------------------------------------------------------
+    % build model parameter
+    [model.initX, model.lsdCoef] = bsPreBuildModelParam(initLog, GPreInvParam.mode, GPreInvParam.lsdCoef);
+    GPreInvParam.lsdCoef = model.lsdCoef;
+    if GPreInvParam.isInitDeltaZero
+        model.initX(sampNum+1:end) = 0;
+    end
+    
     % build forward matrix G
     model.G = bsPreBuildGMatrix(...
                 GPreInvParam.mode, ...
@@ -70,21 +81,29 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
                 initLog(:, 3), ...
                 angleData, ...
                 GPreInvParam.wavelet, ...
-                GPreInvParam.lsdCoff);
+                model.lsdCoef);
             
-    % build model parameter
-    [model.initX, model.lsdCoef] = bsPreBuildModelParam(initLog, GPreInvParam.mode, GPreInvParam.lsdCoff);
-    GPreInvParam.lsdCoef = model.lsdCoef;
-    
     % reshape angle seismic data as a vector
-    model.d = reshape(angleSeisData, GInvParam.angleTrNum*(sampNum-1), 1);
+    model.d = reshape(angleSeisData, GPreInvParam.angleTrNum*(sampNum-1), 1);
     
+    % check data
+    if isnan(model.initX)
+        error('There is nan data in model.initX');
+    end
+    
+    if isnan(model.G)
+        error('There is nan data in model.G');
+    end
+    
+    if isnan(model.d)
+        error('There is nan data in model.d');
+    end
 % -------------------------------------------------------------------------            
     
     % start time of the inverted time interval
     model.t0 = round(startTime / GPreInvParam.dt) * GPreInvParam.dt;
-    model.inId = inline;
-    model.crossId = crossline;
+    model.inline = inline;
+    model.crossline = crossline;
     model.initLog = initLog;
     
     if exist('trueLog', 'var') && ~isempty(trueLog)
@@ -98,18 +117,18 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
     
     % normalize
     if GPreInvParam.isNormal
-        model.maxAbsD = max(abs(model.d));
+        model.maxAbsD = norm(model.d);
         model.d = model.d / model.maxAbsD;
         model.G = model.G / model.maxAbsD;    % we have to use the original G to normalize
     end
 end
 
-function seisData = bsReadMultiSegyFiles(separates, inId, crossId, startTime, sampNum, dt)
+function seisData = bsReadMultiSegyFiles(separates, inline, crossline, startTime, sampNum, dt)
     nFile = length(separates);
     seisData = size(sampNum, nFile);
     for i = 1 : nFile
         separate = separates(i);
-        seisData(:, i) = bsReadTracesByIds(separate.fileName, separate.segyInfo, inId, crossId, startTime, sampNum, dt);
+        seisData(:, i) = bsReadTracesByIds(separate.fileName, separate.segyInfo, inline, crossline, startTime, sampNum, dt);
     end
 end
 
@@ -117,7 +136,7 @@ function [Lb, Ub] = bsGetBound(GPreInvParam, initLog)
     bound = GPreInvParam.bound;
     sampNum = size(initLog, 1);
     
-    switch bound.mode
+    switch lower(bound.mode)
         case 'off'
             Lb = [];
             Ub = [];

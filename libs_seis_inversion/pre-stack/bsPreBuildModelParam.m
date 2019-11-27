@@ -28,8 +28,8 @@ function [x, output] = bsPreBuildModelParam(welllog, mode, extraInfo)
     sampNum = length(Lp);
     output = [];
     
-    switch mode
-        case 'Lpsd_fit'
+    switch lower(mode)
+        case 'lpsd_fit'
             if isfield(extraInfo, 'lsCoef') && ~isempty(extraInfo.lsCoef)
                 output = extraInfo;
             else
@@ -37,11 +37,11 @@ function [x, output] = bsPreBuildModelParam(welllog, mode, extraInfo)
                 output.ldCoef = polyfit(Lp, Ld, 1);
             end
             
-            output.deltaLs = Ls - ( lsCoef(1)*Lp + lsCoef(2) ); 
-            output.deltaLd = Ld - ( ldCoef(1)*Lp + ldCoef(2) );
+            deltaLs = Ls - ( output.lsCoef(1)*Lp + output.lsCoef(2) ); 
+            deltaLd = Ld - ( output.ldCoef(1)*Lp + output.ldCoef(2) );
             x = [Lp; deltaLs; deltaLd];
             
-        case 'Lpsd'
+        case 'lpsd'
             x = [Lp; Ls; Ld];
             
         case 'reflectivity'

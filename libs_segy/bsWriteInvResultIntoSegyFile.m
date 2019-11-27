@@ -1,12 +1,11 @@
-function bsWriteInvResultIntoSegyFile(res, sourceFileName, sourceSegyInfo, dstFileName, upNum, dt)
+function bsWriteInvResultIntoSegyFile(res, data, sourceFileName, sourceSegyInfo, dstFileName)
     
-    data = res.data;
     inIds = res.inIds;
     crossIds = res.crossIds;
     horizon = res.horizon;
     
    
-    [newProfileData, minTime] = bsHorizonRestoreData(data, horizon, upNum, dt, sourceSegyInfo.t0, 1);
+    [newProfileData, minTime] = bsHorizonRestoreData(data, horizon, res.upNum, res.dt, sourceSegyInfo.t0, 1);
     newProfileData(isnan(newProfileData)) = -99999;
     
     bsWriteTracesByRefFileAndIds(sourceFileName, dstFileName, sourceSegyInfo, newProfileData, inIds, crossIds);

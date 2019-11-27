@@ -1,7 +1,7 @@
-function [x, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, Ub, regParam, parampkgs, options)
+function [x, fval, exitFlag, output] = bsPreInv1DTraceByDLSR(d, G, xInit, Lb, Ub, regParam, parampkgs, options, mode, lsdCoef)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% This code is designed for 1D seismic inversion using dictionary learning
-% and sparse representation technique
+% This code is designed for prestack 1D seismic inversion using dictionary
+% learning and sparse representation representation
 %
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
 % Programming dates: Nov 2019
@@ -48,7 +48,7 @@ function [x, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, U
     % create mainData
     mainData.A = G;
     mainData.B = d;
-    sampNum = length(xInit);
+    sampNum = length(xInit)/3;
     
     % re-organize the input objective function pakages
     inputObjFcnPkgs = {
@@ -69,7 +69,7 @@ function [x, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, U
     GBOptions.maxIter = options.innerIter;
     
     % create packages for sparse inversion 
-    parampkgs = bsInitDLSRPkgs(parampkgs, regParam.lambda, regParam.gamma, sampNum, G);
+    parampkgs = bsInitDLSRPkgs(parampkgs, regParam.gamma, sampNum);
     GSparseInvParam = parampkgs.GSparseInvParam;
     
     ncell = GSparseInvParam.ncell;
@@ -77,8 +77,10 @@ function [x, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, U
     
     midX = [];
     midF = [];
+    data = zeros(sampNum, 4);
+    newData = data;
     
-    for i = 1 : options.maxIter
+    for iter = 1 : options.maxIter
         
         % change the current initial guess
         inputObjFcnPkgs{2, 2} = [];
@@ -90,44 +92,40 @@ function [x, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, U
         end
         
         % sparse reconstruction
-        xI = exp(xOut);
+        [data(:, 2), data(:, 3), data(:, 4)] = bsPreRecoverElasticParam(xOut, mode, lsdCoef);
         
-        vps = zeros(sizeAtom, ncell);
-        for j = 1 : ncell
-            js = GSparseInvParam.index(j);
-            vps(:, j) = xI(js : js+sizeAtom-1);
-        end
-        
-        gammas = omp(GSparseInvParam.DIC'*vps, GSparseInvParam.omp_G, GSparseInvParam.sparsity);
-        new_ips = GSparseInvParam.DIC *  gammas;
-        
-        %% reconstruct model by equations
-        switch GSparseInvParam.reconstructType
-            case 'equation'
-                xNew = regParam.gamma * xI;
-                % get reconstructed results by equation
-                for j = 1 : ncell
-                    xNew = xNew + GSparseInvParam.R{j}' * new_ips(:, j);
-                end
-
-                xNew = GSparseInvParam.invR * xNew;
-            case 'simpleAvg'
-                % get reconstructed results by averaging patches
-                reconstruct_ips = bsAvgPatches(new_ips, GSparseInvParam.index, sampNum);
-                xNew = reconstruct_ips * regParam.gamma + xI * (1 - regParam.gamma);
-        end
-
-        %% reconstruct model by 
-        xNew = log(xNew);
-        
-        % projection
-        xInit = bsPFunc(xNew, output_.options.bounds);
-%         xInit = xNew;
-
-%         figure;
-%         plot(1:length(xNew), exp(xNew), 'r'); hold on;
-%         plot(1:length(xNew), exp(xOut), 'g');
+        for i = 2 : 4
+            patches = zeros(sizeAtom, ncell);
+            for j = 1 : ncell
+                js = GSparseInvParam.index(j);
+                patches(:, j) = data(js : js+sizeAtom-1, i);
+            end
             
+            gammas = omp(GSparseInvParam.DIC{i-1}'*patches, ...
+                GSparseInvParam.omp_G{i-1}, ...
+                GSparseInvParam.sparsity);
+            new_patches = GSparseInvParam.DIC{i-1} *  gammas;
+        
+            %% reconstruct model by equations
+            switch GSparseInvParam.reconstructType
+                case 'equation'
+                    avgLog = regParam.gamma * data(:, i);
+                    % get reconstructed results by equation
+                    for j = 1 : ncell
+                        avgLog = avgLog + GSparseInvParam.R{j}' * new_patches(:, j);
+                    end
+
+                    newData(:, i) = GSparseInvParam.invR * avgLog;
+                case 'simpleAvg'
+                    % get reconstructed results by averaging patches
+                    avgLog = bsAvgPatches(new_patches, GSparseInvParam.index, sampNum);
+                    newData(:, i) = avgLog * regParam.gamma + data(:, i) * (1 - regParam.gamma);
+            end
+        end
+        
+        %% reconstruct model by 
+        xInit = bsPreBuildModelParam(newData, mode, lsdCoef);
+        
     end
     
     switch GSparseInvParam.isSparseRebuild
@@ -146,7 +144,7 @@ function [x, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, U
     
 end
 
-function parampkgs = bsInitDLSRPkgs(parampkgs, lambda, gamma, sampNum, G)
+function parampkgs = bsInitDLSRPkgs(parampkgs, gamma, sampNum)
     
     if isfield(parampkgs.GSparseInvParam, 'omp_G')
         return;
@@ -157,7 +155,7 @@ function parampkgs = bsInitDLSRPkgs(parampkgs, lambda, gamma, sampNum, G)
     validatestring(string(GSparseInvParam.reconstructType), {'equation', 'simpleAvg'});
     validateattributes(gamma, {'double'}, {'>=', 0, '<=', 1});
     
-    [sizeAtom, nAtom] = size(GSparseInvParam.DIC);
+    [sizeAtom, nAtom] = size(GSparseInvParam.DIC{1});
     GSparseInvParam.sizeAtom = sizeAtom;
     GSparseInvParam.nAtom = nAtom;
     GSparseInvParam.nrepeat = sizeAtom - GSparseInvParam.stride;
@@ -177,8 +175,13 @@ function parampkgs = bsInitDLSRPkgs(parampkgs, lambda, gamma, sampNum, G)
     end
     GSparseInvParam.invTmp = tmp;
     GSparseInvParam.invR = inv(gamma * eye(sampNum) + GSparseInvParam.invTmp);
-%     GSparseInvParam.invG = inv(G' * G + gamma * tmp + lambda * eye(sampNum));
-    GSparseInvParam.omp_G = GSparseInvParam.DIC' * GSparseInvParam.DIC;
+    
+    GSparseInvParam.omp_G = cell(1, 3);
+    for i = 1 : 3
+        GSparseInvParam.omp_G{i} = GSparseInvParam.DIC{i}' * GSparseInvParam.DIC{i};
+    end
     
     parampkgs.GSparseInvParam = GSparseInvParam;
 end
+
+

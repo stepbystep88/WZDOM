@@ -4,7 +4,7 @@ function [horizonTimes] = bsCalcHorizonTimeParallel(usedTimeLine, inIds, crossId
     nTrace = length(inIds);
     horizonTimes = zeros(1, nTrace);
     
-    pbm = bsInitParforProgress(numWorkers, nTrace, 'Calculating horizon information', 0);
+    pbm = bsInitParforProgress(numWorkers, nTrace, 'Calculating horizon information', [], 0);
             
     
     parfor i = 1 : nTrace
@@ -15,7 +15,7 @@ function [horizonTimes] = bsCalcHorizonTimeParallel(usedTimeLine, inIds, crossId
             error('%d trace is failed!!!', i);
         end
 
-        bsIncParforProgress(pbm, i, 100);
+        bsIncParforProgress(pbm, i, 10000);
         
     end
     

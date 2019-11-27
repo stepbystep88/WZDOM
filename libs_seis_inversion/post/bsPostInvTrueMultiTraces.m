@@ -27,6 +27,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
     
     % horion of the whole volume
     usedTimeLine = timeLine{GPostInvParam.usedTimeLineId};
+    
     % create folder to save the intermediate results
     try
         mkdir([GPostInvParam.modelSavePath,'/models/']);
@@ -42,6 +43,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
     else
         horizonTimes = bsCalcHorizonTime(usedTimeLine, inIds, crossIds);
     end
+    
     startTimes = horizonTimes - GPostInvParam.dt * GPostInvParam.upNum;
     
     for i = 1 : nMethod
@@ -92,11 +94,14 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
         res.crossIds = crossIds;    % inverted crossline ids
         res.horizon = horizonTimes; % the horizon of inverted traces
         res.name = method.name;     % the name of this method
+        res.dt = GPostInvParam.dt;
+        res.upNum = GPostInvParam.upNum;
+        res.downNum = GPostInvParam.downNum;
         
         if isfield(method, 'type')  % the type of inverted volume, IP, Seismic, VP, VS, Rho
             res.type = method.type;
         else
-            res.type = 'IP';
+            res.type = 'Ip';
         end
         
         if isfield(method, 'showFiltCoef')
@@ -112,12 +117,11 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
         if isfield(method, 'isSaveSegy') && method.isSaveSegy
             segyFileName = bsGetFileName('segy');
             fprintf('Writing segy file:%s ....\n', segyFileName);
-            bsWriteInvResultIntoSegyFile(res, ...
+            bsWriteInvResultIntoSegyFile( ...
+                res, data, ...
                 GPostInvParam.postSeisData.segyFileName, ...
                 GPostInvParam.postSeisData.segyInfo, ...
-                segyFileName, ...
-                GPostInvParam.upNum, ...
-                GPostInvParam.dt);
+                segyFileName);
             fprintf('Write segy file:%s successfully!\n', segyFileName);
         end
         
@@ -160,6 +164,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
             pbm = bsInitParforProgress(GPostInvParam.numWorkers, ...
                 traceNum, ...
                 sprintf('Post inversion progress information by method %s', method.name), ...
+                GPostInvParam.modelSavePath, ...
                 GPostInvParam.isPrintBySavingFile);
             
             % parallel computing

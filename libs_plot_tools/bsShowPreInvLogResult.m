@@ -1,38 +1,56 @@
-function bsShowPostInvLogResult(GPostInvParam, GPlotParam, GShowProfileParam, invVals, trueLogFiltcoef)
+function bsShowPreInvLogResult(GPreInvParam, GPlotParam, GShowProfileParam, ...
+    invVals, trueLogFiltcoef, isShowSynSeisComparasion)
+
+    if ~exist('isShowSynSeisComparasion', 'var')
+        isShowSynSeisComparasion = 1;
+    end
+    
 
     nItems = length(invVals);
     model = invVals{1}.model;
+    trueLog = model.trueLog;
     
     sampNum = size(model.trueLog, 1);
-    t = (model.t0 : GPostInvParam.dt : model.t0 + (sampNum-1)*GPostInvParam.dt) / 1000;
+    t = (model.t0 : GPreInvParam.dt : model.t0 + (sampNum-1)*GPreInvParam.dt) / 1000;
     
     
     bsShowInvLog();
-    bsShowSyntheticSeisData();
+    
+    if isShowSynSeisComparasion
+        bsShowSyntheticSeisData();
+    end
     
     function bsShowInvLog()
         hf = figure;
         for iItem = 1 : nItems
         
             figure(hf);
-            bsSetFigureSize(iItem);
+            bsSetPreFigureSize(iItem);
 
             invVal = invVals{iItem};
-            trueLog = model.trueLog;
-
             if trueLogFiltcoef>0 && trueLogFiltcoef<1
-                trueLog = bsButtLowPassFilter(trueLog, trueLogFiltcoef);
+                trueLog = bsFiltWelllog(trueLog, trueLogFiltcoef);
             end
 
             bsShowPostSubInvLogResult(GPlotParam, ...
-                invVal.Ip/1000, trueLog/1000, model.initLog/1000, ...
-                t, invVal.name, ...
-                GShowProfileParam.rangeIP/1000, nItems, iItem);
+                invVal.vp/1000, trueLog(:, 2)/1000, model.initLog(:, 2)/1000, ...
+                t, invVal.name, 'V_P (km/s)', GShowProfileParam.rangeVP/1000, ...
+                nItems, iItem, 1);
+            
+            bsShowPostSubInvLogResult(GPlotParam, ...
+                invVal.vs/1000, trueLog(:, 3)/1000, model.initLog(:, 3)/1000, ...
+                t, invVal.name, 'V_S (km/s)', GShowProfileParam.rangeVS/1000, ...
+                nItems, iItem, 2);
+            
+            bsShowPostSubInvLogResult(GPlotParam, ...
+                invVal.rho, trueLog(:, 4), model.initLog(:, 4), ...
+                t, invVal.name, '\rho (g/cm^3)', GShowProfileParam.rangeRho, ...
+                nItems, iItem, 3);
 
         end
 
         legends = {'Initial model', 'Real model', 'Inversion result'};
-        bsSetLegend(GPlotParam, {'g', 'k', 'r'}, legends, 'I_{\it{P}} (g/cc*km/s)');
+        bsSetLegend(GPlotParam, {'g', 'k', 'r'}, legends);
        
     end
 
@@ -44,12 +62,12 @@ function bsShowPostInvLogResult(GPostInvParam, GPlotParam, GShowProfileParam, in
             bsSetFigureSize(iItem);
 
             invVal = invVals{iItem};
-            model = invVal.model;
-
-            G = bsPostGenGMatrix(GPostInvParam.wavelet, sampNum);
-            synFromInv = G * log(invVal.Ip);
-            synFromTrue = G * log(model.trueLog);
-            seisData = model.origianl_d;
+            
+            G = bsPostGenGMatrix(GPreInvParam.wavelet, sampNum);
+            synFromInv = G * log(invVal.vp .* invVal.vs);
+            synFromTrue = G * log(trueLog(:, 2) .* trueLog(:, 4));
+            seisData = bsGetPostSeisData(GPreInvParam, invVal.inline, invVal.crossline,...
+                model.t0, sampNum-1);
             
             bsShowPostSubSynSeisData(GPlotParam, ...
                 synFromTrue, synFromInv, seisData, ...
@@ -64,7 +82,7 @@ function bsShowPostInvLogResult(GPostInvParam, GPlotParam, GShowProfileParam, in
 end
 
 function bsSetLegend(GPlotParam, colors, legends, attrName)
-    hL = subplot('position', [0.25    0.02    0.500    0.04]);
+    hL = subplot('position', [0.25    0.02    0.500    0.03]);
     poshL = get(hL, 'position');     % Getting its position
 
     plot(0, 0, colors{1}, 'linewidth', GPlotParam.linewidth); hold on;
@@ -79,21 +97,24 @@ function bsSetLegend(GPlotParam, colors, legends, attrName)
         'fontname', GPlotParam.fontname);
     set(lgd, 'position', poshL);      % Adjusting legend's position
     axis(hL, 'off');                 % Turning its axis off
-    annotation('textbox', [0.05, 0.07, 0, 0], 'string', attrName, ...
-        'edgecolor', 'none', 'fitboxtotext', 'on', ...
-        'fontsize', GPlotParam.fontsize,...
-        'fontweight', 'bold', ...
-        'fontname', GPlotParam.fontname);
+    
+    if exist('attrName', 'var')
+        annotation('textbox', [0.05, 0.07, 0, 0], 'string', attrName, ...
+            'edgecolor', 'none', 'fitboxtotext', 'on', ...
+            'fontsize', GPlotParam.fontsize,...
+            'fontweight', 'bold', ...
+            'fontname', GPlotParam.fontname);
+    end
 end
 
 function bsSetFigureSize(nPlot)
     switch nPlot
-        case {1, 2, 3}
-            set(gcf, 'position', [  336   240   509   406]);
-        case 4
-            set(gcf, 'position', [  336   240   678   406]);
-        case 5
-            set(gcf, 'position', [  336   240   636   406]);
+        case 1
+            set(gcf, 'position', [  336   240   247   483]);
+        case 2
+            set(gcf, 'position', [  336 240 1080 483]);
+        case 3
+            set(gcf, 'position', [  336 240 1080 483]);
         otherwise
             set(gcf, 'position', [687   134   658   543]);
     end
@@ -108,25 +129,62 @@ function bsSetSubPlotSize(nItems, iItem)
     end
 end
 
+function bsSetPreFigureSize(nPlot)
+    switch nPlot
+        case 1
+            set(gcf, 'position', [  336    98   847   388]);
+        case 2
+            set(gcf, 'position', [  336    98   847   639]);
+        case 3
+            set(gcf, 'position', [  336    98   847   868]);
+        otherwise
+            set(gcf, 'position', [336    42   847   953]);
+    end
+end
+
+function bsSetPreSubPlotSize(nItems, iItem, k)
+    
+    index = 3 * (iItem - 1) + k;
+    switch nItems
+        case 1
+        case 2
+        case 3
+            bsSubPlotFit(nItems, 3, index, 0.96, 0.92, 0.05, 0.05, 0.06, 0.02);
+        case 4
+            bsSubPlotFit(nItems, 3, index, 0.96, 0.92, 0.05, 0.02, 0.06, 0.045);
+    end
+end
+
 %% show comparasions of welllog inversion results
 function bsShowPostSubInvLogResult(GPlotParam, ...
     invVal, trueVal, initVal, ...
-    t, tmethod, range, nItems, iItem)
+    t, tmethod, attName, range, nItems, iItem, k)
 
-    bsSetSubPlotSize(nItems, iItem);
-    
+    bsSetPreSubPlotSize(nItems, iItem, k);
     plot(initVal, t, 'g', 'linewidth', GPlotParam.linewidth); hold on;
     plot(trueVal, t, 'k', 'LineWidth', GPlotParam.linewidth);   hold on;
     plot(invVal, t, 'r','LineWidth', GPlotParam.linewidth);    hold on;
-    
-    ylabel('Time (s)');
-    set(gca,'ydir','reverse');
-    
-    title(sprintf('(%s) %s', char( 'a' + (iItem-1) ), tmethod));
-    set(gca, 'xlim', range) ; 
-    set(gca, 'ylim', [t(1) t(end)]);
-%     bsTextSeqIdFit(ichar - 'a' + 1, 0, 0, 12);
+        
+    if k == 1
+        ylabel('Time (s)');
+    end
 
+    if k == 2
+        title(sprintf('(%s) %s', char( 'a' + (iItem-1) ), tmethod));
+    end
+    
+    if iItem == nItems
+        xlabel(attName);
+    end
+
+    set(gca, 'ydir', 'reverse');
+    
+    if ~isempty(range)
+        set(gca, 'xlim', range);
+    end
+    
+    set(gca, 'ylim', [t(1), t(end)]);
+    
     set(gca , 'fontsize', GPlotParam.fontsize,'fontweight', GPlotParam.fontweight, 'fontname', GPlotParam.fontname);
 end
 

@@ -35,7 +35,7 @@ function model = bsPostPrepareModel(GPostInvParam, inline, crossline, horizonTim
         model.d = filtfilt(b, a, model.d);
     end
     
-    switch GPostInvParam.initModel.mode
+    switch lower(GPostInvParam.initModel.mode)
         % the source of initial model
         
         case 'segy' % get initial model from segy file
@@ -51,14 +51,17 @@ function model = bsPostPrepareModel(GPostInvParam, inline, crossline, horizonTim
             initLog = bsButtLowPassFilter(initLog, GPostInvParam.initModel.filtCoef);
             
         case 'filter_from_true_log' % get initial model by filtering the true model
+            if isempty(trueLog)
+                error('When initModel.mode is filter_from_true_log, true welllog data must be inputed.');
+            end
             initLog = bsButtLowPassFilter(trueLog, GPostInvParam.initModel.filtCoef);
             
         case 'function' % get initial model by calling a function
             
-            if isempty(GPreInvParam.initModel.fcn)
-                error('When GPreInvParam.initModel.mode is function, the GPreInvParam.initModel.fcn could not be empty!\n');
+            if isempty(GPostInvParam.initModel.fcn)
+                error('When GPostInvParam.initModel.mode is function, the GPreInvParam.initModel.fcn could not be empty!\n');
             end
-            initLog = GPostInvParam.initModel.fcn(GPostInvParam, inline, crossline);
+            initLog = GPostInvParam.initModel.fcn(GPostInvParam, inline, crossline, startTime);
             
         otherwise
             validatestring(GPostInvParam.initModel.mode, ['segy', 'filter_from_true_log', 'function']);
@@ -74,7 +77,7 @@ function model = bsPostPrepareModel(GPostInvParam, inline, crossline, horizonTim
     model.initX = log(model.initLog);
        
     % set boundary information
-    switch GPostInvParam.bound.mode
+    switch lower(GPostInvParam.bound.mode)
         case 'off'
             model.Lb = [];
             model.Ub = [];
@@ -95,7 +98,7 @@ function model = bsPostPrepareModel(GPostInvParam, inline, crossline, horizonTim
     
     % normalize
     if GPostInvParam.isNormal
-        model.maxAbsD = max(abs(model.d));
+        model.maxAbsD = norm(model.d);
         model.d = model.d / model.maxAbsD;
         model.G = model.orginal_G / model.maxAbsD;    % we have to use the original G to normalize
     end

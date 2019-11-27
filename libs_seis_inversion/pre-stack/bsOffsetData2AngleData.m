@@ -1,10 +1,10 @@
 function [angleSeisData, angleData, superTrData] = bsOffsetData2AngleData(GPreInvParam, preData, offsets, depth, initVp, initVs, initRho)
     
     % get super gather from pre-stack CDP gather
-    [superTrData, offsetMax, offsetMin] = bsCalcSuperGather(preData, offsets);
+    [superTrData, offsetMax, offsetMin] = bsCalcSuperGather(preData, offsets, GPreInvParam.oldSuperTrNum);
     
     % the last super traces is dropped
-    superTrData = superTrData(:, 1:GInvParam.newSuperTrNum);
+    superTrData = superTrData(:, 1:GPreInvParam.newSuperTrNum);
     
     % reset the range of offset
     GPreInvParam.offsetMax = (offsetMax - offsetMin)/(GPreInvParam.oldSuperTrNum - 1) * (GPreInvParam.newSuperTrNum - 1) + offsetMin;
@@ -13,7 +13,7 @@ function [angleSeisData, angleData, superTrData] = bsOffsetData2AngleData(GPreIn
     % calculate the angle information 
     [meanTheta, angleData] = bsCalcAngleByRayTracking(GPreInvParam, depth, initVp, initVs, initRho);
     [angleIndex, angleCoef] = bsCalcAngleIndexAndCoef(meanTheta, angleData);
-    [angleSeisData] = bsOffset2Angle(angleIndex, angleCoef, superTrData, angleTrNum);
+    [angleSeisData] = bsOffset2Angle(angleIndex, angleCoef, superTrData, GPreInvParam.angleTrNum);
 
 end
 
@@ -24,6 +24,7 @@ function [superTrData, offsetMax, offsetMin] = bsCalcSuperGather(preData, offset
     [sampNum, nTrace] = size(preData);
     superTrData = zeros(sampNum, superTrNum);
     superNum = zeros(1, superTrNum);
+    invOffset = (offsetMax-offsetMin) / superTrNum;
     
     for i = 1 : nTrace
         % get the group id which the current trace should be 
@@ -40,6 +41,7 @@ function [superTrData, offsetMax, offsetMin] = bsCalcSuperGather(preData, offset
         superNum(superTraceId) = superNum(superTraceId) + 1;
     end
     
+    superNum( superNum == 0 ) = 1;
     for i = 1 : superTrNum
         superTrData(:, i) = superTrData(:, i) / superNum(i);
     end

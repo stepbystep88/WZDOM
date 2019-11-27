@@ -5,7 +5,7 @@ function [G] = bsPreBuildGMatrix(mode, vp, vs, angleData, wavelet, extraInfo)
 % Programming dates: Nov 2019
 % -------------------------------------------------------------------------
 
-    sampNum = size(welllog, 1);
+    sampNum = size(vp, 1);
     angleTrNum = length(angleData);
     
     [c1, c2, c3] = bsAkiSyn(angleData, vp, vs); 
@@ -55,8 +55,8 @@ function G = bsGenGByMode(mode, c1, c2, c3, sampNum, angleTrNum, wavelet, extraI
     W = bsWaveletMatrix(sampNum-1, wavelet);
     cellG = cell(angleTrNum, 3);
 
-    switch mode
-        case 'Lpsd_fit'
+    switch lower(mode)
+        case 'lpsd_fit'
             D = bsGen1DDiffOperator(sampNum, 1, 1);
             k = extraInfo.lsCoef(1);
             m = extraInfo.ldCoef(1);
@@ -71,7 +71,7 @@ function G = bsGenGByMode(mode, c1, c2, c3, sampNum, angleTrNum, wavelet, extraI
                 cellG{i, 2} = W * newC2 * D;
                 cellG{i, 3} = W * newC3 * D;
             end
-        case 'Lpsd'
+        case 'lpsd'
             D = bsGen1DDiffOperator(sampNum, 1, 1);
             for i = 1 : angleTrNum
                 newC1 = diag( 0.5*c1(1:sampNum-1, i) );

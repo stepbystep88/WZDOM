@@ -5,7 +5,7 @@ function [ W, wavelet ] = bsWaveletMatrix(sampNum, wavelet, waveletFreq, dt)
         wavelet = bsGenRickerWavelet(waveletFreq, dt);
     end
     
-    [~, ix] = max(abs(wavelet));
+    [~, ix] = max((wavelet));
 
     Wmatrix = convmtx(wavelet, sampNum);
     W = Wmatrix(ix : ix+sampNum-1, :);
