@@ -51,6 +51,39 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
         methodName = method.name;
         matFileName = bsGetFileName('mat');
         
+        % try loading the results from mat or segy file
+        res = loadResults();
+        
+        if isempty(res.source)
+            % obtain results by computing
+            [vp, vs, rho] = bsCallInvFcn();
+            res.source = 'computation';
+            res.type = {'vp', 'vs', 'rho'};
+            res.data = {vp, vs, rho};
+        end
+        
+        if isfield(method, 'showFiltCoef')
+            res.showFiltCoef = method.showFiltCoef;
+        else
+            res.showFiltCoef = 0;
+        end
+        
+        res.inIds = inIds;          % inverted inline ids 
+        res.crossIds = crossIds;    % inverted crossline ids
+        res.horizon = horizonTimes; % the horizon of inverted traces
+        res.name = method.name;     % the name of this method
+        res.dt = GPreInvParam.dt;
+        res.upNum = GPreInvParam.upNum;
+        res.downNum = GPreInvParam.downNum;
+        
+        invResults{i} = res;
+        
+        % save the results into mat or segy file
+        saveResults();
+        
+    end
+    
+    function res = loadResults()
         res.source = [];
         
         if isfield(method, 'load')
@@ -61,68 +94,64 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
                     try
                         % from mat file
                         if isfield(loadInfo, 'fileName') && ~isempty(loadInfo.fileName)
-                            load(GPreInvParam.load.fileName);
+                            load_mat = load(GPreInvParam.load.fileName);
                         else
-                            load(matFileName);
+                            load_mat = load(matFileName);
                         end
 
                         res.source = 'mat';
+                        res.type = {'vp', 'vs', 'rho'};
+                        res.data = {load_mat.vp, load_mat.vs, load_mat.rho};
+                        
                     catch
                         warning('load mat file failed.');
                     end
                     
                 case 'segy'
                     % from sgy file
-                    [vp, loadInfo.segyInfo, ~] = bsReadTracesByIds(...
-                        loadInfo.vp.fileName, ...
-                        loadInfo.vp.segyInfo, ...
-                        inIds, crossIds, startTimes, sampNum, GPreInvParam.dt);
-                    
-                    [vs, loadInfo.segyInfo, ~] = bsReadTracesByIds(...
-                        loadInfo.vs.fileName, ...
-                        loadInfo.vs.segyInfo, ...
-                        inIds, crossIds, startTimes, sampNum, GPreInvParam.dt);
-                    
-                    [rho, loadInfo.segyInfo, ~] = bsReadTracesByIds(...
-                        loadInfo.rho.fileName, ...
-                        loadInfo.rho.segyInfo, ...
-                        inIds, crossIds, startTimes, sampNum, GPreInvParam.dt);
+                    if ~iscell(loadInfo.fileName)
+                        loadInfo.fileName = {loadInfo.fileName};
+                        nFile = 1;
+                    else
+                        nFile = length(loadInfo.fileName);
+                    end
+                    data = cell(1, nFile);
+                    for iFile = 1 : nFile
+                        if length(loadInfo.segyInfo) == 1
+                            % share the common segy basic info
+                            iSegyInfo = loadInfo.segyInfo;
+                        else
+                            % use different segy info for different files
+                            iSegyInfo = loadInfo.segyInfo(iFile);
+                        end
+                        
+                        if isfield(loadInfo, 'prestack') && loadInfo.prestack == 1
+                            data{iFile} = bsStackPreSeisData(loadInfo.fileName{iFile}, ...
+                                iSegyInfo, ...
+                                inIds, crossIds, startTimes, sampNum, GPreInvParam.dt);
+                        else
+                            [data{iFile}, ~, ~] = bsReadTracesByIds(...
+                                loadInfo.fileName{iFile}, ...
+                                iSegyInfo, ...
+                                inIds, crossIds, startTimes, sampNum, GPreInvParam.dt);
+                        end
+                    end
                     
                     res.source = 'segy';
+                    res.type = method.type;
+                    if nFile == 1
+                        res.data = data{1};
+                    else
+                        res.data = data;
+                    end
+                    
+                    
             end
             
         end
-        
-        if isempty(res.source)
-            % obtain results by computing
-            [vp, vs, rho] = bsCallInvFcn();
-            res.source = 'computation';
-        end
-        
-        res.data = {vp, vs, rho};
-        res.inIds = inIds;          % inverted inline ids 
-        res.crossIds = crossIds;    % inverted crossline ids
-        res.horizon = horizonTimes; % the horizon of inverted traces
-        res.name = method.name;     % the name of this method
-        res.dt = GPreInvParam.dt;
-        res.upNum = GPreInvParam.upNum;
-        res.downNum = GPreInvParam.downNum;
-        
-        if isfield(method, 'type')  % the type of inverted volume, IP, Seismic, VP, VS, Rho
-            res.type = method.type;
-        else
-            res.type = {'vp', 'vs', 'rho'};
-        end
-        
-        if isfield(method, 'showFiltCoef')
-            res.showFiltCoef = method.showFiltCoef;
-        else
-            res.showFiltCoef = 0;
-        end
-        
-        invResults{i} = res;
-        
-        
+    end
+
+    function saveResults()
         % save sgy file
         if isfield(method, 'isSaveSegy') && method.isSaveSegy && strcmp(res.source, 'computation')
             for k = 1 : 3
@@ -151,14 +180,14 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
         if isfield(method, 'isSaveMat') && method.isSaveMat && strcmp(res.source, 'computation')
             fprintf('Writing mat file:%s...\n', matFileName);
             try
-                save(matFileName, 'vp', 'vs', 'rho', 'horizonTimes', 'inIds', 'crossIds', 'GPreInvParam', 'method');
+                save(matFileName, 'vp', 'vs', 'rho', 'GPreInvParam', 'inIds', 'crossIds', 'horizonTimes', 'method');
             catch
-                save(matFileName, 'vp', 'vs', 'rho', 'horizonTimes', 'inIds', 'crossIds', 'GPreInvParam', 'method', '-v7.3');
+                save(matFileName, 'vp', 'vs', 'rho', 'GPreInvParam', 'inIds', 'crossIds', 'horizonTimes', 'method', '-v7.3');
             end
             fprintf('Write mat file:%s successfully!\n', matFileName);
         end
     end
-    
+
     function fileName = bsGetFileName(type, attName)
         switch type
             case 'mat'

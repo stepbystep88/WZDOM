@@ -17,10 +17,11 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
         % vs, rho, respectively.
         case 'segy' % get initial model from segy file
             % start location of the inverted time interval
-            initLog = bsReadMultiSegyFiles(GPreInvParam, ...
-                [initModel.depth, initModel.vp, initModel.vs, initModel.rho], ...
+            initLog = bsReadMultiSegyFiles(...
+                [initModel.vp, initModel.vs, initModel.rho], ...
                 inline, crossline, startTime, sampNum, GPreInvParam.dt);
- 
+            depth = bsGetDepth(initLog(:, 1), GPreInvParam.dt);
+            initLog = [depth, initLog];
             initLog = bsFiltWelllog(initLog, initModel.filtCoef);
             
         case 'filter_from_true_log' % get initial model by filtering the true model
@@ -34,7 +35,7 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
             initLog = initModel.fcn(GPreInvParam, inline, crossline, startTime);
             
         otherwise
-            validatestring(GPreInvParam.initModel.mode, ['segy', 'filter_from_true_log', 'function']);
+            validatestring(GPreInvParam.initModel.mode, {'segy', 'filter_from_true_log', 'function'});
     end
     
     % load prestack seismic data
@@ -123,12 +124,13 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
     end
 end
 
+
 function seisData = bsReadMultiSegyFiles(separates, inline, crossline, startTime, sampNum, dt)
     nFile = length(separates);
-    seisData = size(sampNum, nFile);
+    seisData = zeros(sampNum, nFile);
     for i = 1 : nFile
         separate = separates(i);
-        seisData(:, i) = bsReadTracesByIds(separate.fileName, separate.segyInfo, inline, crossline, startTime, sampNum, dt);
+        seisData(:, i) = bsReadTracesByIds(separate.segyFileName, separate.segyInfo, inline, crossline, startTime, sampNum, dt);
     end
 end
 

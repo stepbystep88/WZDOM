@@ -5,40 +5,16 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs)
 % -------------------------------------------------------------------------
     
     nProfile = length(profiles);
- 
+    GPlotParam = GShowProfileParam.plotParam;
+    isSameType = bsCheckIsSameType(profiles);
+    
     figure;
     % set the screen size
-    switch nProfile
-        case 1
-            bsSetPosition(0.4, 0.25);
-            nRow = 1;
-            nCol = 1;
-            loc = [0.9, 0.9, 0.01, 0.08, 0.07, 0.01];
-        case 2
-            bsSetPosition(0.4, 0.5);
-            nRow = 2;
-            nCol = 1;
-            loc = [0.9, 0.95, 0.01, 0.08, 0.07, 0.02];
-        case 3
-            bsSetPosition(0.4, 0.75);
-            nRow = 3;
-            nCol = 1;
-            loc = [0.9, 0.96, 0.01, 0.06, 0.07, 0.01];
-        case 4
-            bsSetPosition(0.8, 0.5);
-            nRow = 2;
-            nCol = 2;
-            loc = [0.98, 0.95, 0.05, 0.08, 0.04, 0.02];
-        case {5, 6}
-            bsSetPosition(0.8, 0.75);
-            nRow = 3;
-            nCol = 2;
-            loc = [0.98, 0.96, 0.05, 0.06, 0.04, 0.01];
-        case {7, 8, 9}
-            bsSetPosition(0.95, 0.75);
-            nRow = 3;
-            nCol = 3;
-            loc = [0.98, 0.96, 0.03, 0.06, 0.04, 0.01];
+    
+    if isSameType
+        [nRow, nCol, loc, colorbar_pos] = setShareFigureSize(nProfile);
+    else
+        [nRow, nCol, loc] = setFigureSize(nProfile);
     end
     
     % show profiles
@@ -50,12 +26,48 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs)
         
         % change the name
         profile.name = sprintf('(%s) %s', 'a'+iProfile-1, profile.name);
-        bsShowOneProfile(profile);
+        [attName, range] = bsShowOneProfile(profile, isSameType);
+        
+        if mod(iProfile, nCol) ~= 1 && nCol ~= 1
+            set(gca, 'ylabel', []);
+            set(gca, 'ytick', [], 'yticklabel', []);
+        end
+        
+        if ceil(iProfile/nCol) == nRow || iProfile+nCol>nProfile
+%             set(gca, 'ylabel', []);
+        else
+            set(gca, 'xtick', [], 'xticklabel', []);
+        end
     end
     
-    % show one profile
-    function bsShowOneProfile(profile)
+    if isSameType
+        bsShowShareColorbar();
+    end
+    
+    function bsShowShareColorbar()
+        subplot('Position', colorbar_pos);
+        axis off;
+        set(gca, 'colormap', GShowProfileParam.dataColorTbl);
+        set(gca, 'clim', range);
+
+        hc = colorbar( ...
+            'fontsize', GPlotParam.fontsize,...
+            'fontweight', 'bold', ...
+            'fontname', GPlotParam.fontname);
+        hc.Position = hc.Position + [0 0 0.01 0];
+
+        ylabel(hc, attName, ...
+            'fontsize', GShowProfileParam.plotParam.fontsize, ...
+            'fontweight', 'bold', ...
+            'fontname', GShowProfileParam.plotParam.fontname);
+    end
+
+%         gtext(attName, 'fontsize', GPlotParam.fontsize,'fontweight', 'bold', 'fontname', GPlotParam.fontname);
         
+    % show one profile
+    function [attName, range] = bsShowOneProfile(profile, isSameColorbar)
+        
+        fprintf('Showing the %s profile of %s...\n', upper(profile.type), profile.name);
         profileData = profile.data;
         
         if profile.inIds(1) == profile.inIds(2)
@@ -103,7 +115,7 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs)
                     GInvParam.indexInWellData.time, ...
                     GShowProfileParam.showWellFiltCoef);
 
-                attName = 'Density g/cm^3';
+                attName = 'V_S km/s';
                 
             case 'rho'
                 
@@ -116,12 +128,13 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs)
                     GInvParam.indexInWellData.time, ...
                     GShowProfileParam.showWellFiltCoef);
 
-                attName = ' km/s';
+                attName = 'Density g/cm^3';
                 
             case 'seismic'
                 attName = 'Seismic (Amplitude)';
                 wellPos = [];
                 wellData = [];
+                wellTime = [];
                 range = GShowProfileParam.rangeSeismic;
                 
         end
@@ -129,7 +142,7 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs)
         profile.horizon = bsButtLowPassFilter(profile.horizon, 0.1);
         
         % filter data along with horizon
-        profileData = bsFilterData(profileData, profile.showFiltCoef);
+        profileData = bsFilterProfileData(profileData, profile.showFiltCoef);
         
         % fill data by using horion information
 %         [newProfileData, minTime] = bsHorizonRestoreData(profileData, profile.horizon, GInvParam.upNum, GInvParam.dt);
@@ -145,11 +158,12 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs)
                 GInvParam.upNum, ...
                 GInvParam.dt);
 
-                % replace the traces that are near by well location as welllog data
+        % replace the traces that are near by well location as welllog data
         newProfileData = bsReplaceWellLocationData(GShowProfileParam, ...
             newProfileData, ...
             traceIds, ...
             newTraceIds, ...
+            newHorizon, ...
             wellPos, ...
             wellData, ...
             wellTime, ...
@@ -160,15 +174,116 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs)
         % show the filled data by using imagesc
         bsShowHorizonedData(GShowProfileParam, ...
             newProfileData, ...
-            newHorizon, minTime, newDt, profile.name, newTraceIds, range, GShowProfileParam.dataColorTbl);
+            newHorizon, minTime, newDt, profile.name, ...
+            newTraceIds, range, GShowProfileParam.dataColorTbl);
         
         % set attribute name of colorbar
-        ylabel(colorbar(), attName, ...
-            'fontsize', GShowProfileParam.plotParam.fontsize, ...
-            'fontweight', 'bold', ...
-            'fontname', GShowProfileParam.plotParam.fontname);
+        if ~isSameColorbar
+            ylabel(colorbar(), attName, ...
+                'fontsize', GShowProfileParam.plotParam.fontsize, ...
+                'fontweight', 'bold', ...
+                'fontname', GShowProfileParam.plotParam.fontname);
+        end
         bsSetDefaultPlotSet(GShowProfileParam.plotParam);
         
+    end
+end
+
+
+function [nRow, nCol, loc, colorbar_pos] = setShareFigureSize(nProfile)
+    switch nProfile
+        case 1
+            bsSetPosition(0.3, 0.2);
+            nRow = 1;
+            nCol = 1;
+            loc = [0.8, 0.89, 0.01, 0.08, 0.08, -0.01];
+            colorbar_pos = [0.87 0.06 0.01 0.88];
+        case 2
+            bsSetPosition(0.3, 0.42);
+            nRow = 2;
+            nCol = 1;
+            loc = [0.8, 0.95, 0.01, 0.07, 0.08, 0.02];
+            colorbar_pos = [0.87 0.06 0.01 0.9];
+        case 3
+            bsSetPosition(0.3, 0.65);
+            nRow = 3;
+            nCol = 1;
+            loc = [0.8, 0.96, 0.01, 0.04, 0.08, 0.01];
+            colorbar_pos = [0.87 0.05 0.01 0.92];
+        case 4
+            bsSetPosition(0.6, 0.42);
+            nRow = 2;
+            nCol = 2;
+            loc = [0.9, 0.95, 0.02, 0.07, 0.04, 0.02];
+            colorbar_pos = [0.93 0.05 0.01 0.9];
+        case {5, 6}
+            bsSetPosition(0.6, 0.65);
+            nRow = 3;
+            nCol = 2;
+            loc = [0.9, 0.96, 0.02, 0.04, 0.04, 0.01];
+            colorbar_pos = [0.93 0.05 0.01 0.92];
+        case {7, 8, 9}
+            bsSetPosition(0.8, 0.65);
+            nRow = 3;
+            nCol = 3;
+            loc = [0.9, 0.96, 0.01, 0.04, 0.04, 0.01];
+            colorbar_pos = [0.94 0.05 0.01 0.92];
+    end
+end
+
+function [nRow, nCol, loc] = setFigureSize(nProfile)
+    switch nProfile
+        case 1
+            bsSetPosition(0.3, 0.2);
+            nRow = 1;
+            nCol = 1;
+            loc = [0.9, 0.89, 0.01, 0.08, 0.08, -0.01];
+        case 2
+            bsSetPosition(0.3, 0.42);
+            nRow = 2;
+            nCol = 1;
+            loc = [0.9, 0.95, 0.01, 0.07, 0.08, 0.02];
+        case 3
+            bsSetPosition(0.3, 0.65);
+            nRow = 3;
+            nCol = 1;
+            loc = [0.9, 0.96, 0.01, 0.04, 0.08, 0.01];
+        case 4
+            bsSetPosition(0.6, 0.42);
+            nRow = 2;
+            nCol = 2;
+            loc = [0.95, 0.95, 0.02, 0.07, 0.04, 0.02];
+        case {5, 6}
+            bsSetPosition(0.6, 0.65);
+            nRow = 3;
+            nCol = 2;
+            loc = [0.95, 0.96, 0.02, 0.04, 0.04, 0.01];
+        case {7, 8, 9}
+            bsSetPosition(0.8, 0.65);
+            nRow = 3;
+            nCol = 3;
+            loc = [0.95, 0.96, 0.01, 0.04, 0.04, 0.01];
+    end
+end
+
+function isSameType = bsCheckIsSameType(profiles)
+    nProfiles = length(profiles);
+    isSameType = 1;
+    if nProfiles == 0
+        error('There profile data to show is empty.');
+    elseif nProfiles == 1
+        isSameType = 0;
+        return;
+    end
+    
+    type = profiles{1}.type;
+    for i = 2 : nProfiles
+        itype = profiles{i}.type;
+        
+        if ~strcmpi(type, itype)
+            isSameType = 0;
+            break;
+        end
     end
 end
 
@@ -225,8 +340,13 @@ function [wellPos, wellData, wellTime] = bsFindWellLocation(wellLogs, inIds, cro
 end
 
 function profileData = bsReplaceWellLocationData(GShowProfileParam, ...
-    profileData, traceIds, newTraceIds, ...
-    wellPos, wellData, time, t0, dt)
+    profileData, traceIds, newTraceIds, newHorizons, ...
+    wellPos, wellData, wellTime, t0, dt)
+
+    if GShowProfileParam.isShowColorWells == 0
+        return;
+    end
+    
     [newSampNum, trNum] = size(profileData);
     
     offsetNum = GShowProfileParam.showWellOffset * GShowProfileParam.scaleFactor;
@@ -246,64 +366,28 @@ function profileData = bsReplaceWellLocationData(GShowProfileParam, ...
                 e = trNum;
             end
             
-            z = zeros(newSampNum, 1);
-            
-            for j = 1 : newSampNum
-                tj = t0 + dt * (j-1);
-                
-                if tj < time(1, i)
-                    z(j) = wellData(1, i);
-                elseif tj > time(end, i)
-                    z(j) = wellData(end, i);
-                else
-                    z(j) = bsCalVal(tj, time(:, i), wellData(:, i));
+            for k = s : e
+                z = zeros(newSampNum, 1);
+                ctime = wellTime - newHorizons(index) + newHorizons(k);
+                for j = 1 : newSampNum
+                    tj = t0 + dt * (j-1);
+
+                    if tj < ctime(1, i)
+                        z(j) = wellData(1, i);
+                    elseif tj > ctime(end, i)
+                        z(j) = wellData(end, i);
+                    else
+                        z(j) = bsCalVal(tj, ctime(:, i), wellData(:, i));
+                    end
                 end
+                
+                % replace serveral traces neary by the current well as the
+                % corresponding welllog data
+                profileData(:, k) = z;
             end
-            
-            
-            
-            % replace serveral traces neary by the current well as the
-            % corresponding welllog data
-            profileData(:, s:e) = repmat(z, [1, e-s+1]);
         end
     end
     
-end
-
-function profileData = bsFilterData(profileData, showFiltCoef)
-    [sampNum, ~] = size(profileData);
-    
-    % filter data along with horizon
-    if showFiltCoef > 0 && showFiltCoef < 1
-        try
-            for i = 1 : sampNum
-                profileData(i, :) = bsButtLowPassFilter(profileData(i, :), showFiltCoef);
-            end
-        catch
-        end
-    end
-end
-
-
-
-function [newProfileData, newDt, newTraceIds, newHorizon] = bsReScaleData(scaleFactor, profileData, dt, traceIds, horizon)
-    if exist('scaleFactor', 'var') && scaleFactor > 1
-        scaleFactor = round(scaleFactor);
-        [sampNum, traceNum] = size(profileData);
-        
-        newDt = dt / scaleFactor;
-        newTraceIds = linspace(traceIds(1), traceIds(end), traceNum * 1);
-        [X, Y] = meshgrid(traceIds, linspace(1, sampNum, sampNum));
-        [Xq,Yq] = meshgrid(newTraceIds, linspace(1, sampNum, sampNum * scaleFactor));
-        
-        newProfileData = interp2(X, Y, profileData, Xq, Yq,'cubic');
-        newHorizon = interp1(traceIds, horizon, newTraceIds, 'spline');
-    else
-        newProfileData = profileData;
-        newDt = dt;
-        newTraceIds = traceIds;
-        newHorizon = horizon;
-    end
 end
 
 function [newProfileData, newDt, newTraceIds, newHorizon, minTime] = bsReScaleAndRestoreData(...
@@ -347,6 +431,7 @@ function [newProfileData, newDt, newTraceIds, newHorizon, minTime] = bsReScaleAn
     newHorizon = interp1(traceIds, horizon, newTraceIds, 'spline');
 end
 
+
 function bsShowHorizonedData(GShowProfileParam, profileData, horizon, minTime, dt, name, traceIds, range, colorTbl)
     
     [sampNum, traceNum] = size(profileData);
@@ -369,7 +454,7 @@ function bsShowHorizonedData(GShowProfileParam, profileData, horizon, minTime, d
     end
     
     set(h, 'AlphaData', ~isnan(profileData));
-    colorbar;
+%     colorbar;
     
     % set labels of x and y axises
     [label, data] = bsGenLabel(minTime, minTime+sampNum*dt, sampNum, GShowProfileParam.yLabelNum);
@@ -393,6 +478,9 @@ function bsShowHorizonedData(GShowProfileParam, profileData, horizon, minTime, d
     if( GShowProfileParam.isShowHorizon)
         y = 1 + round((horizon - minTime) / dt);
 %         y = horizon / 1000;
-        plot(1:traceNum, y, 'k-','LineWidth', GShowProfileParam.plotParam.linewidth); hold on;
+        plot(1:traceNum, y, 'k-', 'LineWidth', GShowProfileParam.plotParam.linewidth); hold on;
     end
 end
+
+
+

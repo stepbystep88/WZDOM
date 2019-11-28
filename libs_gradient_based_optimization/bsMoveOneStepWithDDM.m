@@ -93,7 +93,7 @@ function [xNew, fNew, gNew, pk, stp, nfev, algInfo] = bsMoveOneStepWithDDM(optAl
 %         0, ...
 %         1e10, ...
 %         100);
-    [xNew, fNew, gNew, stp, flag, nfev] = cvsrch(objFcn, length(xk), xk, fk, gk, pk, 1, 0.0001, 0.9, 1e-7, 0, 1e10, 40); 
+    [xNew, fNew, gNew, stp, flag, nfev] = cvsrch(objFcn, length(xk), xk, fk, gk, pk, 1, 0.0001, 0.9, 1e-7, 0, inf, 40); 
 %     nfev = 0;
 %     stp = 0.0013;
 %     xNew = xk + stp * pk;

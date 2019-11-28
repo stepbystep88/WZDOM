@@ -50,7 +50,7 @@ function bsShowPreInvLogResult(GPreInvParam, GPlotParam, GShowProfileParam, ...
         end
 
         legends = {'Initial model', 'Real model', 'Inversion result'};
-        bsSetLegend(GPlotParam, {'g', 'k', 'r'}, legends);
+        bsSetLegend(GPlotParam, {'g', 'b-.', 'r'}, legends);
        
     end
 
@@ -77,12 +77,12 @@ function bsShowPreInvLogResult(GPreInvParam, GPlotParam, GShowProfileParam, ...
         end
 
         legends = {'Synthetic from true welllog', 'Real data', 'Synthetic from inversion result'};
-        bsSetLegend(GPlotParam, {'k', 'b', 'r'}, legends, 'Seismic');
+        bsSetLegend(GPlotParam, {'b-.', 'k', 'r'}, legends, 'Seismic');
     end
 end
 
 function bsSetLegend(GPlotParam, colors, legends, attrName)
-    hL = subplot('position', [0.25    0.02    0.500    0.03]);
+    hL = subplot('position', [0.25    0.01    0.500    0.03]);
     poshL = get(hL, 'position');     % Getting its position
 
     plot(0, 0, colors{1}, 'linewidth', GPlotParam.linewidth); hold on;
@@ -132,11 +132,11 @@ end
 function bsSetPreFigureSize(nPlot)
     switch nPlot
         case 1
-            set(gcf, 'position', [  336    98   847   388]);
+            set(gcf, 'position', [  336    98   847   295]);
         case 2
-            set(gcf, 'position', [  336    98   847   639]);
+            set(gcf, 'position', [  336    98   847   521]);
         case 3
-            set(gcf, 'position', [  336    98   847   868]);
+            set(gcf, 'position', [   336    98   847   733]);
         otherwise
             set(gcf, 'position', [336    42   847   953]);
     end
@@ -147,11 +147,13 @@ function bsSetPreSubPlotSize(nItems, iItem, k)
     index = 3 * (iItem - 1) + k;
     switch nItems
         case 1
+            bsSubPlotFit(nItems, 3, index, 0.93, 0.75, 0.02, 0.00, 0.06, -0.05);
         case 2
+            bsSubPlotFit(nItems, 3, index, 0.93, 0.88, 0.02, 0.05, 0.06, 0.01);
         case 3
-            bsSubPlotFit(nItems, 3, index, 0.96, 0.92, 0.05, 0.05, 0.06, 0.02);
+            bsSubPlotFit(nItems, 3, index, 0.93, 0.91, 0.02, 0.04, 0.06, 0.01);
         case 4
-            bsSubPlotFit(nItems, 3, index, 0.96, 0.92, 0.05, 0.02, 0.06, 0.045);
+            bsSubPlotFit(nItems, 3, index, 0.93, 0.92, 0.02, 0.03, 0.06, 0.00);
     end
 end
 
@@ -162,19 +164,24 @@ function bsShowPostSubInvLogResult(GPlotParam, ...
 
     bsSetPreSubPlotSize(nItems, iItem, k);
     plot(initVal, t, 'g', 'linewidth', GPlotParam.linewidth); hold on;
-    plot(trueVal, t, 'k', 'LineWidth', GPlotParam.linewidth);   hold on;
+    plot(trueVal, t, 'b-.', 'LineWidth', GPlotParam.linewidth);   hold on;
     plot(invVal, t, 'r','LineWidth', GPlotParam.linewidth);    hold on;
         
     if k == 1
         ylabel('Time (s)');
+    else
+        set(gca, 'ytick', [], 'yticklabel', []);
     end
 
     if k == 2
-        title(sprintf('(%s) %s', char( 'a' + (iItem-1) ), tmethod));
+        title(sprintf('(%s) %s', char( 'a' + (iItem-1) ), tmethod), ...
+            'fontsize', GPlotParam.fontsize+2, 'fontweight', 'bold');
     end
     
     if iItem == nItems
         xlabel(attName);
+    else
+        set(gca, 'xtick', [], 'xticklabel', []);
     end
 
     set(gca, 'ydir', 'reverse');
@@ -195,8 +202,8 @@ function bsShowPostSubSynSeisData(GPlotParam, ...
 
     bsSetSubPlotSize(nItems, iItem);
     
-    plot(synFromTrue, t(1:end-1), 'k', 'linewidth', GPlotParam.linewidth); hold on;
-    plot(seisData, t(1:end-1), 'b','LineWidth', GPlotParam.linewidth);    hold on;
+    plot(synFromTrue, t(1:end-1), 'b-.', 'linewidth', GPlotParam.linewidth); hold on;
+    plot(seisData, t(1:end-1), 'k','LineWidth', GPlotParam.linewidth);    hold on;
     plot(synFromInv, t(1:end-1), 'r', 'LineWidth', GPlotParam.linewidth);   hold on;
     
     ylabel('Time (s)');
