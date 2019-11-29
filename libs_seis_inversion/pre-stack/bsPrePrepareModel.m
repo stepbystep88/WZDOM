@@ -51,7 +51,15 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
             gather = bsReadGathersByIds(preDataInfo.segyFileName, preDataInfo.segyInfo, ...
                 inline, crossline, startTime, sampNum-1, GPreInvParam.dt);
             angleSeisData = gather{1}.data;
-            angleData = GPreInvParam.angleData;
+            if ~isempty(GPreInvParam.angleData)
+                angleData = GPreInvParam.angleData;
+            else
+                angleData = gather{1}.offsets;
+            end
+            
+            if angleData(end) > 10
+                angleData = angleData / 180 * pi;
+            end
             
         case 'offset_one_file'
             gather = bsReadGathersByIds(preDataInfo.segyFileName, preDataInfo.segyInfo, ...

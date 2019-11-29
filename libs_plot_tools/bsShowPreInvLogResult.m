@@ -22,10 +22,12 @@ function bsShowPreInvLogResult(GPreInvParam, GPlotParam, GShowProfileParam, ...
     
     function bsShowInvLog()
         hf = figure;
+        bsSetPreFigureSize(nItems);
+        
         for iItem = 1 : nItems
         
             figure(hf);
-            bsSetPreFigureSize(iItem);
+            
 
             invVal = invVals{iItem};
             if trueLogFiltcoef>0 && trueLogFiltcoef<1
@@ -56,10 +58,12 @@ function bsShowPreInvLogResult(GPreInvParam, GPlotParam, GShowProfileParam, ...
 
     function bsShowSyntheticSeisData()
         hf = figure;
+        bsSetFigureSize(nItems);
+        
         for iItem = 1 : nItems
         
             figure(hf);
-            bsSetFigureSize(iItem);
+            
 
             invVal = invVals{iItem};
             

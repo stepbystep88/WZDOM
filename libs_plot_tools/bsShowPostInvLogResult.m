@@ -12,10 +12,12 @@ function bsShowPostInvLogResult(GPostInvParam, GPlotParam, GShowProfileParam, in
     
     function bsShowInvLog()
         hf = figure;
+        bsSetFigureSize(nItems);
+        
         for iItem = 1 : nItems
         
             figure(hf);
-            bsSetFigureSize(iItem);
+            
 
             invVal = invVals{iItem};
             trueLog = model.trueLog;

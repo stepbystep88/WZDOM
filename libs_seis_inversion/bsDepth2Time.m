@@ -60,31 +60,39 @@ function [GInvParam, outputWelllogs, wavelet] = bsDepth2Time(GInvParam, timeLine
             upIndex = index - GInvParam.upNum;
             downIndex = index + GInvParam.downNum - 1;
             
-            if isfield(indexInWell, 'Ip')
-                Ip = wellData(upIndex : downIndex, indexInWell.Ip);
-            else
-                vp = wellData(upIndex : downIndex, indexInWell.vp);
-                rho = wellData(upIndex : downIndex, indexInWell.rho);
-                Ip =  vp .* rho;
+            try
+                if isfield(indexInWell, 'Ip')
+                    Ip = wellData(upIndex : downIndex, indexInWell.Ip);
+                else
+                    vp = wellData(upIndex : downIndex, indexInWell.vp);
+                    rho = wellData(upIndex : downIndex, indexInWell.rho);
+                    Ip =  vp .* rho;
+                end
+            catch
+                error('Data of well %s is not enough.', inputWelllogs{i}.name);
             end
             
-            synthSeis = G * log(Ip);                                   
-
+            
+            synthSeis = G * log(Ip);  
             % only compare the valid part of welllog data
-            if( upIndex <= expandNum)
-                num = expandNum - upIndex + 2;
-                correlation = corrcoef(synthSeis(num:end), postSeisData(num:end, i)) ;
-            elseif ( downIndex > layerNum + expandNum )
-                num = layerNum + expandNum - upIndex + 1;
-                correlation = corrcoef(synthSeis(1:num), postSeisData(1:num, i)) ;
-            else
-                correlation = corrcoef(synthSeis, postSeisData(:, i));
-            end
+%             if( upIndex <= expandNum)
+%                 num = expandNum - upIndex + 2;
+%                 correlation = corrcoef(synthSeis(num:end), postSeisData(num:end, i)) ;
+%             elseif ( downIndex > layerNum + expandNum )
+%                 num = layerNum + expandNum - upIndex + 1;
+%                 correlation = corrcoef(synthSeis(1:num), postSeisData(1:num, i)) ;
+%             else
+            correlation = corrcoef(synthSeis, postSeisData(:, i));
+%             end
             
-            if correlation(1,2) > maxCorrelation
-                maxCorrelation = correlation(1,2);
-                bestIndex = index;
-                synSeisData(:, i) = synthSeis;
+            try
+                if correlation(1,2) > maxCorrelation
+                    maxCorrelation = correlation(1,2);
+                    bestIndex = index;
+                    synSeisData(:, i) = synthSeis;
+                end
+            catch
+                error('Data of well %s is not enough.', inputWelllogs{i}.name);
             end
         end
             
@@ -106,9 +114,10 @@ function [GInvParam, outputWelllogs, wavelet] = bsDepth2Time(GInvParam, timeLine
     end
     
     % re-scale wavelet
-    [~, index] = bsMaxK(similarities, ceil(0.3*wellNum));
+    [~, index] = bsMaxK(similarities, ceil(0.6*wellNum));
     meanScaleFactor = mean(scaleFactors(index));
 
+%     meanScaleFactor = 1;
     wavelet = GInvParam.wavelet * meanScaleFactor;
     GInvParam.wavelet = wavelet;
     GInvParam.indexInWellData.time = size(inputWelllogs{1}.wellLog, 2) + 1;
@@ -120,6 +129,7 @@ function [GInvParam, outputWelllogs, wavelet] = bsDepth2Time(GInvParam, timeLine
             plot(1:sampNum-1, postSeisData(:, i), 'k', 'linewidth', 2); hold on;
             plot(1:sampNum-1, synSeisData(:, i)*meanScaleFactor, 'r', 'linewidth', 2);
             legend('real seismic data', 'synthetic seismic data');
+            title(inputWelllogs{i}.name);
             bsSetDefaultPlotSet(bsGetDefaultPlotSet());
         end
         

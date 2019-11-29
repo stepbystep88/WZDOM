@@ -101,7 +101,10 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
 
                         res.source = 'mat';
                         res.type = {'vp', 'vs', 'rho'};
-                        res.data = {load_mat.vp, load_mat.vs, load_mat.rho};
+                        vp = load_mat.vp;
+                        vs = load_mat.vs;
+                        rho = load_mat.rho;
+                        res.data = {vp, vs, rho};
                         
                     catch
                         warning('load mat file failed.');
@@ -153,7 +156,7 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
 
     function saveResults()
         % save sgy file
-        if isfield(method, 'isSaveSegy') && method.isSaveSegy && strcmp(res.source, 'computation')
+        if isfield(method, 'isSaveSegy') && method.isSaveSegy 
             for k = 1 : 3
                 switch k
                     case 1
