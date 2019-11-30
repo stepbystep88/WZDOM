@@ -34,9 +34,9 @@ function bsSaveFigure(path, name)
 %     fileName = sprintf('%s/figure/%s.fig', path, name);
 %     saveas(gcf, fileName, 'fig');
     
-%     fileName = sprintf('%s/jpg/%s.jpg', path, name);
-% %     imwrite(img, fileName, 'jpg', 'Resolution', 600);
-%     print('-djpeg', '-r600', fileName);
+    fileName = sprintf('%s/jpg/%s.jpg', path, name);
+%     imwrite(img, fileName, 'jpg', 'Resolution', 600);
+    print('-djpeg', '-r600', fileName);
     
 %     fileName = sprintf('%s/tif/%s.tif', path, name);
 % %     imwrite(img, fileName, 'tiff', 'Resolution', 600);

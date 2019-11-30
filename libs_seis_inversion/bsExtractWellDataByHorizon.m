@@ -41,7 +41,7 @@ function subWellData = bsExtractWellDataByHorizon(wellLog, horizon, dataIndex, t
     end
 
     subWellData(lsPos : lePos, :) = data(sPos : ePos, :);
-    subWellData(1:lsPos, :) = data(sPos, :);
-    subWellData(lePos:end, :) = data(ePos, :);
+    subWellData(1:lsPos, :) = repmat(data(sPos, :), lsPos, 1);
+    subWellData(lePos:end, :) = repmat(data(ePos, :), sampNum-lePos+1, 1);
    
 end

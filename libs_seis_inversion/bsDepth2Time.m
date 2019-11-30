@@ -28,6 +28,7 @@ function [GInvParam, outputWelllogs, wavelet] = bsDepth2Time(GInvParam, timeLine
     indexInWell = GInvParam.indexInWellData;
     outputWelllogs = inputWelllogs;
     searchOffsetNum = GInvParam.depth2time.searchOffsetNum;
+    saveOffsetNum = GInvParam.depth2time.saveOffsetNum;
     
     for i = 1 : wellNum
         wellInfo = inputWelllogs{i};
@@ -57,8 +58,8 @@ function [GInvParam, outputWelllogs, wavelet] = bsDepth2Time(GInvParam, timeLine
         
         for j = -searchOffsetNum : searchOffsetNum
             index = targetIndex + j;
-            upIndex = index - GInvParam.upNum;
-            downIndex = index + GInvParam.downNum - 1;
+            upIndex = index - GInvParam.upNum + 1;
+            downIndex = index + GInvParam.downNum;
             
             try
                 if isfield(indexInWell, 'Ip')
@@ -96,17 +97,31 @@ function [GInvParam, outputWelllogs, wavelet] = bsDepth2Time(GInvParam, timeLine
             end
         end
             
-        upIndex = bestIndex - GInvParam.upNum;
-        downIndex = bestIndex + GInvParam.downNum - 1;
-            
-        bestWelllog = wellData(upIndex : downIndex, :);
+        targetDep = wellData(bestIndex, indexInWell.depth, :);
+        wellData = wellData(expandNum+1:end-expandNum, :);
+        bestIndex = bestIndex - expandNum;
+        upIndex = bestIndex - GInvParam.upNum - saveOffsetNum;
+        downIndex = bestIndex + GInvParam.downNum - 1 + saveOffsetNum;
+        
+        if upIndex < 1 
+            upIndex = 1;
+        end
+        
+        if downIndex > size(wellData, 1)
+            downIndex = size(wellData, 1);
+        end
+        
+        bestWelllog = wellData(upIndex : downIndex, :);            
+        dist = abs(bestWelllog(:, indexInWell.depth) - targetDep);  
+        [~, targetIndex] = min(dist);
         
         % add time information
-        timeData = (0:(sampNum-1))'*GInvParam.dt;
-        timeData = timeData - timeData(GInvParam.upNum) + horizon(i);
+        timeData = (0:(size(bestWelllog, 1)-1))'*GInvParam.dt;
+        timeData = timeData - timeData(targetIndex) + horizon(i);
         
         outputWelllogs{i}.wellLog = [bestWelllog, timeData];
         outputWelllogs{i}.t0 = timeData(1);
+        outputWelllogs{i}.targetDepth = targetDep;
         
         similarities(i) = maxCorrelation;
         scaleFactors(i) = bsComputeGain(postSeisData(:, i), synSeisData(:, i));
@@ -124,11 +139,28 @@ function [GInvParam, outputWelllogs, wavelet] = bsDepth2Time(GInvParam, timeLine
     
     if GInvParam.depth2time.isShowCompare
         
-        for i = 1 : min(wellNum, GInvParam.depth2time.showCompareNum)
-            figure;
-            plot(1:sampNum-1, postSeisData(:, i), 'k', 'linewidth', 2); hold on;
-            plot(1:sampNum-1, synSeisData(:, i)*meanScaleFactor, 'r', 'linewidth', 2);
-            legend('real seismic data', 'synthetic seismic data');
+        figure;
+        set(gcf, 'position', [ 140         235        1505         646]);
+        
+        nSubFigure = min(wellNum, GInvParam.depth2time.showCompareNum);
+        for i = 1 : nSubFigure
+            
+            switch nSubFigure
+                case {1, 2, 3, 4, 5}
+                    subplot(1, nSubFigure, i);
+                otherwise
+                    subplot(2, ceil(nSubFigure/2), i);
+            end
+            
+            plot(postSeisData(:, i), 1:sampNum-1,  'k', 'linewidth', 2); hold on;
+            plot(synSeisData(:, i)*meanScaleFactor, 1:sampNum-1,  'r', 'linewidth', 2);
+            set(gca, 'ydir', 'reverse');
+            
+            if i == 1
+                legend('real seismic data', 'synthetic seismic data');
+                ylabel('Sample number');
+            end
+            
             title(inputWelllogs{i}.name);
             bsSetDefaultPlotSet(bsGetDefaultPlotSet());
         end
