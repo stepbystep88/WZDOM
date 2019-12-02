@@ -20,21 +20,48 @@ function bsWriteTracesByRefFileAndIds(refFileName, dstfileName, GSegyInfo, trDat
     outSegyInfo = bsWriteVolHeader(dstfileName, outSegyInfo);
     
     trNum = length(inIds);
+    index = -1;
+    
     for i = 1 : trNum
         if mod(i, 1000) == 0
             % print information
             fprintf('Writing %d%% data into segy file %s...\n', round(i/trNum*100), dstfileName);
         end
         
-        index = bsIndexOfTraceSetOnInIdAndCrossId(sourceSegyInfo, inIds(i), crossIds(i));
+        if i > 1
+            [index, traceHeader] = bsMoveToNextTrace(index, inIds(i), crossIds(i));
+        end
         
-        if index > 0
+        if i == 1 || index < 0
+            index = bsIndexOfTraceSetOnInIdAndCrossId(sourceSegyInfo, inIds(i), crossIds(i));
             fseek(sourceSegyInfo.fid, 3600+sizeTrace*(index-1), -1);
             traceHeader = bsReadTraceHeader(sourceSegyInfo);
+        end
+        
+        if index > 0
             bsWriteTrace(outSegyInfo, traceHeader, trDatas(:, i));
+        else
+            error('Trace inline=%d, crossline=%d can not be found in file %s', inIds(i), crossIds(i), ref);
         end
     end
     
     fclose(sourceSegyInfo.fid);
     fclose(outSegyInfo.fid);
+    
+    function [index, traceHeader] = bsMoveToNextTrace(index, nextInId, nextCrossId)
+        fseek(sourceSegyInfo.fid, 3600+sizeTrace*index, -1);
+        traceHeader = bsReadTraceHeader(sourceSegyInfo);
+
+        if traceHeader.inId == nextInId && traceHeader.crossId == nextCrossId
+            index = index + 1;
+        else
+            index = -1;
+            traceHeader = [];
+        end
+    end
+
 end
+
+
+
+

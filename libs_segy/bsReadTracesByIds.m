@@ -61,7 +61,7 @@ function [trData, GSegyInfo, trHeader] = bsReadTracesByIds(fileName, GSegyInfo, 
             end
             trData(lsPos : lePos, i) = data(sPos : ePos);
         else
-            trData(:, i) = data(sPos : ePos);
+            trData(:, i) = data;
         end
 
         
