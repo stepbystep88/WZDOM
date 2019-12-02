@@ -114,13 +114,13 @@ end
 function bsSetFigureSize(nPlot)
     switch nPlot
         case 1
-            set(gcf, 'position', [  336   240   247   483]);
+            bsSetPosition(0.13, 0.45);
         case 2
-            set(gcf, 'position', [  336 240 1080 483]);
+            bsSetPosition(0.56, 0.45);
         case 3
-            set(gcf, 'position', [  336 240 1080 483]);
+            bsSetPosition(0.56, 0.45);
         otherwise
-            set(gcf, 'position', [687   134   658   543]);
+            bsSetPosition(0.34, 0.45);
     end
 end
 
@@ -136,13 +136,13 @@ end
 function bsSetPreFigureSize(nPlot)
     switch nPlot
         case 1
-            set(gcf, 'position', [  336    98   847   295]);
+            bsSetPosition(0.44, 0.27);
         case 2
-            set(gcf, 'position', [  336    98   847   521]);
+            bsSetPosition(0.44, 0.48);
         case 3
-            set(gcf, 'position', [   336    98   847   733]);
+            bsSetPosition(0.44, 0.68);
         otherwise
-            set(gcf, 'position', [336    42   847   953]);
+            bsSetPosition(0.44, 0.88);
     end
 end
 

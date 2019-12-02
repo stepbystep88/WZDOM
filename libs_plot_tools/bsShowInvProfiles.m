@@ -192,6 +192,17 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs)
 end
 
 function [profile, traceIds, wellPos] = bsExtractShowData(GShowProfileParam, profile, wellPos)
+
+    if length(unique(profile.inIds)) < length(unique(profile.crossIds))
+        traceIds = profile.crossIds;
+    else
+        traceIds = profile.inIds;
+    end
+    
+    if isempty(wellPos)
+        return;
+    end
+    
     left = min(wellPos) - GShowProfileParam.showLeftTrNumByWells;
     right = max(wellPos) + GShowProfileParam.showRightTrNumByWells;
     
@@ -209,15 +220,7 @@ function [profile, traceIds, wellPos] = bsExtractShowData(GShowProfileParam, pro
     profile.data = profile.data(:, left:right);
     profile.inIds = profile.inIds(:, left:right);
     profile.crossIds = profile.crossIds(:, left:right);
-    
-    if length(unique(profile.inIds)) < length(unique(profile.crossIds))
-        traceIds = profile.crossIds;
-    else
-        traceIds = profile.inIds;
-    end
-        
-    
-    
+    traceIds = traceIds(left:right);
 end
 
 function [nRow, nCol, loc, colorbar_pos] = setShareFigureSize(nProfile)
@@ -338,12 +341,17 @@ function [profileData, range, wellPos, wellData, wellTime] ...
 end
 
 function [wellPos, wellIndex] = bsFindWellLocation(wellLogs, inIds, crossIds)
+
+    wellPos = [];
+    wellIndex = [];
+    
+    if isempty(wellLogs)
+        return;
+    end
+    
     wells = cell2mat(wellLogs);
     wellInIds = [wells.inline];
     wellCrossIds = [wells.crossline];
-    
-    wellPos = [];
-    wellIndex = [];
     
     for i = 1 : length(inIds)
         for j = 1 : length(wellInIds)

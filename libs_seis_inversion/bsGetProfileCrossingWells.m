@@ -1,9 +1,5 @@
-function [inIds, crossIds] = bsGetProfileCrossingWells(GInvParam, wellLogs, method, isAlongCrossline, isCreateProfileData)
+function [inIds, crossIds] = bsGetProfileCrossingWells(GInvParam, wellLogs, method, isAlongCrossline)
 
-	if ~exist('isCreateProfileData', 'var')
-        isCreateProfileData = 0;
-    end
-    
     if ~exist('isAlongCrossline', 'var')
         isAlongCrossline = 1;
     end

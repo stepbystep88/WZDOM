@@ -19,11 +19,11 @@ function [newProfileData, minTime] = bsHorizonRestoreData(profileData, horizon, 
     newProfileData(:) = nan;
     
     for i = 1 : trNum
-        if isShowProgress && mod(i, 1000) == 0
+        if isShowProgress && mod(i, 10000) == 0
             % print information
-            fprintf('Restring data %d%%...\n', round(i/trNum*100));
+            fprintf('Fill data by horion information: %d%%...\n', round(i/trNum*100));
         end
-        newProfileData(poses(i):poses(i)+sampNum-1, i) = profileData(:, i);
+        newProfileData(poses(i)+1:poses(i)+sampNum, i) = profileData(:, i);
     end
     
 end

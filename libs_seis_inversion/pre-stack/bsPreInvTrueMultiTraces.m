@@ -38,11 +38,8 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
     
     invResults = cell(1, nMethod);
     % horizon of given traces
-    if GPreInvParam.isParallel
-        horizonTimes = bsCalcHorizonTimeParallel(usedTimeLine, inIds, crossIds, GPreInvParam.numWorkers);
-    else
-        horizonTimes = bsCalcHorizonTime(usedTimeLine, inIds, crossIds);
-    end
+    horizonTimes = bsCalcHorizonTime(usedTimeLine, inIds, crossIds, ...
+            GPreInvParam.isParallel, GPreInvParam.numWorkers);
     
     startTimes = horizonTimes - GPreInvParam.dt * GPreInvParam.upNum;
     
