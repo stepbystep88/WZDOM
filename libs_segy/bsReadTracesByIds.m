@@ -34,6 +34,10 @@ function [trData, GSegyInfo, trHeader] = bsReadTracesByIds(fileName, GSegyInfo, 
         crossId = crossIds(i);
         
         index = bsIndexOfTraceSetOnInIdAndCrossId(GSegyInfo, inId, crossId);
+        if index == -1
+            error('Trace inline=%d, crossline=%d can not be found in file %s', inIds(i), crossIds(i), fileName);
+        end
+            
         fseek(GSegyInfo.fid, 3600 + (index-1)*(240+GSegyInfo.volHeader.sizeTrace), -1);
         
         trHeader = bsReadTraceHeader(GSegyInfo);

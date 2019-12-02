@@ -41,7 +41,7 @@ function bsWriteTracesByRefFileAndIds(refFileName, dstfileName, GSegyInfo, trDat
         if index > 0
             bsWriteTrace(outSegyInfo, traceHeader, trDatas(:, i));
         else
-            error('Trace inline=%d, crossline=%d can not be found in file %s', inIds(i), crossIds(i), ref);
+            error('Trace inline=%d, crossline=%d can not be found in file %s', inIds(i), crossIds(i), refFileName);
         end
     end
     
