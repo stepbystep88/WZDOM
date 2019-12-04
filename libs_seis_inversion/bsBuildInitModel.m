@@ -16,7 +16,7 @@ function [inIds, crossIds, GInvParam] = bsBuildInitModel(GInvParam, timeLine, we
     addParameter(p, 'rangeInline', rangeInline);
     addParameter(p, 'rangeCrossline', rangeCrossline);
     addParameter(p, 'nPointsUsed', 4);
-    addParameter(p, 'p', 2);
+    addParameter(p, 'p', 1.2);
     
     p.parse(varargin{:});  
     options = p.Results;
@@ -125,11 +125,12 @@ function [isExist, GInvParam] = checkExists(GInvParam, type, dataIndex, options,
                 GInvParam.initModel.segyInfo = segyInfo;
         end
     end
+    GInvParam.initModel.mode = 'segy';
 end
     
 function dstFileName = bsGetDstFileName(type, options)
-    dstFileName = sprintf('%s/%s_%s_flitCoef_%.2f_inline_[%d_%d]_crossline_[%d_%d].sgy', ...
-        options.dstPath, type, options.title, options.filtCoef, ...
+    dstFileName = sprintf('%s/%s_%s_flitCoef_%.2f_p_%.2f_inline_[%d_%d]_crossline_[%d_%d].sgy', ...
+        options.dstPath, type, options.title, options.filtCoef, options.p, ...
         options.rangeInline(1), options.rangeInline(end), ...
         options.rangeCrossline(1), options.rangeCrossline(2));
 end

@@ -1,12 +1,16 @@
-function [inIds, crossIds] = bsGetProfileCrossingWells(GInvParam, wellLogs, method, isAlongCrossline)
+function [inIds, crossIds] = bsGetProfileCrossingWells(GInvParam, wellLogs, varargin)
 
-    if ~exist('isAlongCrossline', 'var')
-        isAlongCrossline = 1;
-    end
+    p = inputParser;
     
-    if ~exist('method', 'var') || isempty(method)
-        method = 'spline';
-    end
+    [rangeInline, rangeCrossline] = bsGetWorkAreaRangeByParam(GInvParam);
+    
+    addParameter(p, 'isAlongCrossline', 1);
+    addParameter(p, 'method', 'cubic');
+    addParameter(p, 'rangeInline', rangeInline);
+    addParameter(p, 'rangeCrossline', rangeCrossline);
+    
+    p.parse(varargin{:});  
+    options = p.Results;
     
     wells = cell2mat(wellLogs);
     wellInIds = [wells.inline];
@@ -14,10 +18,11 @@ function [inIds, crossIds] = bsGetProfileCrossingWells(GInvParam, wellLogs, meth
     nWell = length(wellLogs);
     
     % get the range of current work area
-    [rangeInline, rangeCrossline] = bsGetWorkAreaRangeByParam(GInvParam);
+    rangeInline = options.rangeInline;
+    rangeCrossline = options.rangeCrossline;
     
     if nWell == 1
-        if isAlongCrossline
+        if options.isAlongCrossline
             traceNum = rangeCrossline(2) - rangeCrossline(1) + 1;
             
             inIds = ones(1, traceNum) * wellInIds(1);
@@ -30,12 +35,12 @@ function [inIds, crossIds] = bsGetProfileCrossingWells(GInvParam, wellLogs, meth
             inIds = rangeInline(1) : rangeInline(2);
         end
     else
-        if isAlongCrossline
+        if options.isAlongCrossline
             [inIds, crossIds] = bsInterpolateALine(wellInIds, wellCrossIds, ...
-                rangeInline, rangeCrossline, method);
+                rangeInline, rangeCrossline, options.method);
         else
             [crossIds, inIds] = bsInterpolateALine(wellCrossIds, wellInIds, ...
-                rangeCrossline, rangeInline, method);
+                rangeCrossline, rangeInline, options.method);
         end
     end
 end

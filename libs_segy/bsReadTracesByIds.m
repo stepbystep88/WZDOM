@@ -45,7 +45,7 @@ function [trData, GSegyInfo] = bsReadTracesByIds(fileName, GSegyInfo, inIds, cro
             trHeader = bsReadTraceHeader(GSegyInfo);
             index = index + 1;
         else
-            warning('Trace inline=%d, crossline=%d can not be found in file %s', inIds(i), crossIds(i), refFileName);
+            warning('Trace inline=%d, crossline=%d can not be found in file %s', inIds(i), crossIds(i), fileName);
             continue;
         end
         

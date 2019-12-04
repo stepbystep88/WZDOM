@@ -27,7 +27,8 @@ function [filteredData, weightInfo] = bsNLMByRef(data, refData, varargin)
     p = inputParser;
     
     addParameter(p, 'searchOffset', 3);
-    addParameter(p, 'stride', [1 1]);
+    addParameter(p, 'stride', [1 1 1]);
+    addParameter(p, 'searchStride', [1 2 2]);
     addParameter(p, 'windowSize', 5);
     addParameter(p, 'nPointsUsed', 5);
     addParameter(p, 'weightInfo', []);
@@ -161,7 +162,7 @@ function [weights, index] = bsGetKNearestWeights3D(patches, n1, n2, n3, options)
     
     fprintf('Calculating the weight information...\n');
     p = options.p;
-    
+    searchStride = options.searchStride;
     
 %     if options.isParallel
 %         pbm = bsInitParforProgress(options.numWorkers, nPatches, 'Calculating horizon information', [], 0);
@@ -175,28 +176,28 @@ function [weights, index] = bsGetKNearestWeights3D(patches, n1, n2, n3, options)
         if mod(i, 2000) == 0
             fprintf('Calculating the weight information %.2f%%...\n', i/nPatches*100);
         end
-        [weights(:, i), index(:, i)] = bsGetIWeight3D(patches, normCoef, i, n1, n2, n3, N, K, -p);
+        [weights(:, i), index(:, i)] = bsGetIWeight3D(patches, normCoef, i, n1, n2, n3, N, K, -p, searchStride);
     end
 %     end
 end
 
-function [weight, index] = bsGetIWeight3D(patches, normCoef, i, n1, n2, n3, N, K, e)
+function [weight, index] = bsGetIWeight3D(patches, normCoef, i, n1, n2, n3, N, K, e, searchStride)
     [i1, i2, i3] = bsGetId3D(i, n1, n2, n3);
     
     D = inf((2*N+1)^2, 2);
     iter = 0;
 
-    for c1 = i1-N : i1+N
+    for c1 = i1-N : searchStride(1) : i1+N
         if c1<=0 || c1>n1
             continue;
         end
 
-        for c2 = i2-N : i2+N
+        for c2 = i2-N : searchStride(2) : i2+N
             if c2<=0 || c2>n2
                 continue;
             end
             
-            for c3 = i3-N : i3+N
+            for c3 = i3-N : searchStride(3) : i3+N
                 if c3<=0 || c3>n3 || (c2==i2 && c1==i1 && c3==i3)
                     continue;
                 end
@@ -292,30 +293,31 @@ function [weights, index] = bsGetKNearestWeights2D(patches, n1, n2, options)
     
     fprintf('Calculating the weight information...\n');
     p = options.p;
+    searchStride = options.searchStride;
     
     if options.isParallel
         parfor i = 1 : nPatches
-            [weights(:, i), index(:, i)] = bsGetIWeight2D(patches, normCoef, i, n1, n2, N, K, -p);
+            [weights(:, i), index(:, i)] = bsGetIWeight2D(patches, normCoef, i, n1, n2, N, K, -p, searchStride);
         end
     else
         for i = 1 : nPatches
-            [weights(:, i), index(:, i)] = bsGetIWeight2D(patches, normCoef, i, n1, n2, N, K, -p);
+            [weights(:, i), index(:, i)] = bsGetIWeight2D(patches, normCoef, i, n1, n2, N, K, -p, searchStride);
         end
     end
 end
 
-function [weight, index] = bsGetIWeight2D(patches, normCoef, i, n1, n2, N, K, e)
+function [weight, index] = bsGetIWeight2D(patches, normCoef, i, n1, n2, N, K, e, searchStride)
     [i1, i2] = bsGetId2D(i, n1, n2);
     
     D = inf((2*N+1)^2, 2);
     iter = 0;
 
-    for c1 = i1-N : i1+N
+    for c1 = i1-N : searchStride(1) : i1+N
         if c1<=0 || c1>n1
             continue;
         end
 
-        for c2 = i2-N : i2+N
+        for c2 = i2-N : searchStride(2) : i2+N
             if c2<=0 || c2>n2 || (c2==i2 && c1==i1)
                 continue;
             end
