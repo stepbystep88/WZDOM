@@ -10,7 +10,7 @@ function [inIds, crossIds, GInvParam] = bsBuildInitModel(GInvParam, timeLine, we
         = bsGetWorkAreaRangeByParam(GInvParam);
     
     addParameter(p, 'filtCoef', 0.1);
-    addParameter(p, 'title', bsGetCurentDateAsString());
+    addParameter(p, 'title', '');
     addParameter(p, 'prestack', 1);
     addParameter(p, 'dstPath', sprintf('%s/model/', GInvParam.modelSavePath));
     addParameter(p, 'rangeInline', rangeInline);
