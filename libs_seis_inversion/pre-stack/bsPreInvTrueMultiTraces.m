@@ -42,10 +42,6 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
     % horizon of given traces
     horizonTimes = bsGetHorizonTime(usedTimeLine, inIds, crossIds, ...
             GPreInvParam.isParallel, GPreInvParam.numWorkers);
-    
-    if GPreInvParam.isSmoothHorizon 
-        horizonTimes = bsButtLowPassFilter(horizonTimes, 0.1);
-    end
         
     startTimes = horizonTimes - GPreInvParam.dt * GPreInvParam.upNum;
     

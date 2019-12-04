@@ -25,6 +25,7 @@ function bsShowPreInvProfiles(GPreInvParam, GShowProfileParam, invResults, wellL
                 end
             end
             bsShowInvProfiles(GPreInvParam, GShowProfileParam, profiles, wellLogs, timeLine);
+            set(gcf, 'position', [96          54        1565         870]);
         end
         
     else

@@ -7,10 +7,18 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
     nProfile = length(profiles);
     GPlotParam = GShowProfileParam.plotParam;
     isSameType = bsCheckIsSameType(profiles);
+    nHorizon = length(timeLine);
+    
+    if nProfile < 1
+        return;
+    end
+    
+    % get horizon information
+    horizons = bsGetHorizons();
+    newHorizons = [];
     
     figure;
     % set the screen size
-    
     if isSameType
         [nRow, nCol, loc, colorbar_pos] = setShareFigureSize(nProfile);
     else
@@ -26,7 +34,7 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
         
         % change the name
         profile.name = sprintf('(%s) %s', 'a'+iProfile-1, profile.name);
-        [attName, range] = bsShowOneProfile(profile, timeLine, isSameType);
+        [attName, range] = bsShowOneProfile(profile, isSameType);
         
         if mod(iProfile, nCol) ~= 1 && nCol ~= 1
             set(gca, 'ylabel', []);
@@ -43,6 +51,24 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
     
     if isSameType
         bsShowShareColorbar();
+    end
+    
+    function horizons = bsGetHorizons()
+        if isfield(GShowProfileParam, 'isShowHorizon') ...
+                && GShowProfileParam.isShowHorizon
+
+            inIds = profiles{1}.inIds;
+            crossIds = profiles{1}.crossIds;
+            horizons = zeros(nHorizon, length(inIds));
+
+            for i = 1 : nHorizon
+                horizons(i, :) = bsGetHorizonTime(timeLine{i}, ...
+                    inIds, crossIds, GInvParam.isParallel, GInvParam.numWorkers);
+            end
+        else
+            horizons = [];
+        end
+        
     end
     
     function bsShowShareColorbar()
@@ -66,7 +92,7 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
 %         gtext(attName, 'fontsize', GPlotParam.fontsize,'fontweight', 'bold', 'fontname', GPlotParam.fontname);
         
     % show one profile
-    function [attName, range] = bsShowOneProfile(profile, timeLine, isSameColorbar)
+    function [attName, range] = bsShowOneProfile(profile, isSameColorbar)
         
         fprintf('Showing the %s profile of %s...\n', upper(profile.type), profile.name);
         wellPos = [];
@@ -128,7 +154,7 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
                 attName = 'Density g/cm^3';
             
             case {'vp_vs', 'vpvs_ratio'}
-                attName = 'Ratio';
+                attName = 'Vp/Vs ratio';
                 range = GShowProfileParam.rangeVP_VS;
                 
             case {'possion'}
@@ -171,11 +197,13 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
                 profile.horizon, ...
                 traceIds, ...
                 GInvParam.upNum, ...
-                GInvParam.dt);
+                GInvParam.dt, ...
+                [], ...
+                GInvParam.isParallel);
             
         
-        newProfileData = bsShowHorizonPartData(GInvParam, GShowProfileParam, profile, timeLine, ...
-                traceIds, newProfileData, newTraceIds, newDt, minTime);    
+        [newProfileData, newHorizons, minTime] = bsShowHorizonPartData(GShowProfileParam, horizons, ...
+                traceIds, newProfileData, newTraceIds, newHorizon, newHorizons, newDt, minTime);    
 
         % replace the traces that are near by well location as welllog data
         newProfileData = bsReplaceWellLocationData(GShowProfileParam, ...
@@ -193,7 +221,7 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
         % show the filled data by using imagesc
         bsShowHorizonedData(GShowProfileParam, ...
             newProfileData, ...
-            newHorizon, minTime, newDt, profile.name, ...
+            newHorizons, minTime, newDt, profile.name, ...
             newTraceIds, range, GShowProfileParam.dataColorTbl);
         
         % set attribute name of colorbar
@@ -208,35 +236,91 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
     end
 end
 
-function newProfileData = bsShowHorizonPartData(GInvParam, GShowProfileParam, profile, timeLine, ...
-    traceIds, newProfileData, newTraceIds, newDt, minTime)
+function [newProfileData, newHorizons, minTime] = bsShowHorizonPartData(GShowProfileParam, horizons, ...
+    traceIds, newProfileData, newTraceIds, newHorizon, newHorizons, newDt, minTime)
 
-    if ~isfield(GShowProfileParam, 'isOnlyShowHorizonPart') ...
-            || ~GShowProfileParam.isOnlyShowHorizonPart
-        return;
-    end
-    
-    nHorizon = 2;
-    horizons = zeros(nHorizon, length(traceIds));
-    newHorizons = zeros(nHorizon, length(newTraceIds));
+    mode = lower(GShowProfileParam.showPartVert.mode);
     [sampNum, nTrace] = size(newProfileData);
-    horizonIds = GShowProfileParam.showHorizonIds;
-    times = cell(1, 2);
     
-    time = repmat(((0:sampNum-1)*newDt)', 1, nTrace) + minTime;
-    
-    % get horizons
-    for i = 1 : nHorizon
-        horizons(i, :) = bsGetHorizonTime(timeLine{horizonIds(i)}, ...
-            profile.inIds, profile.crossIds, GInvParam.isParallel, GInvParam.numWorkers);
-        newHorizons(i, :) = interp1(traceIds, horizons(i, :), newTraceIds, 'spline');
-        times{i} = repmat(newHorizons(i, :), sampNum, 1);
+    if (GShowProfileParam.isShowHorizon ...
+            || strcmp(mode, 'in_2_horizons') ...
+            || strcmp(mode, 'in2horizons')) && isempty(newHorizons)
+        nHorizon = size(horizons, 1);
+        newHorizons = zeros(nHorizon, nTrace);
+        
+        for i = 1 : nHorizon
+            newHorizons(i, :) = interp1(traceIds, horizons(i, :), newTraceIds, 'spline');
+        end
     end
     
-    index = time<times{1} | time>times{2};
-    newProfileData(index) = nan;
+    switch mode
+        case {'in_2_horizons', 'in2horizons'}
+            horizonIds = GShowProfileParam.showPartVert.horizonIds;
+            
+            if isempty(horizonIds)
+                error("When GShowProfileParam.showPartVert.mode is 'in_2_horizons' or 'in2horizons', ...GShowProfileParam.showPartVert.horizonIds can not be empty.");
+            end
+            
+            time = repmat(((0:sampNum-1)*newDt)', 1, nTrace) + minTime;
+
+            % get horizons
+            time1 = repmat(newHorizons(horizonIds(1), :), sampNum, 1);
+            time2 = repmat(newHorizons(horizonIds(2), :), sampNum, 1);
+
+            index = time<time1 | time>time2;
+            newProfileData(index) = nan;
+            
+            index = sum(index, 2) / nTrace;
+            [newProfileData, minTime] = bsSetNanDataAsEmpty(newProfileData, index, minTime, newDt);
+        case {'up_down_time', 'updowntime'}
+            [sampNum, nTrace] = size(newProfileData);
+            time = repmat(((0:sampNum-1)*newDt)', 1, nTrace) + minTime;
+            
+            tmp = repmat(newHorizon, sampNum, 1);
+            time1 = tmp - GShowProfileParam.showPartVert.upTime;
+            time2 = tmp + GShowProfileParam.showPartVert.downTime;
+            index = time < time1 | time > time2;
+            newProfileData(index) = nan;
+            [newProfileData, minTime] = bsSetNanDataAsEmpty(newProfileData, index, minTime, newDt);
+        case {'off'}
+         
+        otherwise
+            validatestring(mode, ...
+                {'in_2_horizons', 'in2horizons', 'off', 'up_down_time', 'updowntime'})
+    end
+    
 end
 
+function [newProfileData, minTime] = bsSetNanDataAsEmpty(newProfileData, index, minTime, newDt)
+    sampNum = length(index);
+    sPos = 0;
+    ePos = sampNum+1;
+    
+    for i = 1 : sampNum
+        if index(i) == 1
+            sPos = i;
+        else
+            break;
+        end
+    end
+    
+    for i = 1 : sampNum
+        if index(sampNum - i + 1) == 1
+            ePos = sampNum - i + 1;
+        else
+            break;
+        end
+    end
+    
+    sPos = sPos - 5;
+    ePos = ePos + 5;
+    
+    minTime = minTime + newDt * sPos;
+    newProfileData(ePos+1:end, :) = [];
+    newProfileData(1:sPos, :) = [];
+    
+end
+        
 function [profile, traceIds, wellPos] = bsExtractShowData(GShowProfileParam, profile, wellPos)
 
     if length(unique(profile.inIds)) < length(unique(profile.crossIds))
@@ -479,7 +563,7 @@ end
 
 function [newProfileData, newDt, newTraceIds, newHorizon, minTime] = bsReScaleAndRestoreData(...
     scaleFactor, profileData, horizon, traceIds, ...
-    upNum, dt, minTime)
+    upNum, dt, minTime, isParallel)
 
     scaleFactor = round(scaleFactor);
     [sampNum, traceNum] = size(profileData);
@@ -488,7 +572,7 @@ function [newProfileData, newDt, newTraceIds, newHorizon, minTime] = bsReScaleAn
     newTraceIds = linspace(traceIds(1), traceIds(end), traceNum * scaleFactor);
     
     time0 = horizon - upNum * dt;
-    if ~exist('minTime', 'var')
+    if ~exist('minTime', 'var') || isempty(minTime)
         minTime = min(time0) - 5 * dt;
     end
     maxTime = max(time0) + sampNum * dt + 5 * dt;
@@ -504,12 +588,24 @@ function [newProfileData, newDt, newTraceIds, newHorizon, minTime] = bsReScaleAn
         + repmat(time0, sampNum, 1);
     newSampNum = length(newT);
     
-    for j = 1 : traceNum
-        for i = 1 : newSampNum
-            ti = newT(i);
+    if isParallel
+        parfor j = 1 : traceNum
+            for i = 1 : newSampNum
+                ti = newT(i);
 
-            if ti >= time(1, j) && ti<= time(sampNum, j)
-                Z(i, j) = bsCalVal(ti, time(:, j), profileData(:, j));
+                if ti >= time(1, j) && ti<= time(sampNum, j)
+                    Z(i, j) = bsCalVal(ti, time(:, j), profileData(:, j));
+                end
+            end
+        end
+    else
+        for j = 1 : traceNum
+            for i = 1 : newSampNum
+                ti = newT(i);
+
+                if ti >= time(1, j) && ti<= time(sampNum, j)
+                    Z(i, j) = bsCalVal(ti, time(:, j), profileData(:, j));
+                end
             end
         end
     end
