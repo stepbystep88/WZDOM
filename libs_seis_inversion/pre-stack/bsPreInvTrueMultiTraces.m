@@ -37,10 +37,16 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
     end
     
     invResults = cell(1, nMethod);
+    
+    
     % horizon of given traces
-    horizonTimes = bsCalcHorizonTime(usedTimeLine, inIds, crossIds, ...
+    horizonTimes = bsGetHorizonTime(usedTimeLine, inIds, crossIds, ...
             GPreInvParam.isParallel, GPreInvParam.numWorkers);
     
+    if GPreInvParam.isSmoothHorizon 
+        horizonTimes = bsButtLowPassFilter(horizonTimes, 0.1);
+    end
+        
     startTimes = horizonTimes - GPreInvParam.dt * GPreInvParam.upNum;
     
     for i = 1 : nMethod
@@ -130,7 +136,7 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
                                 iSegyInfo, ...
                                 inIds, crossIds, startTimes, sampNum, GPreInvParam.dt);
                         else
-                            [data{iFile}, ~, ~] = bsReadTracesByIds(...
+                            [data{iFile}, ~] = bsReadTracesByIds(...
                                 loadInfo.fileName{iFile}, ...
                                 iSegyInfo, ...
                                 inIds, crossIds, startTimes, sampNum, GPreInvParam.dt);

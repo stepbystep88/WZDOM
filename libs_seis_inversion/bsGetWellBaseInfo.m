@@ -1,4 +1,4 @@
-function [inline, crossline, time] = bsCalcWellBaseInfo(timeLine, X, Y, xId, yId, inId, crossId, timeId)
+function [inline, crossline, time] = bsGetWellBaseInfo(timeLine, X, Y, xId, yId, inId, crossId, timeId)
 %% Find the nearest inline, crossline, and time information of given X and Y coordinates
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
 % Programming dates: Nov 2019

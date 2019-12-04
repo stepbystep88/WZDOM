@@ -18,7 +18,7 @@ function [invVals, model, outputs] = bsPreInvTrueWell(GPreInvParam, wellInfo, ti
 % -------------------------------------------------------------------------
 
     sampNum = GPreInvParam.upNum + GPreInvParam.downNum;
-    [~, ~, horizonTime] = bsCalcWellBaseInfo(timeLine{GPreInvParam.usedTimeLineId}, ...
+    [~, ~, horizonTime] = bsGetWellBaseInfo(timeLine{GPreInvParam.usedTimeLineId}, ...
         wellInfo.inline, wellInfo.crossline, 1, 2, 1, 2, 3);
     
     % obtain target welllog data

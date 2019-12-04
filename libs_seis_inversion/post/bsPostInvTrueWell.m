@@ -17,7 +17,7 @@ function [invVals, outputs] = bsPostInvTrueWell(GPostInvParam, wellInfo, timeLin
 % -------------------------------------------------------------------------
 
 %     sampNum = GPostInvParam.upNum + GPostInvParam.downNum;
-    [~, ~, horizonTime] = bsCalcWellBaseInfo(timeLine{GPostInvParam.usedTimeLineId}, ...
+    [~, ~, horizonTime] = bsGetWellBaseInfo(timeLine{GPostInvParam.usedTimeLineId}, ...
         wellInfo.inline, wellInfo.crossline, 1, 2, 1, 2, 3);
     
     % obtain target welllog data based on horizon information

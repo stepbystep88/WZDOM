@@ -8,7 +8,7 @@ function [GInvParam, postSeisData, horizon] = bsPrepareForExtractingWavelet(GInv
     crossIds = [wells.crossline];
     
     % horizon of the traces at well location
-    horizon = bsCalcHorizonTime(usedTimeLine, inIds, crossIds);
+    horizon = bsGetHorizonTime(usedTimeLine, inIds, crossIds);
     startTime = horizon - GInvParam.upNum * dt;
     % read seismic data
     postSeisData = bsGetPostSeisData(GInvParam, inIds, crossIds, startTime, sampNum-1);

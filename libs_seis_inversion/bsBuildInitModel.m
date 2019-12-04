@@ -1,4 +1,4 @@
-function [inIds, crossIds] = bsBuildInitModel(GInvParam, timeLine, wellLogs, varargin)
+function [inIds, crossIds, GInvParam] = bsBuildInitModel(GInvParam, timeLine, wellLogs, varargin)
 %% Build initial model and save the result as segy file
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
 % Programming dates: Dec 2019
@@ -15,24 +15,13 @@ function [inIds, crossIds] = bsBuildInitModel(GInvParam, timeLine, wellLogs, var
     addParameter(p, 'dstPath', sprintf('%s/model/', GInvParam.modelSavePath));
     addParameter(p, 'rangeInline', rangeInline);
     addParameter(p, 'rangeCrossline', rangeCrossline);
-    addParameter(p, 'nMostUseWells', 4);
-    addParameter(p, 'p', -2);
+    addParameter(p, 'nPointsUsed', 4);
+    addParameter(p, 'p', 2);
     
     p.parse(varargin{:});  
     options = p.Results;
     
     [inIds, crossIds] = bsGetCDPsByRange(options.rangeInline, options.rangeCrossline);
-    
-    wells = cell2mat(wellLogs);
-    wellInIds = [wells.inline];
-    wellCrossIds = [wells.crossline];
-    
-    usedTimeLine = timeLine{GInvParam.usedTimeLineId};
-    wellHorizonTimes = bsCalcHorizonTime(usedTimeLine, ...
-        wellInIds, wellCrossIds);
-    horizonTimes = bsCalcHorizonTime(usedTimeLine, inIds, crossIds, ...
-            GInvParam.isParallel, GInvParam.numWorkers);
-        
     assert(length(inIds) == length(crossIds),...
         'The length of inIds must be the same as that of crossIds.');
     
@@ -47,8 +36,24 @@ function [inIds, crossIds] = bsBuildInitModel(GInvParam, timeLine, wellLogs, var
         type = {'ip'};
     end
     
+    [isExist, GInvParam] = checkExists(GInvParam, type, dataIndex, options, segyInfo);
+    if isExist
+        return;
+    end
+    
+    wells = cell2mat(wellLogs);
+    wellInIds = [wells.inline];
+    wellCrossIds = [wells.crossline];
+    
+    usedTimeLine = timeLine{GInvParam.usedTimeLineId};
+    wellHorizonTimes = bsGetHorizonTime(usedTimeLine, ...
+        wellInIds, wellCrossIds);
+    horizonTimes = bsGetHorizonTime(usedTimeLine, inIds, crossIds, ...
+            GInvParam.isParallel, GInvParam.numWorkers);
+        
+    % calculate the weight information
     [weights, indexies] = bsGetWeightByIDW(inIds, crossIds, ...
-        wellInIds, wellCrossIds, options.nMostUseWells, -options.p);
+        wellInIds, wellCrossIds, options);
     nTrace = length(inIds);
     res.inIds = inIds;
     res.crossIds = crossIds;
@@ -62,13 +67,14 @@ function [inIds, crossIds] = bsBuildInitModel(GInvParam, timeLine, wellLogs, var
         fprintf('Interpolating the %s data by calculated weights...\n', type{i});
         data = bsInterpolate3DData(nTrace, wellData, weights, indexies);
         
-        dstFileName = sprintf('%s/%s_%s_flitCoef_%.2f.sgy', ...
-            options.dstPath, type{i}, options.title, options.filtCoef);
-        
+        dstFileName = bsGetDstFileName(type{i}, options);
         bsWriteInvResultIntoSegyFile(res, data, fileName, segyInfo, dstFileName);
+        
     end
     
+    
 end
+    
 
 function wellData = bsGetWellData(GInvParam, wellLogs, wellHorizonTimes, dataIndex, filtCoef)
 
@@ -91,37 +97,45 @@ function wellData = bsGetWellData(GInvParam, wellLogs, wellHorizonTimes, dataInd
     end
 end
 
-function [weights, indexies] = bsGetWeightByIDW(inIds, crossIds, ...
-    wellInIds, wellCrossIds, nMostUseWells, e)
+function [isExist, GInvParam] = checkExists(GInvParam, type, dataIndex, options, segyInfo)
+    isExist = true;
+    for j = 1 : length(dataIndex)
 
-    nTrace = length(inIds);
-    
-    fprintf('Calculating the weight information...\n');
-    
-     % at most use 4 wells for interpolation
-    nUseWell = min(nMostUseWells, length(wellInIds));
-    indexies = zeros(nTrace, nUseWell);
-    weights = zeros(nUseWell, nTrace);
-    
-    for i = 1 : nTrace
-        D = sqrt((inIds(i)-wellInIds).^2 + (crossIds(i)-wellCrossIds).^2);
-        [~, index] = bsMinK(D, nUseWell); 
-        indexies(i, :) = index';
-        
-        [minD, minIndex] = min(D);
-        if minD == 0
-            weights(1, i) = 1;
+        dstFileName = bsGetDstFileName(type{j}, options);
+
+        if exist(dstFileName, 'file')
+            warning('Initial model %s exists already!', dstFileName);
         else
-            weights(:, i) = D(index).^e;
+            isExist = false;
         end
-        weights(:, i) = weights(:, i) / sum(weights(:, i));
-        
-        if mod(i, 10000) == 0
-            fprintf('Calculating the weight information of trace %d/%d...\n', i, nTrace);
+
+        % update GInvParam;
+        switch lower(type{j})
+            case 'vp'
+                GInvParam.initModel.vp.segyFileName = dstFileName;
+                GInvParam.initModel.vp.segyInfo = segyInfo;
+            case 'vs'
+                GInvParam.initModel.vs.segyFileName = dstFileName;
+                GInvParam.initModel.vs.segyInfo = segyInfo;
+            case 'density'  
+                GInvParam.initModel.rho.segyFileName = dstFileName;
+                GInvParam.initModel.rho.segyInfo = segyInfo;
+            case 'ip'
+                GInvParam.initModel.segyFileName = dstFileName;
+                GInvParam.initModel.segyInfo = segyInfo;
         end
     end
-    
 end
+    
+function dstFileName = bsGetDstFileName(type, options)
+    dstFileName = sprintf('%s/%s_%s_flitCoef_%.2f_inline_[%d_%d]_crossline_[%d_%d].sgy', ...
+        options.dstPath, type, options.title, options.filtCoef, ...
+        options.rangeInline(1), options.rangeInline(end), ...
+        options.rangeCrossline(1), options.rangeCrossline(2));
+end
+    
+
+
 
 function data = bsInterpolate3DData(nTrace, wellData, weights, indexies)
 
@@ -133,9 +147,6 @@ function data = bsInterpolate3DData(nTrace, wellData, weights, indexies)
         usedWellData = wellData(:, indexies(i, :));
         
         V = usedWellData * weight;
-        if i == 442
-            i;
-        end
         
         data(:, i) = V;
         

@@ -1,4 +1,4 @@
-function [horizonTimes] = bsCalcHorizonTime(usedTimeLine, inIds, crossIds, isParallel, numWorkers)
+function [horizonTimes] = bsGetHorizonTime(usedTimeLine, inIds, crossIds, isParallel, numWorkers)
 %% get the horizon of given traces
 
     if ~exist('isParallel', 'var')
@@ -18,10 +18,10 @@ function [horizonTimes] = bsCalcHorizonTime(usedTimeLine, inIds, crossIds, isPar
             
         parfor i = 1 : nTrace
             try
-                [~, ~, horizonTimes(i)] = bsCalcWellBaseInfo(usedTimeLine, ...
+                [~, ~, horizonTimes(i)] = bsGetWellBaseInfo(usedTimeLine, ...
                     inIds(i), crossIds(i), 1, 2, 1, 2, 3);
             catch
-                error('%d trace is failed!!!', i);
+                error('Trace %d is failed to calculate the horizon time!!!', i);
             end
 
             bsIncParforProgress(pbm, i, 10000);
@@ -30,10 +30,10 @@ function [horizonTimes] = bsCalcHorizonTime(usedTimeLine, inIds, crossIds, isPar
     else
         for i = 1 : nTrace
             try
-                [~, ~, horizonTimes(i)] = bsCalcWellBaseInfo(usedTimeLine, ...
+                [~, ~, horizonTimes(i)] = bsGetWellBaseInfo(usedTimeLine, ...
                     inIds(i), crossIds(i), 1, 2, 1, 2, 3);
             catch
-                error('%d trace is failed!!!', i);
+                error('Trace %d is failed to calculate the horizon time!!!', i);
             end
 
         end

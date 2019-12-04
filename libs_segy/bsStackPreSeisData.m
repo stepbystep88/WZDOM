@@ -9,7 +9,9 @@ function postSeisData = bsStackPreSeisData(fileName, GSegyInfo, inIds, crossIds,
     gathers = bsReadGathersByIds(fileName, GSegyInfo, inIds, crossIds, startTime, sampNum, dt);
     
     for i = 1 : trNum
-        postSeisData(:, i) = mean(gathers{i}.data, 2);
+        if ~isempty(gathers{i}.data)
+            postSeisData(:, i) = mean(gathers{i}.data, 2);
+        end
     end
     
 end

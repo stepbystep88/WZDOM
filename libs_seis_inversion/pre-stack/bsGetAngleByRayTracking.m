@@ -1,4 +1,4 @@
-function [meanTheta, angleData] = bsCalcAngleByRayTracking(GPreInvParam, tDepth, tVp, tVs, tRho)
+function [meanTheta, angleData] = bsGetAngleByRayTracking(GPreInvParam, tDepth, tVp, tVs, tRho)
 %% ray tracking
     
     offsetInteval = (GPreInvParam.offsetMax - GPreInvParam.offsetMin) / GPreInvParam.newSuperTrNum;

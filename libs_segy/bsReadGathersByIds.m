@@ -15,28 +15,38 @@ function gathers = bsReadGathersByIds(fileName, GSegyInfo, inIds, crossIds, star
 
     GSegyInfo = bsReadVolHeader(fileName, GSegyInfo);
     if nargin > 4
-        startPos = bsCalcT0Pos(GSegyInfo, startTime, dt);
+        startPos = bsGetT0Pos(GSegyInfo, startTime, dt);
     end
     
     [~, pointNum] = size(inIds);
     gathers = cell(1, pointNum);
+    trHeader = [];
     
     for i = 1 : pointNum
+        
+        if mod(i, 1000) == 0
+            % print information
+            fprintf('Reading %d%% data from segy file %s...\n', round(i/pointNum*100), fileName);
+        end
+        
         inId = inIds(i);
         crossId = crossIds(i);
-        index = bsIndexOfTraceSetOnInIdAndCrossId(GSegyInfo, inId, crossId);
         
-        data = [];
-        offsets = [];
-        
-        if(index == -1)
-            warning("The trace of inline=%d and cossline=%d doesn't exist in the file %s!\n", ...
-                inId, crossId, fileName);
-            continue;
+        if ~isempty(trHeader) && trHeader.inId == inId && trHeader.crossId == crossId
+        else
+            index = bsIndexOfTraceSetOnInIdAndCrossId(GSegyInfo, inId, crossId);
+            if(index == -1)
+                warning("The trace of inline=%d and cossline=%d doesn't exist in the file %s!\n", ...
+                    inId, crossId, fileName);
+                continue;
+            end
         end
         
         % skip to the first trace matching inId and crossId
         fseek(GSegyInfo.fid, 3600 + (index-1)*(240+GSegyInfo.volHeader.sizeTrace), -1);
+            
+        data = [];
+        offsets = [];
         
         while (index <= GSegyInfo.volHeader.traceNum)
             index = index + 1;
@@ -45,6 +55,7 @@ function gathers = bsReadGathersByIds(fileName, GSegyInfo, inIds, crossIds, star
             
             % this is the next gather
             if (trHeader.inId ~= inId || trHeader.crossId ~= crossId)  
+                index = index - 1;
                 break;
             end
             

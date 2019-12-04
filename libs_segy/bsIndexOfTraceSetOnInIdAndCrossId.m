@@ -1,4 +1,4 @@
-function [index] = bsIndexOfTraceSetOnInIdAndCrossId(GSegyInfo, inId, crossId)
+function [index, returnHeader] = bsIndexOfTraceSetOnInIdAndCrossId(GSegyInfo, inId, crossId, index)
 % find the trace index of a segy file by inline id and crossline id
 %
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
@@ -12,15 +12,26 @@ function [index] = bsIndexOfTraceSetOnInIdAndCrossId(GSegyInfo, inId, crossId)
 %
 % Output
 % index     the index of a trace matching the input inline and crossline ids
-
-
+    sizeTrace = GSegyInfo.volHeader.sizeTrace+240;
+    returnHeader = [];
+    
+    % check whether index work
+    if nargin > 3
+        offset = 3600 + sizeTrace*(index-1);    
+        fseek(GSegyInfo.fid, offset, -1);                 
+        returnHeader = bsReadTraceHeader(GSegyInfo);
+        if(returnHeader.crossId==crossId && returnHeader.inId==inId)
+            return;
+        else
+            returnHeader = [];
+        end
+    end
+    
     fseek(GSegyInfo.fid, 3600, -1);       % skip 3600 bytes
     
     startPos = 1;
     endPos = GSegyInfo.volHeader.traceNum;
     index = floor((startPos+endPos) / 2);
-
-    sizeTrace = GSegyInfo.volHeader.sizeTrace+240;        
 
     while(startPos~=index && index~=endPos)
         % bisearch

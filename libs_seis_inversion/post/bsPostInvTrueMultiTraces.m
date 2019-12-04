@@ -38,11 +38,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
     
     invResults = cell(1, nMethod);
     % horizon of given traces
-    if GPostInvParam.isParallel
-        horizonTimes = bsCalcHorizonTimeParallel(usedTimeLine, inIds, crossIds, GPostInvParam.numWorkers);
-    else
-        horizonTimes = bsCalcHorizonTime(usedTimeLine, inIds, crossIds);
-    end
+    horizonTimes = bsGetHorizonTime(usedTimeLine, inIds, crossIds, GPostInvParam.isParallel, GPostInvParam.numWorkers);
     
     startTimes = horizonTimes - GPostInvParam.dt * GPostInvParam.upNum;
     
@@ -73,7 +69,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
                     
                 case 'segy'
                     % from sgy file
-                    [data, loadInfo.segyInfo, ~] = bsReadTracesByIds(...
+                    [data, loadInfo.segyInfo] = bsReadTracesByIds(...
                         loadInfo.fileName, ...
                         loadInfo.segyInfo, ...
                         inIds, crossIds, startTimes, sampNum, GPostInvParam.dt);

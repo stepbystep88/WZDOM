@@ -1,4 +1,4 @@
-function [trData, GSegyInfo, trHeader] = bsReadTracesByIds(fileName, GSegyInfo, inIds, crossIds, startTime, sampNum, dt)
+function [trData, GSegyInfo] = bsReadTracesByIds(fileName, GSegyInfo, inIds, crossIds, startTime, sampNum, dt)
 %% read traces from a segy file with given inline and crossline ids
 %
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
@@ -14,33 +14,41 @@ function [trData, GSegyInfo, trHeader] = bsReadTracesByIds(fileName, GSegyInfo, 
 % -------------------------------------------------------------------------
             
     GSegyInfo = bsReadVolHeader(fileName, GSegyInfo);        
+    sizeTrace = GSegyInfo.volHeader.sizeTrace+240;    
 
     [~, trNum] = size(inIds);                            
     
     if nargin > 4
         trData = zeros(sampNum, trNum);
         % the start position of a trace that we extract the data from
-        startPos = bsCalcT0Pos(GSegyInfo, startTime, dt);
+        startPos = bsGetT0Pos(GSegyInfo, startTime, dt);
     else
         trData = zeros(GSegyInfo.volHeader.sampNum, trNum);
     end
 
 %     volHeader.dataForm = 5;
     
-    trHeader = [];
     for i = 1 : trNum
-        
-        inId = inIds(i);
-        crossId = crossIds(i);
-        
-        index = bsIndexOfTraceSetOnInIdAndCrossId(GSegyInfo, inId, crossId);
-        if index == -1
-            error('Trace inline=%d, crossline=%d can not be found in file %s', inIds(i), crossIds(i), fileName);
+        if mod(i, 10000) == 0
+            % print information
+            fprintf('Reading %d%% data from segy file %s...\n', round(i/trNum*100), fileName);
         end
-            
-        fseek(GSegyInfo.fid, 3600 + (index-1)*(240+GSegyInfo.volHeader.sizeTrace), -1);
         
-        trHeader = bsReadTraceHeader(GSegyInfo);
+        if i == 1
+            index = bsIndexOfTraceSetOnInIdAndCrossId(GSegyInfo, inIds(i), crossIds(i));
+        else
+            index = bsIndexOfTraceSetOnInIdAndCrossId(GSegyInfo, inIds(i), crossIds(i), index);
+        end
+        
+        if index > 0
+            fseek(GSegyInfo.fid, 3600+sizeTrace*(index-1), -1);
+            trHeader = bsReadTraceHeader(GSegyInfo);
+            index = index + 1;
+        else
+            warning('Trace inline=%d, crossline=%d can not be found in file %s', inIds(i), crossIds(i), refFileName);
+            continue;
+        end
+        
         data = bsReadTraceData(GSegyInfo);
 
         if nargin > 4
@@ -71,5 +79,7 @@ function [trData, GSegyInfo, trHeader] = bsReadTracesByIds(fileName, GSegyInfo, 
         
     end
 
-    fclose(GSegyInfo.fid);                                        
+    fclose(GSegyInfo.fid);    
+    
+
 end
