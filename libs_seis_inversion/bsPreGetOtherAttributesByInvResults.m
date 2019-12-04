@@ -33,18 +33,5 @@ function invResults = bsPreGetOtherAttributesByInvResults(invResults)
     
 end
 
-function vp_vs = bsGetVp_Vs(vp, vs)
-    vp_vs = vp ./ vs;
-end
 
-function possion = bsGetPossion(vp, vs)
-    vp_vs = (vp ./ vs).^2;
-    possion = (0.5*vp_vs - 1)./(vp_vs - 1);
-end
 
-function str = bsJointStr(strs, dchar)
-    str = '';
-    for i = 1 : length(strs)
-        str = [str, dchar, strs{i}];
-    end
-end
