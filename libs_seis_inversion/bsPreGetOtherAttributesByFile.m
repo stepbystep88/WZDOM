@@ -1,4 +1,4 @@
-function bsPreGetOtherAttributeVolumes(GPreInvParam, timeLine, loadInfo)
+function bsPreGetOtherAttributesByFile(GPreInvParam, timeLine, loadInfo)
     nFile = length(loadInfo.fileName);
     
     % horion of the whole volume
