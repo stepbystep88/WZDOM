@@ -165,7 +165,7 @@ function [weights, index] = bsGetKNearestWeights3D(patches, n1, n2, n3, options)
     searchStride = options.searchStride;
     
     if options.isParallel
-        pbm = bsInitParforProgress(options.numWorkers, nPatches, 'Calculating the weight information', [], 0);
+        pbm = bsInitParforProgress(options.numWorkers, nPatches, 'Calculating the weight information', [], 1);
         
         parfor i = 1 : nPatches
             [weights(:, i), index(:, i)] = bsGetIWeight3D(patches, normCoef, i, n1, n2, n3, N, K, -p, searchStride);
