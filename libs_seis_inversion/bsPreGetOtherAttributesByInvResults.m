@@ -1,8 +1,7 @@
-function invResults = bsPreGetOtherAttributesByInvResults(invResults)
+function [invResults, GInvParam, wellLogs] = bsPreGetOtherAttributesByInvResults(invResults, GInvParam, wellLogs)
     
     vp = [];
     vs = [];
-    rho = [];
     
     for i = 1 : length(invResults)
         profile = invResults{i};
@@ -29,6 +28,26 @@ function invResults = bsPreGetOtherAttributesByInvResults(invResults)
             profile.type{nData+2} = 'possion';
         end
         invResults{i} = profile;
+    end
+    
+    if nargin > 1
+        for i = 1 : length(wellLogs)
+            wellData = wellLogs{i}.wellLog;
+            vpIndex = GInvParam.indexInWellData.vp;
+            vsIndex = GInvParam.indexInWellData.vs;
+            vp = wellData(:, vpIndex);
+            vs = wellData(:, vsIndex);
+            vp_vs = bsGetVp_Vs(vp, vs);
+            possion = bsGetPossion(vp, vs);
+            wellLogs{i}.wellLog = [wellData, vp_vs, possion];
+        end
+        
+        nAtt = size(wellData, 2);
+        GInvParam.indexInWellData.vpvs_ratio = nAtt + 1;
+        GInvParam.indexInWellData.possion = nAtt + 2;
+    else
+        GInvParam = [];
+        wellLogs = [];
     end
     
 end

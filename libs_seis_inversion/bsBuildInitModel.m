@@ -41,6 +41,8 @@ function [inIds, crossIds, GInvParam] = bsBuildInitModel(GInvParam, timeLine, we
     if isExist
         return;
     end
+    mkdir(options.dstPath);
+    
     GInvParam.upNum = GInvParam.upNum + options.expandNum;
     GInvParam.downNum = GInvParam.downNum + options.expandNum;
     

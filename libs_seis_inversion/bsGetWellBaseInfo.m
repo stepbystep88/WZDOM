@@ -21,22 +21,17 @@ function [inline, crossline, time] = bsGetWellBaseInfo(timeLine, X, Y, xId, yId,
 % time      the time information of the target trace
 % -------------------------------------------------------------------------
 
-%     tic
-%     dist = sqrt( (timeLine(:, xId) - X).^2 + (timeLine(:,yId) - Y).^2 );
-%     [~, index] = min(dist);
-%     toc
-
     nCrossline = timeLine(end, yId) - timeLine(1, yId) + 1;
     index = (X - timeLine(1, xId) ) * nCrossline + (Y - timeLine(1, yId)) + 1;
         
-    if timeLine(index, xId) ~= X || timeLine(index, yId) ~= Y
+    if index<=0 || index>size(timeLine, 1) || timeLine(index, xId) ~= X || timeLine(index, yId) ~= Y
+        
         index = find(timeLine(:, xId) == X & timeLine(:, yId) == Y);
         if isempty(index)
-            dist = sqrt( (timeLine(:, xId) - X).^2 + (timeLine(:,yId) - Y).^2 );
+            dist = (timeLine(:, xId) - X).^2 + (timeLine(:,yId) - Y).^2;
             [~, index] = min(dist);
         end
     end
-    
     
     inline = timeLine(index, inId);
     crossline = timeLine(index, crossId);

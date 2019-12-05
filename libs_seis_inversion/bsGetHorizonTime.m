@@ -21,7 +21,7 @@ function [horizonTimes] = bsGetHorizonTime(usedTimeLine, inIds, crossIds, isPara
                 [~, ~, horizonTimes(i)] = bsGetWellBaseInfo(usedTimeLine, ...
                     inIds(i), crossIds(i), 1, 2, 1, 2, 3);
             catch
-                error('Trace %d is failed to calculate the horizon time!!!', i);
+                warning('Trace %d is failed to calculate the horizon time!!!', i);
             end
 
             bsIncParforProgress(pbm, i, 10000);
@@ -33,7 +33,7 @@ function [horizonTimes] = bsGetHorizonTime(usedTimeLine, inIds, crossIds, isPara
                 [~, ~, horizonTimes(i)] = bsGetWellBaseInfo(usedTimeLine, ...
                     inIds(i), crossIds(i), 1, 2, 1, 2, 3);
             catch
-                error('Trace %d is failed to calculate the horizon time!!!', i);
+                warning('Trace %d is failed to calculate the horizon time!!!', i);
             end
 
         end

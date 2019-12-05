@@ -95,83 +95,66 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
     function [attName, range] = bsShowOneProfile(profile, isSameColorbar)
         
         fprintf('Showing the %s profile of %s...\n', upper(profile.type), profile.name);
-        wellPos = [];
-        wellData = [];
-        wellTime = [];
-                
+        dataIndex = [];
+        scale = 1;
+        dataColorTbl = GShowProfileParam.dataColorTbl;
+        
         % data preprocessing base on the type of profile
         switch lower(profile.type)
             case 'ip'
                 
-                [profile.data, range, wellPos, wellData, wellTime] = bsGetRangeByType(...
-                    profile, ...
-                    wellLogs, ...
-                    GShowProfileParam.rangeIP, ...
-                    1000, ...
-                    GInvParam.indexInWellData.Ip, ...
-                    GInvParam.indexInWellData.time, ...
-                    GShowProfileParam.showWellFiltCoef);
-
+                range = GShowProfileParam.rangeIP;
+                scale = 1000;
+                dataIndex = GInvParam.indexInWellData.ip;
                 attName = 'Impedance (g/cm^3\cdotkm/s)';
                 
             case 'vp'
-                
-                [profile.data, range, wellPos, wellData, wellTime] = bsGetRangeByType(...
-                    profile, ...
-                    wellLogs, ...
-                    GShowProfileParam.rangeVP, ...
-                    1000, ...
-                    GInvParam.indexInWellData.vp, ...
-                    GInvParam.indexInWellData.time, ...
-                    GShowProfileParam.showWellFiltCoef);
-
+                range = GShowProfileParam.rangeVP;
+                scale = 1000;
+                dataIndex = GInvParam.indexInWellData.vp;
                 attName = 'V_P km/s';
                 
             case 'vs'
-                
-                [profile.data, range, wellPos, wellData, wellTime] = bsGetRangeByType(...
-                    profile, ...
-                    wellLogs, ...
-                    GShowProfileParam.rangeVS, ...
-                    1000, ...
-                    GInvParam.indexInWellData.vs, ...
-                    GInvParam.indexInWellData.time, ...
-                    GShowProfileParam.showWellFiltCoef);
-
+                range = GShowProfileParam.rangeVS;
+                scale = 1000;
+                dataIndex = GInvParam.indexInWellData.vs;
                 attName = 'V_S km/s';
                 
             case {'rho', 'density'}
-                
-                [profile.data, range, wellPos, wellData, wellTime] = bsGetRangeByType(...
-                    profile, ...
-                    wellLogs, ...
-                    GShowProfileParam.rangeRho, ...
-                    1, ...
-                    GInvParam.indexInWellData.rho, ...
-                    GInvParam.indexInWellData.time, ...
-                    GShowProfileParam.showWellFiltCoef);
-
+                range = GShowProfileParam.rangeRho;
+                dataIndex = GInvParam.indexInWellData.rho;
                 attName = 'Density g/cm^3';
             
             case {'vp_vs', 'vpvs_ratio'}
                 attName = 'Vp/Vs ratio';
                 range = GShowProfileParam.rangeVP_VS;
+                dataIndex = GInvParam.indexInWellData.vpvs_ratio;
                 
             case {'possion'}
                 attName = 'Possion ratio';
                 range = GShowProfileParam.rangePossion;
-                
+                dataIndex = GInvParam.indexInWellData.possion;
             case 'seismic'
                 attName = 'Seismic (Amplitude)';
 %                 [wellPos, ~] = bsFindWellLocation(wellLogs, profile.inIds, profile.crossIds);
                 range = GShowProfileParam.rangeSeismic;
-                
+                dataColorTbl = GShowProfileParam.seismicColorTbl;
             otherwise
                 validatestring({'seismic', 'ip', ...
                     'vp', 'vs', 'rho', 'density', ...
                     'vp_vs', 'vpvs_ratio', 'possion'})
         end
         
+        
+        [profile.data, range, wellPos, wellData, wellTime] = bsGetRangeByType(...
+                    profile, ...
+                    wellLogs, ...
+                    range, ...
+                    scale, ...
+                    dataIndex, ...
+                    GInvParam.indexInWellData.time, ...
+                    GShowProfileParam.showWellFiltCoef);
+                
         % smooth the horizon
         profile.horizon = bsButtLowPassFilter(profile.horizon, 0.1);
         
@@ -222,7 +205,7 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
         bsShowHorizonedData(GShowProfileParam, ...
             newProfileData, ...
             newHorizons, minTime, newDt, profile.name, ...
-            newTraceIds, range, GShowProfileParam.dataColorTbl);
+            newTraceIds, range, dataColorTbl);
         
         % set attribute name of colorbar
         if ~isSameColorbar
@@ -292,6 +275,7 @@ function [newProfileData, newHorizons, minTime] = bsShowHorizonPartData(GShowPro
 end
 
 function [newProfileData, minTime] = bsSetNanDataAsEmpty(newProfileData, index, minTime, newDt)
+    index = mean(index, 2);
     sampNum = length(index);
     sPos = 0;
     ePos = sampNum+1;
@@ -453,13 +437,23 @@ end
 function [profileData, range, wellPos, wellData, wellTime] ...
     = bsGetRangeByType(profile, wellLogs, range, scale, dataIndex, timeIndex, showWellFiltCoef)
     
+    
     profileData = profile.data;
-    profileData(profileData<=0) = nan;    
+%     profileData(profileData<=0) = nan;    
     profileData = profileData / scale;
 
-    range = range / scale;
-
+    if ~isempty(range)
+        range = range / scale;
+    end
+    
     [wellPos, wellIndex] = bsFindWellLocation(wellLogs, profile.inIds, profile.crossIds);
+    
+    if isempty(dataIndex)
+        wellData = [];
+        wellTime = [];
+        
+        return;
+    end
     
     [wellData, wellTime] = bsGetWellData(wellLogs, wellIndex, dataIndex, timeIndex, showWellFiltCoef);
     
@@ -631,9 +625,9 @@ function bsShowHorizonedData(GShowProfileParam, profileData, horizons, minTime, 
     
     if GShowProfileParam.isColorReverse
         colorTbl = flipud(colorTbl);
-        set(gcf, 'colormap', colorTbl);
+        set(gca, 'colormap', colorTbl);
     else
-        set(gcf, 'colormap', colorTbl);
+        set(gca, 'colormap', colorTbl);
     end
     
     set(h, 'AlphaData', ~isnan(profileData));

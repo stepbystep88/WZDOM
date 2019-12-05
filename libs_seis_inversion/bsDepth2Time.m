@@ -161,7 +161,12 @@ function [GInvParam, outputWelllogs, wavelet] = bsDepth2Time(GInvParam, timeLine
                 ylabel('Sample number');
             end
             
-            title(inputWelllogs{i}.name);
+            if isfield(inputWelllogs{i}, 'name')
+                title(inputWelllogs{i}.name);
+            elseif isfield(inputWelllogs{i}, 'wellName')
+                title(inputWelllogs{i}.wellName);
+            end
+            
             bsSetDefaultPlotSet(bsGetDefaultPlotSet());
         end
         

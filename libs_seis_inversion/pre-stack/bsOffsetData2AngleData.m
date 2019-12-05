@@ -1,7 +1,7 @@
 function [angleSeisData, angleData, superTrData] = bsOffsetData2AngleData(GPreInvParam, preData, offsets, depth, initVp, initVs, initRho)
     
     % get super gather from pre-stack CDP gather
-    [superTrData, offsetMax, offsetMin] = bsCalcSuperGather(preData, offsets, GPreInvParam.oldSuperTrNum);
+    [superTrData, offsetMax, offsetMin] = bsGetSuperGather(preData, offsets, GPreInvParam.oldSuperTrNum);
     
     % the last super traces is dropped
     superTrData = superTrData(:, 1:GPreInvParam.newSuperTrNum);
@@ -11,13 +11,13 @@ function [angleSeisData, angleData, superTrData] = bsOffsetData2AngleData(GPreIn
     GPreInvParam.offsetMin = offsetMin;
    
     % calculate the angle information 
-    [meanTheta, angleData] = bsCalcAngleByRayTracking(GPreInvParam, depth, initVp, initVs, initRho);
-    [angleIndex, angleCoef] = bsCalcAngleIndexAndCoef(meanTheta, angleData);
+    [meanTheta, angleData] = bsGetAngleByRayTracking(GPreInvParam, depth, initVp, initVs, initRho);
+    [angleIndex, angleCoef] = bsGetAngleIndexAndCoef(meanTheta, angleData);
     [angleSeisData] = bsOffset2Angle(angleIndex, angleCoef, superTrData, GPreInvParam.angleTrNum);
 
 end
 
-function [superTrData, offsetMax, offsetMin] = bsCalcSuperGather(preData, offsets, superTrNum)
+function [superTrData, offsetMax, offsetMin] = bsGetSuperGather(preData, offsets, superTrNum)
     offsetMax = max(offsets);
     offsetMin = min(offsets);
     
@@ -47,7 +47,7 @@ function [superTrData, offsetMax, offsetMin] = bsCalcSuperGather(preData, offset
     end
 end
 
-function [angleIndex, angleCoef] = bsCalcAngleIndexAndCoef(angle, angleData)
+function [angleIndex, angleCoef] = bsGetAngleIndexAndCoef(angle, angleData)
 
     sampNum = size(angle, 1);
     angleTrNum = length(angleData);

@@ -228,7 +228,7 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
                     = bsPreInvOneTrace(GPreInvParam, horizonTimes(iTrace), method, ...
                         inIds(iTrace), crossIds(iTrace), preModel, 0);
                 
-                bsIncParforProgress(pbm, iTrace, 50);
+                bsIncParforProgress(pbm, iTrace, 101);
             end
             
 
