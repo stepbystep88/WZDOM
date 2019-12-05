@@ -17,6 +17,7 @@ function [inIds, crossIds, GInvParam] = bsBuildInitModel(GInvParam, timeLine, we
     addParameter(p, 'rangeCrossline', rangeCrossline);
     addParameter(p, 'nPointsUsed', 4);
     addParameter(p, 'p', 1.2);
+    addParameter(p, 'expandNum', 30);
     
     p.parse(varargin{:});  
     options = p.Results;
@@ -40,6 +41,8 @@ function [inIds, crossIds, GInvParam] = bsBuildInitModel(GInvParam, timeLine, we
     if isExist
         return;
     end
+    GInvParam.upNum = GInvParam.upNum + options.expandNum;
+    GInvParam.downNum = GInvParam.downNum + options.expandNum;
     
     wells = cell2mat(wellLogs);
     wellInIds = [wells.inline];
@@ -72,6 +75,8 @@ function [inIds, crossIds, GInvParam] = bsBuildInitModel(GInvParam, timeLine, we
         
     end
     
+    GInvParam.upNum = GInvParam.upNum - options.expandNum;
+    GInvParam.downNum = GInvParam.downNum - options.expandNum;
     
 end
     

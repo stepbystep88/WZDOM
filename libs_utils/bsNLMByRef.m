@@ -164,21 +164,21 @@ function [weights, index] = bsGetKNearestWeights3D(patches, n1, n2, n3, options)
     p = options.p;
     searchStride = options.searchStride;
     
-%     if options.isParallel
-%         pbm = bsInitParforProgress(options.numWorkers, nPatches, 'Calculating horizon information', [], 0);
-%         
-%         parfor i = 1 : nPatches
-%             [weights(:, i), index(:, i)] = bsGetIWeight3D(patches, normCoef, i, n1, n2, n3, N, K, -p);
-%             bsIncParforProgress(pbm, i, 1000);
-%         end
-%     else
-    for i = 1 : nPatches
-        if mod(i, 2000) == 0
-            fprintf('Calculating the weight information %.2f%%...\n', i/nPatches*100);
+    if options.isParallel
+        pbm = bsInitParforProgress(options.numWorkers, nPatches, 'Calculating the weight information', [], 0);
+        
+        parfor i = 1 : nPatches
+            [weights(:, i), index(:, i)] = bsGetIWeight3D(patches, normCoef, i, n1, n2, n3, N, K, -p, searchStride);
+            bsIncParforProgress(pbm, i, 2000);
         end
-        [weights(:, i), index(:, i)] = bsGetIWeight3D(patches, normCoef, i, n1, n2, n3, N, K, -p, searchStride);
+    else
+        for i = 1 : nPatches
+            if mod(i, 2000) == 0
+                fprintf('Calculating the weight information %.2f%%...\n', i/nPatches*100);
+            end
+            [weights(:, i), index(:, i)] = bsGetIWeight3D(patches, normCoef, i, n1, n2, n3, N, K, -p, searchStride);
+        end
     end
-%     end
 end
 
 function [weight, index] = bsGetIWeight3D(patches, normCoef, i, n1, n2, n3, N, K, e, searchStride)
