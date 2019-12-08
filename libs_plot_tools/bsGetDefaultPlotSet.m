@@ -1,7 +1,7 @@
 function plotSet = bsGetDefaultPlotSet()
 
-    plotSet.linewidth = 2;
-    plotSet.fontsize = 12;
+    plotSet.linewidth = 1.5;
+    plotSet.fontsize = 9;
     plotSet.fontname = 'Times New Roman';
-    plotSet.fontweight = 'bold';
+    plotSet.fontweight = 'normal';
 end

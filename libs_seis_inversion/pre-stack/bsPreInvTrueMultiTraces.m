@@ -170,7 +170,7 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
                 end
                 fprintf('Writing segy file:%s ....\n', segyFileName);
                 bsWriteInvResultIntoSegyFile(res, kdata, ...
-                    GPreInvParam.preSeisData.segyFileName, ...
+                    GPreInvParam.preSeisData.fileName, ...
                     GPreInvParam.preSeisData.segyInfo, ...
                     segyFileName);
                 fprintf('Write segy file:%s successfully!\n', segyFileName);
@@ -211,7 +211,9 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
         % obtain a preModel avoid calculating matrix G again and again.
         % see line 20 of function bsPrePrepareModel for details
         [vp(:, 1), vs(:, 1), rho(:, 1), preModel, output] = bsPreInvOneTrace(GPreInvParam, horizonTimes(1), method, inIds(1), crossIds(1), [], 0);
-        method.parampkgs = output.parampkgs;
+        if ~isempty(output)
+            method.parampkgs = output.parampkgs;
+        end
         
         if GPreInvParam.isParallel
             
@@ -223,12 +225,11 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
             
             % parallel computing
             parfor iTrace = 2 : traceNum
-                
-                [vp(:, iTrace), vs(:, iTrace), rho(:, iTrace)] ...
-                    = bsPreInvOneTrace(GPreInvParam, horizonTimes(iTrace), method, ...
-                        inIds(iTrace), crossIds(iTrace), preModel, 0);
-                
-                bsIncParforProgress(pbm, iTrace, 101);
+                    [vp(:, iTrace), vs(:, iTrace), rho(:, iTrace)] ...
+                        = bsPreInvOneTrace(GPreInvParam, horizonTimes(iTrace), method, ...
+                            inIds(iTrace), crossIds(iTrace), preModel, 0);
+
+                    bsIncParforProgress(pbm, iTrace, 101);
             end
             
 
@@ -259,27 +260,39 @@ function [vp, vs, rho, model, output] = bsPreInvOneTrace(GPreInvParam, horizonTi
             inId, crossId, method.name);
     end
     
-    % create model data
-    if GPreInvParam.isReadMode
-        % in read mode, model is loaded from local file
-        modelFileName = bsGetModelFileName(GPreInvParam.modelSavePath, inId, crossId);
-        parLoad(modelFileName);
-    else
-        % otherwise, create the model by computing. Note that we input
-        % argment preModel is a pre-calculated model, by doing this, we
-        % avoid wasting time on calculating the common data of different
-        % traces such as forward matrix G.
-        model = bsPrePrepareModel(GPreInvParam, inId, crossId, horizonTime, [], preModel);
-        if GPreInvParam.isSaveMode
-            % in save mode, model should be saved as local file
+    try
+        % create model data
+        if GPreInvParam.isReadMode
+            % in read mode, model is loaded from local file
             modelFileName = bsGetModelFileName(GPreInvParam.modelSavePath, inId, crossId);
-            parSave(modelFileName, model);
+            parLoad(modelFileName);
+        else
+            % otherwise, create the model by computing. Note that we input
+            % argment preModel is a pre-calculated model, by doing this, we
+            % avoid wasting time on calculating the common data of different
+            % traces such as forward matrix G.
+            model = bsPrePrepareModel(GPreInvParam, inId, crossId, horizonTime, [], preModel);
+            if GPreInvParam.isSaveMode
+                % in save mode, model should be saved as local file
+                modelFileName = bsGetModelFileName(GPreInvParam.modelSavePath, inId, crossId);
+                parSave(modelFileName, model);
+            end
         end
-    end
 
-    method.mode = GPreInvParam.mode;
-    method.lsdCoef = model.lsdCoef;
-    [xOut, ~, ~, output] = bsPreInv1DTrace(model.d, model.G, model.initX, model.Lb, model.Ub, method);                       
-  
-    [vp, vs, rho] = bsPreRecoverElasticParam(xOut, GPreInvParam.mode, model.lsdCoef);
+        method.mode = GPreInvParam.mode;
+        method.lsdCoef = model.lsdCoef;
+        [xOut, ~, ~, output] = bsPreInv1DTrace(model.d, model.G, model.initX, model.Lb, model.Ub, method);                       
+
+        [vp, vs, rho] = bsPreRecoverElasticParam(xOut, GPreInvParam.mode, model.lsdCoef);
+    catch e
+        fprintf(1,'The identifier was:\n%s',e.identifier);
+        fprintf(1,'There was an error! The message was:\n%s',e.message);
+        
+        sampNum = GPreInvParam.upNum + GPreInvParam.downNum;
+        vp = zeros(sampNum, 1);
+        vs = zeros(sampNum, 1);
+        rho = zeros(sampNum, 1);
+        model = [];
+        output = [];
+    end
 end

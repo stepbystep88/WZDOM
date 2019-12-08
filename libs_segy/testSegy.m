@@ -2,7 +2,8 @@
 inFileName = 'in.sgy';
 outFileName = 'out.sgy';
 
-load GSegyInfo.mat;
+GSegyInfo = bsCreateGSegyInfo();
+
 GInSegyInfo = bsReadVolHeader(inFileName, GSegyInfo);
 GOutSegyInfo = bsWriteVolHeader(outFileName, GInSegyInfo);
 

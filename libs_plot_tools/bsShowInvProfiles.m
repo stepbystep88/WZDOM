@@ -52,7 +52,7 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
     if isSameType
         bsShowShareColorbar();
     end
-    
+
     function horizons = bsGetHorizons()
         if isfield(GShowProfileParam, 'isShowHorizon') ...
                 && GShowProfileParam.isShowHorizon
@@ -74,7 +74,16 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
     function bsShowShareColorbar()
         subplot('Position', colorbar_pos);
         axis off;
-        set(gca, 'colormap', GShowProfileParam.dataColorTbl);
+        
+        % set colormap
+        colorTbl = GShowProfileParam.colormap.allTheSame;
+        if GShowProfileParam.isColorReverse
+            colorTbl = flipud(colorTbl);
+            set(gca, 'colormap', colorTbl);
+        else
+            set(gca, 'colormap', colorTbl);
+        end
+    
         set(gca, 'clim', range);
 
         hc = colorbar( ...
@@ -97,56 +106,66 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
         fprintf('Showing the %s profile of %s...\n', upper(profile.type), profile.name);
         dataIndex = [];
         scale = 1;
-        dataColorTbl = GShowProfileParam.dataColorTbl;
+        dataColorTbl = [];
         
         % data preprocessing base on the type of profile
         switch lower(profile.type)
             case 'ip'
                 
-                range = GShowProfileParam.rangeIP;
+                range = GShowProfileParam.range.ip;
                 scale = 1000;
                 dataIndex = GInvParam.indexInWellData.ip;
+                dataColorTbl = GShowProfileParam.colormap.ip;
                 attName = 'Impedance (g/cm^3\cdotkm/s)';
                 
             case 'vp'
-                range = GShowProfileParam.rangeVP;
+                range = GShowProfileParam.range.vp;
                 scale = 1000;
                 dataIndex = GInvParam.indexInWellData.vp;
+                dataColorTbl = GShowProfileParam.colormap.vp;
                 attName = 'V_P km/s';
                 
             case 'vs'
-                range = GShowProfileParam.rangeVS;
+                range = GShowProfileParam.range.vs;
                 scale = 1000;
                 dataIndex = GInvParam.indexInWellData.vs;
+                dataColorTbl = GShowProfileParam.colormap.vs;
                 attName = 'V_S km/s';
                 
             case {'rho', 'density'}
-                range = GShowProfileParam.rangeRho;
+                range = GShowProfileParam.range.rho;
                 dataIndex = GInvParam.indexInWellData.rho;
+                dataColorTbl = GShowProfileParam.colormap.rho;
                 attName = 'Density g/cm^3';
             
             case {'vp_vs', 'vpvs_ratio'}
                 attName = 'Vp/Vs ratio';
-                range = GShowProfileParam.rangeVP_VS;
+                range = GShowProfileParam.range.vpvs_ratio;
                 dataIndex = GInvParam.indexInWellData.vpvs_ratio;
+                dataColorTbl = GShowProfileParam.colormap.vpvs_ratio;
                 
             case {'possion'}
                 attName = 'Possion ratio';
-                range = GShowProfileParam.rangePossion;
+                range = GShowProfileParam.range.possion;
                 dataIndex = GInvParam.indexInWellData.possion;
+                dataColorTbl = GShowProfileParam.colormap.possion;
             case 'seismic'
                 attName = 'Seismic (Amplitude)';
 %                 [wellPos, ~] = bsFindWellLocation(wellLogs, profile.inIds, profile.crossIds);
-                range = GShowProfileParam.rangeSeismic;
-                dataColorTbl = GShowProfileParam.seismicColorTbl;
+                range = GShowProfileParam.range.seismic;
+                dataColorTbl = GShowProfileParam.colormap.seismic;
+                
             otherwise
                 validatestring({'seismic', 'ip', ...
                     'vp', 'vs', 'rho', 'density', ...
                     'vp_vs', 'vpvs_ratio', 'possion'})
         end
         
+        if ~isempty(GShowProfileParam.colormap.allTheSame) && ~strcmpi(profile.type, 'seismic')
+            dataColorTbl = GShowProfileParam.colormap.allTheSame;
+        end
         
-        [profile.data, range, wellPos, wellData, wellTime] = bsGetRangeByType(...
+        [profile.data, range, wellPos, wellData, wellTime, wellNames] = bsGetRangeByType(...
                     profile, ...
                     wellLogs, ...
                     range, ...
@@ -185,7 +204,7 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
                 GInvParam.isParallel);
             
         
-        [newProfileData, newHorizons, minTime] = bsShowHorizonPartData(GShowProfileParam, horizons, ...
+        [newProfileData, newHorizons, minTime] = bsShowVerticalPartData(GShowProfileParam, horizons, ...
                 traceIds, newProfileData, newTraceIds, newHorizon, newHorizons, newDt, minTime);    
 
         % replace the traces that are near by well location as welllog data
@@ -205,7 +224,7 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
         bsShowHorizonedData(GShowProfileParam, ...
             newProfileData, ...
             newHorizons, minTime, newDt, profile.name, ...
-            newTraceIds, range, dataColorTbl);
+            newTraceIds, range, dataColorTbl, wellPos, wellNames);
         
         % set attribute name of colorbar
         if ~isSameColorbar
@@ -219,7 +238,7 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
     end
 end
 
-function [newProfileData, newHorizons, minTime] = bsShowHorizonPartData(GShowProfileParam, horizons, ...
+function [newProfileData, newHorizons, minTime] = bsShowVerticalPartData(GShowProfileParam, horizons, ...
     traceIds, newProfileData, newTraceIds, newHorizon, newHorizons, newDt, minTime)
 
     mode = lower(GShowProfileParam.showPartVert.mode);
@@ -434,7 +453,7 @@ function isSameType = bsCheckIsSameType(profiles)
     end
 end
 
-function [profileData, range, wellPos, wellData, wellTime] ...
+function [profileData, range, wellPos, wellData, wellTime, wellNames] ...
     = bsGetRangeByType(profile, wellLogs, range, scale, dataIndex, timeIndex, showWellFiltCoef)
     
     
@@ -446,14 +465,15 @@ function [profileData, range, wellPos, wellData, wellTime] ...
         range = range / scale;
     end
     
-    [wellPos, wellIndex] = bsFindWellLocation(wellLogs, profile.inIds, profile.crossIds);
-    
     if isempty(dataIndex)
         wellData = [];
         wellTime = [];
-        
+        wellPos = [];
+        wellNames = [];
         return;
     end
+    
+    [wellPos, wellIndex, wellNames] = bsFindWellLocation(wellLogs, profile.inIds, profile.crossIds);
     
     [wellData, wellTime] = bsGetWellData(wellLogs, wellIndex, dataIndex, timeIndex, showWellFiltCoef);
     
@@ -464,10 +484,11 @@ function [profileData, range, wellPos, wellData, wellTime] ...
     end
 end
 
-function [wellPos, wellIndex] = bsFindWellLocation(wellLogs, inIds, crossIds)
+function [wellPos, wellIndex, wellNames] = bsFindWellLocation(wellLogs, inIds, crossIds)
 
     wellPos = [];
     wellIndex = [];
+    wellNames = {};
     
     if isempty(wellLogs)
         return;
@@ -482,6 +503,7 @@ function [wellPos, wellIndex] = bsFindWellLocation(wellLogs, inIds, crossIds)
             if wellInIds(j) == inIds(i) && wellCrossIds(j) == crossIds(i)
                 wellPos = [wellPos, i];
                 wellIndex = [wellIndex, j];
+                wellNames = [wellNames, wellLogs{j}.name];
             end
         end
     end
@@ -609,7 +631,8 @@ function [newProfileData, newDt, newTraceIds, newHorizon, minTime] = bsReScaleAn
 end
 
 
-function bsShowHorizonedData(GShowProfileParam, profileData, horizons, minTime, dt, name, traceIds, range, colorTbl)
+function bsShowHorizonedData(GShowProfileParam, profileData, horizons, minTime, dt, ...
+    name, traceIds, range, colorTbl, wellPos, wellNames)
     
     [sampNum, traceNum] = size(profileData);
 %     min_val = min(min(profileData));
@@ -644,7 +667,7 @@ function bsShowHorizonedData(GShowProfileParam, profileData, horizons, minTime, 
     % set title
     xlabel('Trace numbers');
     if(~isempty(name))
-        title(name); 
+        title(name, 'fontweight', 'bold'); 
     end
     ylabel('Time (s)');
     
@@ -657,6 +680,18 @@ function bsShowHorizonedData(GShowProfileParam, profileData, horizons, minTime, 
             y = 1 + round((horizons(i, :) - minTime) / dt);
     %         y = horizon / 1000;
             plot(1:traceNum, y, 'k-', 'LineWidth', GShowProfileParam.plotParam.linewidth); hold on;
+        end
+    end
+    
+    % show the name of wells
+    if ~isempty(wellPos)
+        for i = 1 : length(wellPos)
+            ipos = GShowProfileParam.scaleFactor * wellPos(i) - 0.05*traceNum;
+            text(ipos, 20, wellNames{i}, ...
+                'fontsize', GShowProfileParam.plotParam.fontsize,...
+                'fontweight', 'bold', ...
+                'fontname', GShowProfileParam.plotParam.fontname, ...
+                'Interpreter','none');
         end
     end
 end

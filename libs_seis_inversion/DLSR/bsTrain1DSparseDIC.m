@@ -1,4 +1,4 @@
-function DIC = bsLearn1DSparseDIC(datas, GTrainDICParam)
+function DIC = bsTrain1DSparseDIC(datas, GTrainDICParam)
 %% To train a dictionary by using K-SVD algorithm
 %
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)

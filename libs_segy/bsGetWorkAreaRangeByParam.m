@@ -6,13 +6,13 @@ function [rangeInline, rangeCrossline, fileName, segyInfo] ...
 % Programming dates: Nov 2019
 % -------------------------------------------------------------------------
     if isfield(GInvParam, 'postSeisData') ...
-        && exist(GInvParam.postSeisData.segyFileName, 'file')
+        && exist(GInvParam.postSeisData.fileName, 'file')
         
-        fileName = GInvParam.postSeisData.segyFileName;
+        fileName = GInvParam.postSeisData.fileName;
         segyInfo = GInvParam.postSeisData.segyInfo;
         
     else
-        fileName = GInvParam.preSeisData.segyFileName;
+        fileName = GInvParam.preSeisData.fileName;
         segyInfo = GInvParam.preSeisData.segyInfo;
     end    
     

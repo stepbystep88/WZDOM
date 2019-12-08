@@ -1,5 +1,11 @@
-function bsShowPostInvLogResult(GPostInvParam, GPlotParam, GShowProfileParam, invVals, trueLogFiltcoef)
+function bsShowPostInvLogResult(GPostInvParam, GShowProfileParam, invVals, trueLogFiltcoef, isShowSynthetic)
 
+    if ~exist('isShowSynthetic', 'var')
+        isShowSynthetic = 0;
+    end
+    
+    GPlotParam = GShowProfileParam.plotParam;
+    
     nItems = length(invVals);
     model = invVals{1}.model;
     
@@ -8,7 +14,10 @@ function bsShowPostInvLogResult(GPostInvParam, GPlotParam, GShowProfileParam, in
     
     
     bsShowInvLog();
-    bsShowSyntheticSeisData();
+
+    if isShowSynthetic
+        bsShowSyntheticSeisData();
+    end
     
     function bsShowInvLog()
         hf = figure;
@@ -29,7 +38,7 @@ function bsShowPostInvLogResult(GPostInvParam, GPlotParam, GShowProfileParam, in
             bsShowPostSubInvLogResult(GPlotParam, ...
                 invVal.Ip/1000, trueLog/1000, model.initLog/1000, ...
                 t, invVal.name, ...
-                GShowProfileParam.rangeIP/1000, nItems, iItem);
+                GShowProfileParam.range.ip/1000, nItems, iItem);
 
         end
 
@@ -56,7 +65,7 @@ function bsShowPostInvLogResult(GPostInvParam, GPlotParam, GShowProfileParam, in
             bsShowPostSubSynSeisData(GPlotParam, ...
                 synFromTrue, synFromInv, seisData, ...
                 t, invVal.name, ...
-                GShowProfileParam.rangeSeismic, nItems, iItem);
+                GShowProfileParam.range.seismic, nItems, iItem);
 
         end
 
@@ -125,7 +134,11 @@ function bsShowPostSubInvLogResult(GPlotParam, ...
     set(gca,'ydir','reverse');
     
     title(sprintf('(%s) %s', char( 'a' + (iItem-1) ), tmethod));
-    set(gca, 'xlim', range) ; 
+    
+    if ~isempty(range)
+        set(gca, 'xlim', range) ; 
+    end
+    
     set(gca, 'ylim', [t(1) t(end)]);
 %     bsTextSeqIdFit(ichar - 'a' + 1, 0, 0, 12);
 

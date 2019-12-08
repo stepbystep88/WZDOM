@@ -1,9 +1,9 @@
 function timeLines = bsSmoothHorizon(timeLines, N)
     for i = 1 : length(timeLines)
         timeLine = timeLines{i};
-        [inRange, crossRange] = bsGetRange(timeLine);
+%         [inRange, crossRange] = bsGetRange(timeLine);
         
-        [timeSlice, inGrid, crossGrid] = bsLine2Slice(timeLine, inRange, crossRange);
+        [timeSlice, inGrid, crossGrid] = bsLine2Slice(timeLine);
         
 %         h = fspecial('gaussian', [3, 3]);
         smoothTimeSlice = smooth2a(timeSlice, N, N);
@@ -23,7 +23,7 @@ function [inRange, crossRange] = bsGetRange(timeLine)
     crossRange = [min(timeLine(:, 2)), max(timeLine(:, 2))];
 end
 
-function [timeSlice, inGrid, crossGrid] = bsLine2Slice(timeLine, inRange, crossRange)
+function [timeSlice, inGrid, crossGrid] = bsLine2Slice(timeLine)
     [inRange, crossRange] = bsGetRange(timeLine);
     [inGrid, crossGrid] = meshgrid(inRange(1):inRange(2), crossRange(1):crossRange(2));
     

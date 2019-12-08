@@ -37,9 +37,9 @@ function [GInvParam, outputWelllogs, wavelet] = bsDepth2Time(GInvParam, timeLine
         layerNum = size(wellData, 1);
         
         % expand welllog data
-        if isfield(indexInWell, 'Ip')
+        if isfield(indexInWell, 'ip') && indexInWell.ip > 0
             wellData = bsExpandPostWellData(wellData, expandNum);
-            dist = abs(wellData(:, indexInWell.time) - horizon);
+            dist = abs(wellData(:, indexInWell.time) - horizon(i));
         else
             wellData = bsExpandPreWellData(wellData, ...
                 expandNum, ...
@@ -62,19 +62,19 @@ function [GInvParam, outputWelllogs, wavelet] = bsDepth2Time(GInvParam, timeLine
             downIndex = index + GInvParam.downNum;
             
             try
-                if isfield(indexInWell, 'Ip')
-                    Ip = wellData(upIndex : downIndex, indexInWell.Ip);
+                if isfield(indexInWell, 'ip') && indexInWell.ip > 0
+                    ip = wellData(upIndex : downIndex, indexInWell.ip);
                 else
                     vp = wellData(upIndex : downIndex, indexInWell.vp);
                     rho = wellData(upIndex : downIndex, indexInWell.rho);
-                    Ip =  vp .* rho;
+                    ip =  vp .* rho;
                 end
             catch
                 error('Data of well %s is not enough.', inputWelllogs{i}.name);
             end
             
             
-            synthSeis = G * log(Ip);  
+            synthSeis = G * log(ip);  
             % only compare the valid part of welllog data
 %             if( upIndex <= expandNum)
 %                 num = expandNum - upIndex + 2;
@@ -129,7 +129,7 @@ function [GInvParam, outputWelllogs, wavelet] = bsDepth2Time(GInvParam, timeLine
     end
     
     % re-scale wavelet
-    [~, index] = bsMaxK(similarities, ceil(0.6*wellNum));
+    [~, index] = bsMaxK(similarities, ceil(0.8*wellNum));
     meanScaleFactor = mean(scaleFactors(index));
 
 %     meanScaleFactor = 1;

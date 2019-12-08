@@ -48,7 +48,7 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
             angleData = GPreInvParam.angleData;
             
         case 'angle_one_file'
-            gather = bsReadGathersByIds(preDataInfo.segyFileName, preDataInfo.segyInfo, ...
+            gather = bsReadGathersByIds(preDataInfo.fileName, preDataInfo.segyInfo, ...
                 inline, crossline, startTime, sampNum-1, GPreInvParam.dt);
             angleSeisData = gather{1}.data;
             if ~isempty(GPreInvParam.angleData)
@@ -62,7 +62,7 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
             end
             
         case 'offset_one_file'
-            gather = bsReadGathersByIds(preDataInfo.segyFileName, preDataInfo.segyInfo, ...
+            gather = bsReadGathersByIds(preDataInfo.fileName, preDataInfo.segyInfo, ...
                 inline, crossline, startTime, sampNum, GPreInvParam.dt);
             preData = gather{1}.data;
             offsets = gather{1}.offsets;
@@ -138,7 +138,7 @@ function seisData = bsReadMultiSegyFiles(separates, inline, crossline, startTime
     seisData = zeros(sampNum, nFile);
     for i = 1 : nFile
         separate = separates(i);
-        seisData(:, i) = bsReadTracesByIds(separate.segyFileName, separate.segyInfo, inline, crossline, startTime, sampNum, dt);
+        seisData(:, i) = bsReadTracesByIds(separate.fileName, separate.segyInfo, inline, crossline, startTime, sampNum, dt);
     end
 end
 

@@ -1,9 +1,11 @@
-function [inIds, crossIds, GInvParam] = bsBuildInitModel(GInvParam, timeLine, wellLogs, varargin)
+function [inIds, crossIds, GInvParam, output] = bsBuildInitModel(GInvParam, timeLine, wellLogs, varargin)
 %% Build initial model and save the result as segy file
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
 % Programming dates: Dec 2019
 % -------------------------------------------------------------------------
-
+    
+    output = [];
+    
     p = inputParser;
     
     [rangeInline, rangeCrossline, fileName, segyInfo] ...
@@ -11,29 +13,46 @@ function [inIds, crossIds, GInvParam] = bsBuildInitModel(GInvParam, timeLine, we
     
     addParameter(p, 'filtCoef', 0.1);
     addParameter(p, 'title', '');
-    addParameter(p, 'prestack', 1);
     addParameter(p, 'dstPath', sprintf('%s/model/', GInvParam.modelSavePath));
     addParameter(p, 'rangeInline', rangeInline);
     addParameter(p, 'rangeCrossline', rangeCrossline);
+    addParameter(p, 'inIds', []);
+    addParameter(p, 'crossIds', []);
     addParameter(p, 'nPointsUsed', 4);
-    addParameter(p, 'p', 1.2);
+    addParameter(p, 'p', 2);
     addParameter(p, 'expandNum', 30);
+    addParameter(p, 'isRebuild', 0);
     
     p.parse(varargin{:});  
     options = p.Results;
     
-    [inIds, crossIds] = bsGetCDPsByRange(options.rangeInline, options.rangeCrossline);
+    if isempty(options.inIds) || isempty(options.crossIds)
+        [inIds, crossIds] = bsGetCDPsByRange(options.rangeInline, options.rangeCrossline);
+    else
+        inIds = options.inIds;
+        crossIds = options.crossIds;
+        
+        % resort the ids 
+%         ids = sortrows([inIds', crossIds'], [1, 2]);
+%         inIds = ids(:, 1);
+%         crossIds = ids(:, 2);
+
+        options.rangeInline = [min(inIds), max(inIds)];
+        options.rangeCrossline = [min(crossIds), max(crossIds)];
+    end
+    
     assert(length(inIds) == length(crossIds),...
         'The length of inIds must be the same as that of crossIds.');
     
-    if options.prestack 
+    switch lower(GInvParam.flag)
+    case {'prestack', 'pre-stack'}
         dataIndex = [...
             GInvParam.indexInWellData.vp, ...
             GInvParam.indexInWellData.vs, ...
             GInvParam.indexInWellData.rho];
         type = {'vp', 'vs', 'density'};
-    else
-        dataIndex = GInvParam.indexInWellData.Ip;
+    case {'poststack', 'post-stack'}
+        dataIndex = GInvParam.indexInWellData.ip;
         type = {'ip'};
     end
     
@@ -66,7 +85,9 @@ function [inIds, crossIds, GInvParam] = bsBuildInitModel(GInvParam, timeLine, we
     res.upNum = GInvParam.upNum;
     res.dt = GInvParam.dt;
     
-    for i = 1 : length(dataIndex)
+    nData = length(dataIndex);
+    output = cell(1, nData);
+    for i = 1 : nData
         wellData = bsGetWellData(GInvParam, wellLogs, wellHorizonTimes, dataIndex(i), options.filtCoef);
         
         fprintf('Interpolating the %s data by calculated weights...\n', type{i});
@@ -74,7 +95,7 @@ function [inIds, crossIds, GInvParam] = bsBuildInitModel(GInvParam, timeLine, we
         
         dstFileName = bsGetDstFileName(type{i}, options);
         bsWriteInvResultIntoSegyFile(res, data, fileName, segyInfo, dstFileName);
-        
+        output{i} = data;
     end
     
     GInvParam.upNum = GInvParam.upNum - options.expandNum;
@@ -110,7 +131,7 @@ function [isExist, GInvParam] = checkExists(GInvParam, type, dataIndex, options,
 
         dstFileName = bsGetDstFileName(type{j}, options);
 
-        if exist(dstFileName, 'file')
+        if exist(dstFileName, 'file') && ~options.isRebuild
             warning('Initial model %s exists already!', dstFileName);
         else
             isExist = false;
@@ -119,17 +140,17 @@ function [isExist, GInvParam] = checkExists(GInvParam, type, dataIndex, options,
         % update GInvParam;
         switch lower(type{j})
             case 'vp'
-                GInvParam.initModel.vp.segyFileName = dstFileName;
+                GInvParam.initModel.vp.fileName = dstFileName;
                 GInvParam.initModel.vp.segyInfo = segyInfo;
             case 'vs'
-                GInvParam.initModel.vs.segyFileName = dstFileName;
+                GInvParam.initModel.vs.fileName = dstFileName;
                 GInvParam.initModel.vs.segyInfo = segyInfo;
             case 'density'  
-                GInvParam.initModel.rho.segyFileName = dstFileName;
+                GInvParam.initModel.rho.fileName = dstFileName;
                 GInvParam.initModel.rho.segyInfo = segyInfo;
             case 'ip'
-                GInvParam.initModel.segyFileName = dstFileName;
-                GInvParam.initModel.segyInfo = segyInfo;
+                GInvParam.initModel.ip.fileName = dstFileName;
+                GInvParam.initModel.ip.segyInfo = segyInfo;
         end
     end
     GInvParam.initModel.mode = 'segy';
@@ -141,9 +162,6 @@ function dstFileName = bsGetDstFileName(type, options)
         options.rangeInline(1), options.rangeInline(end), ...
         options.rangeCrossline(1), options.rangeCrossline(2));
 end
-    
-
-
 
 function data = bsInterpolate3DData(nTrace, wellData, weights, indexies)
 

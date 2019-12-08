@@ -18,17 +18,44 @@ function bsShowPreInvProfiles(GPreInvParam, GShowProfileParam, invResults, wellL
     
     if hasMultiAtts
         for i = 1 : maxNumAtt
+            profiles = {};
             for k = 1 : nResults
-                if iscell(invResults{k}.data)
-                    profiles{k}.data = invResults{k}.data{i};
-                    profiles{k}.type = invResults{k}.type{i};
+                if iscell(invResults{k}.data) && length(invResults{k}.data) > 1
+                    
+                    if length(invResults{k}.data) >= i
+                        profile.data = invResults{k}.data{i};
+                        profile.type = invResults{k}.type{i};
+
+                        if iscell(invResults{k}.name)
+                            profile.name = invResults{k}.name{i};
+                        end
+                        
+                        profiles = [profiles, profile];
+                    end
+                else
+                    profile = bsRemoveCell(invResults{k});
+                    profiles = [profiles, profile];
                 end
             end
-            bsShowInvProfiles(GPreInvParam, GShowProfileParam, profiles, wellLogs, timeLine);
-            set(gcf, 'position', [720    54   941   696]);
+            
+            if ~isempty(profiles)
+                bsShowInvProfiles(GPreInvParam, GShowProfileParam, profiles, wellLogs, timeLine);
+                set(gcf, 'position', [139          54        1690         797]);
+            end
         end
         
     else
         bsShowInvProfiles(GPreInvParam, GShowProfileParam, profiles, wellLogs, timeLine);
+    end
+end
+function profile = bsRemoveCell(profile)
+    if iscell(profile.name)
+        profile.name = profile.name{1};
+    end
+    if iscell(profile.data)
+        profile.data = profile.data{1};
+    end
+    if iscell(profile.type)
+        profile.type = profile.type{1};
     end
 end

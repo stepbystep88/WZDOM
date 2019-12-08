@@ -115,7 +115,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
             fprintf('Writing segy file:%s ....\n', segyFileName);
             bsWriteInvResultIntoSegyFile( ...
                 res, data, ...
-                GPostInvParam.postSeisData.segyFileName, ...
+                GPostInvParam.postSeisData.fileName, ...
                 GPostInvParam.postSeisData.segyInfo, ...
                 segyFileName);
             fprintf('Write segy file:%s successfully!\n', segyFileName);
@@ -153,7 +153,9 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
         % obtain a preModel avoid calculating matrix G again and again.
         % see line 20 of function bsPostPrepareModel for details
         [data(:, 1), preModel, output] = bsPostInvOneTrace(GPostInvParam, horizonTimes(1), method, inIds(1), crossIds(1), [], 0);
-        method.parampkgs = output.parampkgs;
+        if ~isempty(output)
+            method.parampkgs = output.parampkgs;
+        end
         
         if GPostInvParam.isParallel
             
@@ -168,7 +170,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
                 
                 data(:, iTrace) = bsPostInvOneTrace(GPostInvParam, horizonTimes(iTrace), method, inIds(iTrace), crossIds(iTrace), preModel, 0);
                 
-                bsIncParforProgress(pbm, iTrace, 50);
+                bsIncParforProgress(pbm, iTrace, 100);
             end
             
 
@@ -197,25 +199,36 @@ function [idata, model, output] = bsPostInvOneTrace(GPostInvParam, horizonTime, 
             inId, crossId, method.name);
     end
     
-    % create model data
-    if GPostInvParam.isReadMode
-        % in read mode, model is loaded from local file
-        modelFileName = bsGetModelFileName(GPostInvParam.modelSavePath, inId, crossId);
-        parLoad(modelFileName);
-    else
-        % otherwise, create the model by computing. Note that we input
-        % argment preModel is a pre-calculated model, by doing this, we
-        % avoid wasting time on calculating the common data of different
-        % traces such as forward matrix G.
-        model = bsPostPrepareModel(GPostInvParam, inId, crossId, horizonTime, [], preModel);
-        if GPostInvParam.isSaveMode
-            % in save mode, mode should be saved as local file
+    try
+        % create model data
+        if GPostInvParam.isReadMode
+            % in read mode, model is loaded from local file
             modelFileName = bsGetModelFileName(GPostInvParam.modelSavePath, inId, crossId);
-            parSave(modelFileName, model);
+            parLoad(modelFileName);
+        else
+            % otherwise, create the model by computing. Note that we input
+            % argment preModel is a pre-calculated model, by doing this, we
+            % avoid wasting time on calculating the common data of different
+            % traces such as forward matrix G.
+            model = bsPostPrepareModel(GPostInvParam, inId, crossId, horizonTime, [], preModel);
+            if GPostInvParam.isSaveMode
+                % in save mode, mode should be saved as local file
+                modelFileName = bsGetModelFileName(GPostInvParam.modelSavePath, inId, crossId);
+                parSave(modelFileName, model);
+            end
         end
+
+        [xOut, ~, ~, output] = bsPostInv1DTrace(model.d, model.G, model.initX, model.Lb, model.Ub, method);                       
+
+        idata = exp(xOut);
+    catch e
+        fprintf(1,'The identifier was:\n%s',e.identifier);
+        fprintf(1,'There was an error! The message was:\n%s',e.message);
+        
+        sampNum = GPostInvParam.upNum + GPostInvParam.downNum;
+        idata = zeros(sampNum, 1);
+        model = [];
+        output = [];
     end
-
-    [xOut, ~, ~, output] = bsPostInv1DTrace(model.d, model.G, model.initX, model.Lb, model.Ub, method);                       
-
-    idata = exp(xOut);
+    
 end
