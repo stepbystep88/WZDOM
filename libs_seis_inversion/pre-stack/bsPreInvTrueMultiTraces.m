@@ -284,9 +284,8 @@ function [vp, vs, rho, model, output] = bsPreInvOneTrace(GPreInvParam, horizonTi
         [xOut, ~, ~, output] = bsPreInv1DTrace(model.d, model.G, model.initX, model.Lb, model.Ub, method);                       
 
         [vp, vs, rho] = bsPreRecoverElasticParam(xOut, GPreInvParam.mode, model.lsdCoef);
-    catch e
-        fprintf(1,'The identifier was:\n%s',e.identifier);
-        fprintf(1,'There was an error! The message was:\n%s',e.message);
+    catch err
+        fprintf(getReport(err));
         
         sampNum = GPreInvParam.upNum + GPreInvParam.downNum;
         vp = zeros(sampNum, 1);

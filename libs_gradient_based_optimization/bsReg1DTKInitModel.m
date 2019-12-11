@@ -23,6 +23,6 @@ function [f, g, data] = bsReg1DTKInitModel(x, data, isInitial)
     end
     
     z = x - data.xInit;
-    f = z' * z;
+    f = sum(z.^2, 1);
     g = 2 * z;
 end

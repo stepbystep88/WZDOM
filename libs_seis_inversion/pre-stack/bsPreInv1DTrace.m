@@ -154,6 +154,10 @@ function [xOut, fval, exitFlag, output] = bsPreInv1DTrace(d, G, xInit, Lb, Ub, m
             % dictionary learning and sparse representation
             [xOut, fval, exitFlag, output] = bsPreInv1DTraceByDLSR(d, G, xInit, Lb, Ub, regParam, parampkgs, options, method.mode, method.lsdCoef);
         
+        case 'CSR'
+            % dictionary learning and sparse representation
+            [xOut, fval, exitFlag, output] = bsPreInv1DTraceByCSR(d, G, xInit, Lb, Ub, regParam, parampkgs, options, method.mode, method.lsdCoef);
+        
         case 'LFC'
             % only low frequency component constraint
             options.addLowFreqConstraint = 0;

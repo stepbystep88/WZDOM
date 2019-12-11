@@ -1,10 +1,8 @@
-function [inIds, crossIds, GInvParam, output] = bsBuildInitModel(GInvParam, timeLine, wellLogs, varargin)
+function [inIds, crossIds, GInvParam, dstFileNames, segyInfo] = bsBuildInitModel(GInvParam, timeLine, wellLogs, varargin)
 %% Build initial model and save the result as segy file
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
 % Programming dates: Dec 2019
 % -------------------------------------------------------------------------
-    
-    output = [];
     
     p = inputParser;
     
@@ -18,10 +16,12 @@ function [inIds, crossIds, GInvParam, output] = bsBuildInitModel(GInvParam, time
     addParameter(p, 'rangeCrossline', rangeCrossline);
     addParameter(p, 'inIds', []);
     addParameter(p, 'crossIds', []);
-    addParameter(p, 'nPointsUsed', 4);
+    addParameter(p, 'nPointsUsed', 10);
     addParameter(p, 'p', 2);
     addParameter(p, 'expandNum', 30);
     addParameter(p, 'isRebuild', 0);
+    addParameter(p, 'dataIndex', []);
+    addParameter(p, 'type', []);
     
     p.parse(varargin{:});  
     options = p.Results;
@@ -32,11 +32,6 @@ function [inIds, crossIds, GInvParam, output] = bsBuildInitModel(GInvParam, time
         inIds = options.inIds;
         crossIds = options.crossIds;
         
-        % resort the ids 
-%         ids = sortrows([inIds', crossIds'], [1, 2]);
-%         inIds = ids(:, 1);
-%         crossIds = ids(:, 2);
-
         options.rangeInline = [min(inIds), max(inIds)];
         options.rangeCrossline = [min(crossIds), max(crossIds)];
     end
@@ -44,19 +39,24 @@ function [inIds, crossIds, GInvParam, output] = bsBuildInitModel(GInvParam, time
     assert(length(inIds) == length(crossIds),...
         'The length of inIds must be the same as that of crossIds.');
     
-    switch lower(GInvParam.flag)
-    case {'prestack', 'pre-stack'}
-        dataIndex = [...
-            GInvParam.indexInWellData.vp, ...
-            GInvParam.indexInWellData.vs, ...
-            GInvParam.indexInWellData.rho];
-        type = {'vp', 'vs', 'density'};
-    case {'poststack', 'post-stack'}
-        dataIndex = GInvParam.indexInWellData.ip;
-        type = {'ip'};
+    if isempty(options.dataIndex)
+        switch lower(GInvParam.flag)
+        case {'prestack', 'pre-stack'}
+            dataIndex = [...
+                GInvParam.indexInWellData.vp, ...
+                GInvParam.indexInWellData.vs, ...
+                GInvParam.indexInWellData.rho];
+            type = {'vp', 'vs', 'density'};
+        case {'poststack', 'post-stack'}
+            dataIndex = GInvParam.indexInWellData.ip;
+            type = {'ip'};
+        end
+    else
+        dataIndex = options.dataIndex;
+        type = options.type;
     end
     
-    [isExist, GInvParam] = checkExists(GInvParam, type, dataIndex, options, segyInfo);
+    [isExist, GInvParam, dstFileNames] = checkExists(GInvParam, type, dataIndex, options, segyInfo);
     if isExist
         return;
     end
@@ -86,7 +86,6 @@ function [inIds, crossIds, GInvParam, output] = bsBuildInitModel(GInvParam, time
     res.dt = GInvParam.dt;
     
     nData = length(dataIndex);
-    output = cell(1, nData);
     for i = 1 : nData
         wellData = bsGetWellData(GInvParam, wellLogs, wellHorizonTimes, dataIndex(i), options.filtCoef);
         
@@ -95,7 +94,6 @@ function [inIds, crossIds, GInvParam, output] = bsBuildInitModel(GInvParam, time
         
         dstFileName = bsGetDstFileName(type{i}, options);
         bsWriteInvResultIntoSegyFile(res, data, fileName, segyInfo, dstFileName);
-        output{i} = data;
     end
     
     GInvParam.upNum = GInvParam.upNum - options.expandNum;
@@ -125,12 +123,15 @@ function wellData = bsGetWellData(GInvParam, wellLogs, wellHorizonTimes, dataInd
     end
 end
 
-function [isExist, GInvParam] = checkExists(GInvParam, type, dataIndex, options, segyInfo)
+function [isExist, GInvParam, dstFileNames] = checkExists(GInvParam, type, dataIndex, options, segyInfo)
     isExist = true;
+    dstFileNames = cell(1, length(dataIndex));
+    
     for j = 1 : length(dataIndex)
 
         dstFileName = bsGetDstFileName(type{j}, options);
-
+        dstFileNames{j} = dstFileName;
+        
         if exist(dstFileName, 'file') && ~options.isRebuild
             warning('Initial model %s exists already!', dstFileName);
         else

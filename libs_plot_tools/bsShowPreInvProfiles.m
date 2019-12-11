@@ -28,6 +28,8 @@ function bsShowPreInvProfiles(GPreInvParam, GShowProfileParam, invResults, wellL
 
                         if iscell(invResults{k}.name)
                             profile.name = invResults{k}.name{i};
+                        else
+                            profile.name = invResults{k}.name;
                         end
                         
                         profiles = [profiles, profile];

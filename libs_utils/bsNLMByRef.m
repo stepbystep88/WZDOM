@@ -41,21 +41,20 @@ function [filteredData, weightInfo] = bsNLMByRef(data, refData, varargin)
     
     assert(isequal(size(data), size(refData)), 'data and refData must have the same size.');
     
+    if length(options.windowSize) == 1
+        % the third dimension will not be used if the data is 2D
+        options.windowSize = options.windowSize * ones(1, 3);
+    end
+            
     switch length(size(data))
         case 2
-            is3D = false;
+            [filteredData, weightInfo] = bsNLM2D(data, refData, options);
         case 3
-            is3D = true;
+            [filteredData, weightInfo] = bsNLM3D(data, refData, options);
         otherwise
             error('The input data to processed by NLM filter must be a 2D profile or a 3D volume.');
     end
-    
-    if is3D
-        [filteredData, weightInfo] = bsNLM3D(data, refData, options);
-    else
-        [filteredData, weightInfo] = bsNLM2D(data, refData, options);
-    end
-    
+
     
 end
 
@@ -65,9 +64,9 @@ function [filteredData, weightInfo] = bsNLM3D(data, refData, options)
     ws = options.windowSize;
     
     [o1, o2, o3] = size(data);
-    p1 = round(1 : options.stride(1) : o1-ws+1);
-    p2 = round(1 : options.stride(2) : o2-ws+1);
-    p3 = round(1 : options.stride(3) : o3-ws+1);
+    p1 = round(1 : options.stride(1) : o1-ws(1)+1);
+    p2 = round(1 : options.stride(2) : o2-ws(2)+1);
+    p3 = round(1 : options.stride(3) : o3-ws(3)+1);
     
     n1 = length(p1);
     n2 = length(p2);
@@ -81,10 +80,10 @@ function [filteredData, weightInfo] = bsNLM3D(data, refData, options)
             fprintf('Cutting data into patches %.2f%%...\n', i/nPatches*100);
         end
         [i1, i2, i3] = bsGetId3D(i, n1, n2, n3);
-        patches{i} = data(p1(i1):p1(i1)+ws-1, p2(i2):p2(i2)+ws-1, p3(i3):p3(i3)+ws-1);
+        patches{i} = data(p1(i1):p1(i1)+ws(1)-1, p2(i2):p2(i2)+ws(2)-1, p3(i3):p3(i3)+ws(3)-1);
 
         if isempty(options.weightInfo)
-            refPatches{i} = refData(p1(i1):p1(i1)+ws-1, p2(i2):p2(i2)+ws-1, p3(i3):p3(i3)+ws-1);
+            refPatches{i} = refData(p1(i1):p1(i1)+ws(1)-1, p2(i2):p2(i2)+ws(2)-1, p3(i3):p3(i3)+ws(3)-1);
         end
     end
     
@@ -114,16 +113,16 @@ function [filteredData, weightInfo] = bsNLM3D(data, refData, options)
         iIndex = index(:, i);
         weight = weights(:, i);
 
-        avgPatch = zeros(ws, ws);
+        avgPatch = zeros(ws(1), ws(2), ws(3));
         for k = 1 : K
             avgPatch = avgPatch + weight(k) * patches{iIndex(k)};
         end
 
-        filteredData(p1(i1):p1(i1)+ws-1, p2(i2):p2(i2)+ws-1, p3(i3):p3(i3)+ws-1) = ...
-            filteredData(p1(i1):p1(i1)+ws-1, p2(i2):p2(i2)+ws-1, p3(i3):p3(i3)+ws-1)...
+        filteredData(p1(i1):p1(i1)+ws(1)-1, p2(i2):p2(i2)+ws(2)-1, p3(i3):p3(i3)+ws(3)-1) = ...
+            filteredData(p1(i1):p1(i1)+ws(1)-1, p2(i2):p2(i2)+ws(2)-1, p3(i3):p3(i3)+ws(3)-1)...
             + avgPatch;
-        filteredNum(p1(i1):p1(i1)+ws-1, p2(i2):p2(i2)+ws-1, p3(i3):p3(i3)+ws-1) = ...
-            filteredNum(p1(i1):p1(i1)+ws-1, p2(i2):p2(i2)+ws-1, p3(i3):p3(i3)+ws-1) + 1;
+        filteredNum(p1(i1):p1(i1)+ws(1)-1, p2(i2):p2(i2)+ws(2)-1, p3(i3):p3(i3)+ws(3)-1) = ...
+            filteredNum(p1(i1):p1(i1)+ws(1)-1, p2(i2):p2(i2)+ws(2)-1, p3(i3):p3(i3)+ws(3)-1) + 1;
     end
     
     filteredData = filteredData ./ filteredNum;
@@ -164,21 +163,21 @@ function [weights, index] = bsGetKNearestWeights3D(patches, n1, n2, n3, options)
     p = options.p;
     searchStride = options.searchStride;
     
-    if options.isParallel
-        pbm = bsInitParforProgress(options.numWorkers, nPatches, 'Calculating the weight information', [], 1);
-        
-        parfor i = 1 : nPatches
-            [weights(:, i), index(:, i)] = bsGetIWeight3D(patches, normCoef, i, n1, n2, n3, N, K, -p, searchStride);
-            bsIncParforProgress(pbm, i, 2000);
+%     if options.isParallel
+%         pbm = bsInitParforProgress(options.numWorkers, nPatches, 'Calculating the weight information', [], 1);
+%         
+%         parfor i = 1 : nPatches
+%             [weights(:, i), index(:, i)] = bsGetIWeight3D(patches, normCoef, i, n1, n2, n3, N, K, -p, searchStride);
+%             bsIncParforProgress(pbm, i, 2000);
+%         end
+%     else
+    for i = 1 : nPatches
+        if mod(i, 2000) == 0
+            fprintf('Calculating the weight information %.2f%%...\n', i/nPatches*100);
         end
-    else
-        for i = 1 : nPatches
-            if mod(i, 2000) == 0
-                fprintf('Calculating the weight information %.2f%%...\n', i/nPatches*100);
-            end
-            [weights(:, i), index(:, i)] = bsGetIWeight3D(patches, normCoef, i, n1, n2, n3, N, K, -p, searchStride);
-        end
+        [weights(:, i), index(:, i)] = bsGetIWeight3D(patches, normCoef, i, n1, n2, n3, N, K, -p, searchStride);
     end
+%     end
 end
 
 function [weight, index] = bsGetIWeight3D(patches, normCoef, i, n1, n2, n3, N, K, e, searchStride)
@@ -222,8 +221,8 @@ end
 function [filteredData, weightInfo] = bsNLM2D(data, refData, options)
     ws = options.windowSize;
     [o1, o2] = size(data);
-    p1 = round(1 : options.stride(1) : o1-ws+1);
-    p2 = round(1 : options.stride(2) : o2-ws+1);
+    p1 = round(1 : options.stride(1) : o1-ws(1)+1);
+    p2 = round(1 : options.stride(2) : o2-ws(2)+1);
     
     n1 = length(p1);
     n2 = length(p2);
@@ -233,10 +232,10 @@ function [filteredData, weightInfo] = bsNLM2D(data, refData, options)
     
     for i = 1 : nPatches
         [i1, i2] = bsGetId2D(i, n1, n2);
-        patches{i} = data(p1(i1):p1(i1)+ws-1, p2(i2):p2(i2)+ws-1);
+        patches{i} = data(p1(i1):p1(i1)+ws(1)-1, p2(i2):p2(i2)+ws(2)-1);
 
         if isempty(options.weightInfo)
-            refPatches{i} = refData(p1(i1):p1(i1)+ws-1, p2(i2):p2(i2)+ws-1);
+            refPatches{i} = refData(p1(i1):p1(i1)+ws(1)-1, p2(i2):p2(i2)+ws(2)-1);
         end
     end
     
@@ -261,15 +260,15 @@ function [filteredData, weightInfo] = bsNLM2D(data, refData, options)
         iIndex = index(:, i);
         weight = weights(:, i);
 
-        avgPatch = zeros(ws, ws);
+        avgPatch = zeros(ws(1), ws(2));
         for k = 1 : K
             avgPatch = avgPatch + weight(k) * patches{iIndex(k)};
         end
 
-        filteredData(p1(i1):p1(i1)+ws-1, p2(i2):p2(i2)+ws-1) = ...
-            filteredData(p1(i1):p1(i1)+ws-1, p2(i2):p2(i2)+ws-1) + avgPatch;
-        filteredNum(p1(i1):p1(i1)+ws-1, p2(i2):p2(i2)+ws-1) = ...
-            filteredNum(p1(i1):p1(i1)+ws-1, p2(i2):p2(i2)+ws-1) + 1;
+        filteredData(p1(i1):p1(i1)+ws(1)-1, p2(i2):p2(i2)+ws(2)-1) = ...
+            filteredData(p1(i1):p1(i1)+ws(1)-1, p2(i2):p2(i2)+ws(2)-1) + avgPatch;
+        filteredNum(p1(i1):p1(i1)+ws(1)-1, p2(i2):p2(i2)+ws(2)-1) = ...
+            filteredNum(p1(i1):p1(i1)+ws(1)-1, p2(i2):p2(i2)+ws(2)-1) + 1;
     end
     
     filteredData = filteredData ./ filteredNum;

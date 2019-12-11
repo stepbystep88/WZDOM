@@ -17,22 +17,22 @@ function [x,fval,exitFlag,output] = bsHAGCSByShe2019(objFunc, Lb, Ub, varargin)
     p = bsAddBasicalParameters(p, length(Lb));
     
     % the mimimum number of nests exists in the population
-    addParameter(p, 'minNests', 10 );       
+    addParameter(p, 'minNests', 5 );       
     % the maximum number of nests exists in the population
     addParameter(p, 'maxNests', 100 );      
     % the number of history iterations saved for generating new control parameters
-    addParameter(p, 'nHistory', 20);        
+    addParameter(p, 'nHistory', 500);        
     
     % set default function of generation initial population as @bsGenerateInitialPopulationByLHS
     addParameter(p, 'initialPopulationFcn', @bsGenerateInitialPopulationByRandom );
     % for every [interval] iterations, perform gradient descent algorithm once
-    addParameter(p, 'interval', 5 );    
+    addParameter(p, 'interval', 50 );    
     
     % the max number iterations for gradient-based algorithm to perform local search 
     addParameter(p, 'innerMaxIter', 100 ); 
     % the options parameters for the gradient-based algorithm, we use
     % GBSolver to solve the optimization problems
-    addParameter(p, 'optionsForGB', [] );
+    addParameter(p, 'GBOptions', [] );
     
     % whether to save the detail update information of all population. The
     % value is set to yes when we need to display an animation of
@@ -48,7 +48,7 @@ function [x,fval,exitFlag,output] = bsHAGCSByShe2019(objFunc, Lb, Ub, varargin)
     
     % function handle of objective function, 0 means we don't need to
     % calculate the gradient information, see bsRosenbrock.m for example
-    noGradientFunc = @(x)(objFunc(x, 0));
+    noGradientFunc = objFunc;
     % call initial function to generate the initial population
     if nargin(params.initialPopulationFcn) == 3
         nests = params.initialPopulationFcn(Lb, Ub, nNest);
@@ -58,12 +58,22 @@ function [x,fval,exitFlag,output] = bsHAGCSByShe2019(objFunc, Lb, Ub, varargin)
     end
     
     % create the optiions struct for the GBSolver, see bsGBSolver.m
-    GBOptions = bsCreateGBOptions(length(Lb), ...
-        'optimalFunctionTolerance', params.optimalFunctionTolerance, ...
-        'maxIter', params.innerMaxIter, ...
-        'isSaveMiddleRes', params.isSaveMiddleRes, ... % whether to save the middle results during the iterations
-        'display', 'off', ...
-        'optimalF', params.optimalF);                  % optimalF is the groundtruth of the global minimum function value
+    if isempty(params.GBOptions)
+        GBOptions = bsCreateGBOptions(length(Lb), ...
+            'optimalFunctionTolerance', params.optimalFunctionTolerance, ...
+            'maxIter', params.innerMaxIter, ...
+            'isSaveMiddleRes', params.isSaveMiddleRes, ... % whether to save the middle results during the iterations
+            'display', 'off', ...
+            'optimalF', params.optimalF);                  % optimalF is the groundtruth of the global minimum function value
+    else
+        [~, GBOptions] = bsGetFieldsWithDefaults(params.GBOptions, {...
+            'optimalFunctionTolerance', params.optimalFunctionTolerance; ...
+            'maxIter', params.innerMaxIter; ...
+            'isSaveMiddleRes', params.isSaveMiddleRes; ... % whether to save the middle results during the iterations
+            'display', 'off'; ...
+            'optimalF', params.optimalF ...
+        });
+    end
     
     %% ---------------------------------------------------------------------------------------------------------------%%
     % initialzie a population
@@ -75,7 +85,7 @@ function [x,fval,exitFlag,output] = bsHAGCSByShe2019(objFunc, Lb, Ub, varargin)
     gradient = zeros(nDim, nNest);      % used to save the gradient information of each nest
     
     % objective function, this function will calcuate the gradient information
-    gradientObjFunc = @(x)(objFunc(x, 1));
+    gradientObjFunc = objFunc;
     % calculate the gradient information, and fitness of the initilized population. 
     [nests, fitness, gradient] = bsGetFitnessWithGradient(gradientObjFunc, nests, nests, fitness, gradient);
     nfev = nNest;   % count the number of evaluations of objective functions
@@ -276,9 +286,6 @@ function [x,fval,exitFlag,output] = bsHAGCSByShe2019(objFunc, Lb, Ub, varargin)
             stopFEV = stopFEV + intervalFEV;
         end
 
-        
-        
-        
 %         mid_results = [mid_results, [iter; nfev; globalMinFVal]];
         
         data.fNew = globalMinFVal;

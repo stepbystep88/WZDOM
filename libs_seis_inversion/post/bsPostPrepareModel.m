@@ -9,31 +9,6 @@ function model = bsPostPrepareModel(GPostInvParam, inline, crossline, horizonTim
     sampNum = GPostInvParam.upNum + GPostInvParam.downNum; 
     startTime = horizonTime - GPostInvParam.dt * GPostInvParam.upNum;
     
-    [postSeisData, GPostInvParam.postSeisData.segyInfo] = bsReadTracesByIds(...
-        GPostInvParam.postSeisData.fileName, ...
-        GPostInvParam.postSeisData.segyInfo, ...
-        inline, ...
-        crossline, ...
-        startTime, ...
-        sampNum,...
-        GPostInvParam.dt);
-    
-    if isempty(model)
-        model.orginal_G = bsPostGenGMatrix(GPostInvParam.wavelet, sampNum);
-        model.G = model.orginal_G;
-    end
-    
-    % start time of the inverted time interval
-    model.t0 = round(startTime / GPostInvParam.dt) * GPostInvParam.dt;
-    model.inId = inline;
-    model.crossId = crossline;
-    model.d = postSeisData(1 : end-1);
-    model.origianl_d = model.d;
-    
-    if isfield(GPostInvParam, 'seismicFiltCoef') && ~isempty(GPostInvParam.seismicFiltCoef)
-        model.d = bsButtLowPassFilter(model.d, GPostInvParam.seismicFiltCoef);
-    end
-    
     switch lower(GPostInvParam.initModel.mode)
         % the source of initial model
         
@@ -66,15 +41,36 @@ function model = bsPostPrepareModel(GPostInvParam, inline, crossline, horizonTim
             validatestring(GPostInvParam.initModel.mode, ['segy', 'filter_from_true_log', 'function']);
     end
     
+    [model.d, model.orginal_G, model.initX] = bsPostBuild_d_G_m(GPostInvParam, inline, crossline, startTime, initLog, model);
+    
+    % start time of the inverted time interval
+    model.t0 = round(startTime / GPostInvParam.dt) * GPostInvParam.dt;
+    model.inId = inline;
+    model.crossId = crossline;
+    model.dTrue = model.d;
+    model.initLog = initLog;
+       
     if exist('trueLog', 'var') && ~isempty(trueLog)
         model.trueLog = trueLog;
         model.trueX = log(model.trueLog);
+        
+        if GPostInvParam.errorModel.isUse
+            model.d = model.orginal_G * model.trueX;
+        end
     end
     
-    model.dTrue = model.d;
-    model.initLog = initLog;
-    model.initX = log(model.initLog);
-       
+    if GPostInvParam.errorModel.isUse && isempty(trueLog)
+        errorData = bsReadTracesByIds(...
+                GPostInvParam.errorModel.fileName, ...
+                GPostInvParam.errorModel.segyInfo, ...
+                inline, ...
+                crossline, ...
+                startTime, ...
+                sampNum-1, ...
+                GPostInvParam.dt);
+        model.d = model.d - errorData;
+    end
+    
     % set boundary information
     switch lower(GPostInvParam.bound.mode)
         case 'off'
@@ -100,5 +96,7 @@ function model = bsPostPrepareModel(GPostInvParam, inline, crossline, horizonTim
         model.maxAbsD = norm(model.d);
         model.d = model.d / model.maxAbsD;
         model.G = model.orginal_G / model.maxAbsD;    % we have to use the original G to normalize
+    else
+        model.G = model.orginal_G;
     end
 end

@@ -36,6 +36,15 @@ function options = bsCreateGSparseInvParam(DIC, flag, varargin)
     % different elastic parameters
     validatestring(lower(flag), {'ssr', 'csr', 'one'});
     
+    if strcmpi(flag, 'csr')
+        % the coeficient of normalization, for training CSR dictionary
+        addParameter(p, 'rangeCoef', []); 
+    
+        % whether to modify the joint dictionary and sparse representation
+        % see Eq. 9 Sparse Representation for Color Image Restoration for details
+        addParameter(p, 'isModifiedDIC', 0); 
+    end
+    
     p.parse(varargin{:});  
     options = p.Results;
     options.flag = flag;

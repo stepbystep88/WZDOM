@@ -171,6 +171,11 @@ function [xOut, fval, exitFlag, output] = bsPostInv1DTrace(d, G, xInit, Lb, Ub, 
             % only low frequency component constraint
             options.addLowFreqConstraint = 0;
             [xOut, fval, exitFlag, output] = bsSeisInv1DTraceByRegFunc(d, G, xInit, Lb, Ub, regParam, parampkgs, options, @bsReg1DTKInitModel);
+        
+        case 'HAGCS'
+            % use global optimization
+            [xOut, fval, exitFlag, output] = bsSeisInv1DTraceByGlobalOptimization(d, G, xInit, Lb, Ub, regParam, parampkgs, options, options.regFunc);
+            
         otherwise
             [xOut, fval, exitFlag, output] = bsSeisInv1DTraceByRegFunc(d, G, xInit, Lb, Ub, regParam, parampkgs, options, options.regFunc);
     end

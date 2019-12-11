@@ -16,7 +16,7 @@ function [index, returnHeader] = bsIndexOfTraceSetOnInIdAndCrossId(GSegyInfo, in
     returnHeader = [];
     
     % check whether index work
-    if nargin > 3
+    if nargin > 3 && index <= GSegyInfo.volHeader.traceNum
         offset = 3600 + sizeTrace*(index-1);    
         fseek(GSegyInfo.fid, offset, -1);                 
         returnHeader = bsReadTraceHeader(GSegyInfo);
@@ -25,6 +25,7 @@ function [index, returnHeader] = bsIndexOfTraceSetOnInIdAndCrossId(GSegyInfo, in
         else
             returnHeader = [];
         end
+
     end
     
     fseek(GSegyInfo.fid, 3600, -1);       % skip 3600 bytes

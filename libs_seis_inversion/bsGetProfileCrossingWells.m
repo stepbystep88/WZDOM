@@ -5,7 +5,7 @@ function [inIds, crossIds] = bsGetProfileCrossingWells(GInvParam, wellLogs, vara
     [rangeInline, rangeCrossline] = bsGetWorkAreaRangeByParam(GInvParam);
     
     addParameter(p, 'isAlongCrossline', 1);
-    addParameter(p, 'method', 'cubic');
+    addParameter(p, 'method', 'PCHIP');
     addParameter(p, 'rangeInline', rangeInline);
     addParameter(p, 'rangeCrossline', rangeCrossline);
     
@@ -48,6 +48,11 @@ end
 function [outInIds, outCrossIds] = bsInterpolateALine(inIds, crossIds, ...
     rangeInline, rangeCrossline, interp_method)
 
+    [ids, index] = sortrows([inIds', crossIds'], [1, 2]);
+    index = index';
+    inIds = ids(:, 1)';
+    crossIds = ids(:, 2)';
+    
     setInIds = [inIds(1), inIds, inIds(length(inIds))];
     setCrossIds = [rangeCrossline(1), crossIds, rangeCrossline(2)];
     

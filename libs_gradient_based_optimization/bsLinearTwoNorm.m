@@ -22,6 +22,6 @@ function [f, g] = bsLinearTwoNorm(x, data)
     
     z = data.A * x - data.B;
 
-    f = z' * z;
+    f = sum(z.^2, 1);
     g = 2*(data.A' * z) ;
 end

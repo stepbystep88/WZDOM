@@ -75,7 +75,7 @@ function [options] = bsCreateSeisInv1DOptions(nDim, varargin)
     addParameter(parser, 'mainFunc', @bsLinearTwoNorm );
     
     % set default regularization function
-    addParameter(parser, 'regFunc', @bsReg1DTV );
+    addParameter(parser, 'regFunc', [] );
     
     parser.parse(varargin{:});  
     options = parser.Results;

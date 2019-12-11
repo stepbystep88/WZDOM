@@ -221,9 +221,9 @@ function [idata, model, output] = bsPostInvOneTrace(GPostInvParam, horizonTime, 
         [xOut, ~, ~, output] = bsPostInv1DTrace(model.d, model.G, model.initX, model.Lb, model.Ub, method);                       
 
         idata = exp(xOut);
-    catch e
-        fprintf(1,'The identifier was:\n%s',e.identifier);
-        fprintf(1,'There was an error! The message was:\n%s',e.message);
+        
+    catch err
+        fprintf(getReport(err));
         
         sampNum = GPostInvParam.upNum + GPostInvParam.downNum;
         idata = zeros(sampNum, 1);

@@ -18,8 +18,8 @@ function [DIC, rangeCoef] = bsTrain1DSparseJointDIC(datas, GTrainDICParam)
         data = datas{j};
         
         for i = 1 : nAtt
-            if( GSparseInvParam.trainFiltCoef < 1)
-                data(:, i) = stpButtLowPassFilter(data(:, i), GSparseInvParam.trainFiltCoef);
+            if( GTrainDICParam.filtCoef < 1)
+                data(:, i) = bsButtLowPassFilter(data(:, i), GTrainDICParam.filtCoef);
             end
             rangeCoef(i, 1) = min(rangeCoef(i, 1), min(data(:, i)));
             rangeCoef(i, 2) = max(rangeCoef(i, 2), max(data(:, i)));
@@ -37,7 +37,7 @@ function [DIC, rangeCoef] = bsTrain1DSparseJointDIC(datas, GTrainDICParam)
             index = 1 : GTrainDICParam.stride : num - GTrainDICParam.sizeAtom + 1;
          
             for k = index
-                subData = data(k : k+GTrainDICParam.sizeAtom-1);
+                subData = data(k : k+GTrainDICParam.sizeAtom-1, i);
                 
                 subData = (subData - rangeCoef(i, 1)) / (rangeCoef(i, 2) - rangeCoef(i, 1));
 
@@ -49,7 +49,7 @@ function [DIC, rangeCoef] = bsTrain1DSparseJointDIC(datas, GTrainDICParam)
         
     end
     
-    params.data = patches;
+    params.data = allPatchs;
     params.Tdata = GTrainDICParam.sparsity;
     params.dictsize = GTrainDICParam.nAtom;
     params.iternum = GTrainDICParam.iterNum;

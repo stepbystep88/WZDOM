@@ -38,62 +38,12 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
             validatestring(GPreInvParam.initModel.mode, {'segy', 'filter_from_true_log', 'function'});
     end
     
-    % load prestack seismic data
-    preDataInfo = GPreInvParam.preSeisData;
-    switch lower(preDataInfo.mode)
-        case 'angle_separate_files'
-            separates = preDataInfo.separates;
-            angleSeisData = bsReadMultiSegyFiles(separates, inline, crossline, ...
-                startTime, sampNum-1, GPreInvParam.dt);
-            angleData = GPreInvParam.angleData;
-            
-        case 'angle_one_file'
-            gather = bsReadGathersByIds(preDataInfo.fileName, preDataInfo.segyInfo, ...
-                inline, crossline, startTime, sampNum-1, GPreInvParam.dt);
-            angleSeisData = gather{1}.data;
-            if ~isempty(GPreInvParam.angleData)
-                angleData = GPreInvParam.angleData;
-            else
-                angleData = gather{1}.offsets;
-            end
-            
-            if angleData(end) > 10
-                angleData = angleData / 180 * pi;
-            end
-            
-        case 'offset_one_file'
-            gather = bsReadGathersByIds(preDataInfo.fileName, preDataInfo.segyInfo, ...
-                inline, crossline, startTime, sampNum, GPreInvParam.dt);
-            preData = gather{1}.data;
-            offsets = gather{1}.offsets;
-            
-            [angleSeisData, angleData, ~] = bsOffsetData2AngleData(GPreInvParam, preData, offsets, ...
-                initLog(:, 1), initLog(:, 2), initLog(:, 3), initLog(:, 4));
-   
-        otherwise
-            validatestring(GPreInvParam.preSeisData.mode, ...
-                'angle_separate_files', 'angle_one_file', 'offset_one_file');
-    end
-
-% -------------------------------------------------------------------------
-    % build model parameter
-    [model.initX, model.lsdCoef] = bsPreBuildModelParam(initLog, GPreInvParam.mode, GPreInvParam.lsdCoef);
-    GPreInvParam.lsdCoef = model.lsdCoef;
-    if GPreInvParam.isInitDeltaZero
-        model.initX(sampNum+1:end) = 0;
-    end
     
-    % build forward matrix G
-    model.G = bsPreBuildGMatrix(...
-                GPreInvParam.mode, ...
-                initLog(:, 2), ...
-                initLog(:, 3), ...
-                angleData, ...
-                GPreInvParam.wavelet, ...
-                model.lsdCoef);
-            
-    % reshape angle seismic data as a vector
-    model.d = reshape(angleSeisData, GPreInvParam.angleTrNum*(sampNum-1), 1);
+% -------------------------------------------------------------------------
+    % build d, G, m
+    [model.d, model.G, model.initX, model.lsdCoef] ...
+        = bsPreBuild_d_G_m(GPreInvParam, inline, crossline, startTime, initLog);
+    GPreInvParam.lsdCoef = model.lsdCoef;
     
     % check data
     if isnan(model.initX)
@@ -133,14 +83,6 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
 end
 
 
-function seisData = bsReadMultiSegyFiles(separates, inline, crossline, startTime, sampNum, dt)
-    nFile = length(separates);
-    seisData = zeros(sampNum, nFile);
-    for i = 1 : nFile
-        separate = separates(i);
-        seisData(:, i) = bsReadTracesByIds(separate.fileName, separate.segyInfo, inline, crossline, startTime, sampNum, dt);
-    end
-end
 
 function [Lb, Ub] = bsGetBound(GPreInvParam, initLog)
     bound = GPreInvParam.bound;

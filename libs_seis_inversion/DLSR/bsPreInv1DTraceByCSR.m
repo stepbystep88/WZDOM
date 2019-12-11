@@ -1,10 +1,10 @@
-function [x, fval, exitFlag, output] = bsPreInv1DTraceByDLSR(d, G, xInit, Lb, Ub, regParam, parampkgs, options, mode, lsdCoef)
+function [x, fval, exitFlag, output] = bsPreInv1DTraceByCSR(d, G, xInit, Lb, Ub, regParam, parampkgs, options, mode, lsdCoef)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This code is designed for prestack 1D seismic inversion using dictionary
-% learning and sparse representation representation
+% learning and collaboration sparse representation representation
 %
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
-% Programming dates: Nov 2019
+% Programming dates: Dec 2019
 % -------------------------------------------------------------------------
 % Input
 % 
@@ -74,17 +74,20 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByDLSR(d, G, xInit, Lb, Ub
     
     ncell = GSparseInvParam.ncell;
     sizeAtom = GSparseInvParam.sizeAtom;
+    rangeCoef = GSparseInvParam.rangeCoef;
+    patches = zeros(sizeAtom*3, ncell);
     
     midX = [];
     midF = [];
     data = zeros(sampNum, 4);
     newData = data;
     
+    
+    
     for iter = 1 : options.maxIter
         
         % change the current initial guess
         inputObjFcnPkgs{2, 2} = [];
-        
         [xOut, fval, exitFlag, output_] = bsGBSolveByOptions(inputObjFcnPkgs, xInit, Lb, Ub, GBOptions);
         
         if GBOptions.isSaveMiddleRes
@@ -95,34 +98,50 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByDLSR(d, G, xInit, Lb, Ub
         % sparse reconstruction
         [data(:, 2), data(:, 3), data(:, 4)] = bsPreRecoverElasticParam(xOut, mode, lsdCoef);
         
-        for i = 2 : 4
-            patches = zeros(sizeAtom, ncell);
-            for j = 1 : ncell
-                js = GSparseInvParam.index(j);
-                patches(:, j) = data(js : js+sizeAtom-1, i);
-            end
-            
-            gammas = omp(GSparseInvParam.DIC{i-1}'*patches, ...
-                GSparseInvParam.omp_G{i-1}, ...
-                GSparseInvParam.sparsity);
-            new_patches = GSparseInvParam.DIC{i-1} *  gammas;
-        
-            %% reconstruct model by equations
-            switch GSparseInvParam.reconstructType
-                case 'equation'
-                    avgLog = regParam.gamma * data(:, i);
-                    % get reconstructed results by equation
-                    for j = 1 : ncell
-                        avgLog = avgLog + GSparseInvParam.R{j}' * new_patches(:, j);
-                    end
-
-                    newData(:, i) = GSparseInvParam.invR * avgLog;
-                case 'simpleAvg'
-                    % get reconstructed results by averaging patches
-                    avgLog = bsAvgPatches(new_patches, GSparseInvParam.index, sampNum);
-                    newData(:, i) = avgLog * regParam.gamma + data(:, i) * (1 - regParam.gamma);
+        for j = 1 : ncell
+            js = GSparseInvParam.index(j);
+            for i = 1 : 3
+                sPos = sizeAtom*(i-1) + 1;
+                ePos = sPos + sizeAtom - 1;
+                
+                iData = data(js : js+sizeAtom-1, i+1);
+                % normalization
+                patches(sPos:ePos, j) = (iData - rangeCoef(i, 1))/(rangeCoef(i, 2) - rangeCoef(i, 1));
             end
         end
+
+        if GSparseInvParam.isModifiedDIC
+            patches = GSparseInvParam.M  * patches;
+        end
+        
+        gammas = omp(GSparseInvParam.DIC'*patches, ...
+                    GSparseInvParam.omp_G, ...
+                    GSparseInvParam.sparsity);
+        new_patches = GSparseInvParam.DIC *  gammas;
+        
+        %% reconstruct model by equations
+        for i = 1 : 3
+            sPos = sizeAtom*(i-1) + 1;
+            ePos = sPos + sizeAtom - 1;
+            i_new_patches = new_patches(sPos:ePos, :) * (rangeCoef(i, 2) - rangeCoef(i, 1)) + rangeCoef(i, 1);
+            
+            switch GSparseInvParam.reconstructType
+                case 'equation'
+                    avgLog = regParam.gamma * data(:, i+1);
+                    % get reconstructed results by equation
+                    for j = 1 : ncell
+                        
+                        avgLog = avgLog + GSparseInvParam.R{j}' * i_new_patches(:, j);
+                    end
+
+                    newData(:, i+1) = GSparseInvParam.invR * avgLog;
+                case 'simpleAvg'
+                    % get reconstructed results by averaging patches
+                    avgLog = bsAvgPatches(i_new_patches, GSparseInvParam.index, sampNum);
+                    newData(:, i+1) = avgLog * regParam.gamma + data(:, i+1) * (1 - regParam.gamma);
+            end
+        end
+        
         
         %% reconstruct model by 
         xInit = bsPreBuildModelParam(newData, mode, lsdCoef);
@@ -156,7 +175,9 @@ function parampkgs = bsInitDLSRPkgs(parampkgs, gamma, sampNum)
     validatestring(string(GSparseInvParam.reconstructType), {'equation', 'simpleAvg'});
     validateattributes(gamma, {'double'}, {'>=', 0, '<=', 1});
     
-    [sizeAtom, nAtom] = size(GSparseInvParam.DIC{1});
+    [sizeAtom, nAtom] = size(GSparseInvParam.DIC);
+    sizeAtom = sizeAtom / 3;
+    
     GSparseInvParam.sizeAtom = sizeAtom;
     GSparseInvParam.nAtom = nAtom;
     GSparseInvParam.nrepeat = sizeAtom - GSparseInvParam.stride;
@@ -177,11 +198,27 @@ function parampkgs = bsInitDLSRPkgs(parampkgs, gamma, sampNum)
     GSparseInvParam.invTmp = tmp;
     GSparseInvParam.invR = inv(gamma * eye(sampNum) + GSparseInvParam.invTmp);
     
-    GSparseInvParam.omp_G = cell(1, 3);
-    for i = 1 : 3
-        GSparseInvParam.omp_G{i} = GSparseInvParam.DIC{i}' * GSparseInvParam.DIC{i};
+    if GSparseInvParam.isModifiedDIC
+        I = eye(sizeAtom * 3);
+        oneSa = ones(sizeAtom, sizeAtom);
+        Z = zeros(sizeAtom, sizeAtom);
+        cOne = {oneSa Z Z;
+              Z oneSa Z;
+              Z Z oneSa};
+        GSparseInvParam.M = I + GSparseInvParam.a / sizeAtom * cell2mat(cOne);
+
+        MDIC = GSparseInvParam.M * GSparseInvParam.DIC;
+        % normalize the modified dictionary
+        for j = 1 : size(MDIC, 2)
+            MDIC(:, j) = MDIC(:, j) / norm(MDIC(:, j));
+        end
+        
+        GSparseInvParam.DIC = MDIC;
+        GSparseInvParam.omp_G = GSparseInvParam.MDIC' * GSparseInvParam.MDIC;
+    else
+        GSparseInvParam.omp_G = GSparseInvParam.DIC' * GSparseInvParam.DIC;
     end
-    
+        
     parampkgs.GSparseInvParam = GSparseInvParam;
 end
 

@@ -362,31 +362,31 @@ function [nRow, nCol, loc, colorbar_pos] = setShareFigureSize(nProfile)
             bsSetPosition(0.3, 0.2);
             nRow = 1;
             nCol = 1;
-            loc = [0.8, 0.89, 0.01, 0.08, 0.08, -0.01];
+            loc = [0.79, 0.89, 0.01, 0.08, 0.09, -0.01];
             colorbar_pos = [0.87 0.06 0.01 0.88];
         case 2
             bsSetPosition(0.3, 0.42);
             nRow = 2;
             nCol = 1;
-            loc = [0.8, 0.94, 0.01, 0.07, 0.08, 0.02];
+            loc = [0.79, 0.94, 0.01, 0.07, 0.09, 0.02];
             colorbar_pos = [0.87 0.06 0.01 0.9];
         case 3
             bsSetPosition(0.3, 0.65);
             nRow = 3;
             nCol = 1;
-            loc = [0.8, 0.95, 0.01, 0.04, 0.08, 0.01];
+            loc = [0.79, 0.95, 0.01, 0.04, 0.09, 0.01];
             colorbar_pos = [0.87 0.05 0.01 0.92];
         case 4
             bsSetPosition(0.6, 0.42);
             nRow = 2;
             nCol = 2;
-            loc = [0.9, 0.94, 0.02, 0.07, 0.04, 0.02];
+            loc = [0.88, 0.93, 0.02, 0.07, 0.05, 0.02];
             colorbar_pos = [0.93 0.05 0.01 0.9];
         case {5, 6}
             bsSetPosition(0.6, 0.65);
             nRow = 3;
             nCol = 2;
-            loc = [0.9, 0.95, 0.02, 0.04, 0.04, 0.01];
+            loc = [0.89, 0.95, 0.02, 0.04, 0.05, 0.01];
             colorbar_pos = [0.93 0.05 0.01 0.92];
         case {7, 8, 9}
             bsSetPosition(0.8, 0.65);
@@ -403,32 +403,32 @@ function [nRow, nCol, loc] = setFigureSize(nProfile)
             bsSetPosition(0.3, 0.2);
             nRow = 1;
             nCol = 1;
-            loc = [0.89, 0.84, 0.01, 0.08, 0.08, 0.00];
+            loc = [0.87, 0.82, 0.01, 0.08, 0.09, 0.00];
         case 2
             bsSetPosition(0.3, 0.42);
             nRow = 2;
             nCol = 1;
-            loc = [0.89, 0.93, 0.01, 0.07, 0.08, 0.02];
+            loc = [0.87, 0.91, 0.01, 0.07, 0.09, 0.02];
         case 3
             bsSetPosition(0.3, 0.65);
             nRow = 3;
             nCol = 1;
-            loc = [0.89, 0.94, 0.01, 0.04, 0.08, 0.00];
+            loc = [0.87, 0.92, 0.01, 0.04, 0.09, 0.00];
         case 4
             bsSetPosition(0.6, 0.42);
             nRow = 2;
             nCol = 2;
-            loc = [0.95, 0.94, 0.02, 0.07, 0.04, 0.02];
+            loc = [0.93, 0.92, 0.02, 0.07, 0.05, 0.02];
         case {5, 6}
             bsSetPosition(0.6, 0.65);
             nRow = 3;
             nCol = 2;
-            loc = [0.95, 0.95, 0.02, 0.04, 0.04, 0.01];
+            loc = [0.93, 0.93, 0.02, 0.04, 0.05, 0.01];
         case {7, 8, 9}
             bsSetPosition(0.8, 0.65);
             nRow = 3;
             nCol = 3;
-            loc = [0.95, 0.95, 0.01, 0.04, 0.04, 0.01];
+            loc = [0.93, 0.95, 0.01, 0.04, 0.05, 0.01];
     end
 end
 
@@ -591,7 +591,7 @@ function [newProfileData, newDt, newTraceIds, newHorizon, minTime] = bsReScaleAn
     if ~exist('minTime', 'var') || isempty(minTime)
         minTime = min(time0) - 5 * dt;
     end
-    maxTime = max(time0) + sampNum * dt + 5 * dt;
+    maxTime = max(time0) + sampNum * dt + 10 * dt;
 %     t = minTime : dt : maxTime;
     newT = minTime : newDt : maxTime;
     
@@ -684,10 +684,16 @@ function bsShowHorizonedData(GShowProfileParam, profileData, horizons, minTime, 
     end
     
     % show the name of wells
-    if ~isempty(wellPos)
-        for i = 1 : length(wellPos)
+    if ~isempty(wellPos) && GShowProfileParam.isShowColorWells
+        nWell = length(wellPos);
+        
+        half = floor(nWell/2);
+        
+        for i = 1 : nWell
+            x = mod(i, 2);
+            
             ipos = GShowProfileParam.scaleFactor * wellPos(i) - 0.05*traceNum;
-            text(ipos, 20, wellNames{i}, ...
+            text(ipos, 0.95*sampNum - 0.07*sampNum*x, wellNames{i}, ...
                 'fontsize', GShowProfileParam.plotParam.fontsize,...
                 'fontweight', 'bold', ...
                 'fontname', GShowProfileParam.plotParam.fontname, ...
