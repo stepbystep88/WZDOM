@@ -114,7 +114,7 @@ function bsSetSubPlotSize(nItems, iItem)
     switch nItems
         case {1, 2, 3}
             bsSubPlotFit(1, nItems, iItem, 0.96, 0.92, 0.08, 0.11, 0.085, 0.045);
-        case 4
+        otherwise
             bsSubPlotFit(1, nItems, iItem, 0.96, 0.92, 0.08, 0.11, 0.085, 0.045);
     end
 end

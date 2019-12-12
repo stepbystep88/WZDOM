@@ -1,4 +1,4 @@
-function bsWriteInvResultsIntoSegyFiles(GPreInvParam, invResults, title)
+function bsWriteInvResultsIntoSegyFiles(GInvParam, invResults, title)
     
     if isempty(invResults)
         return;
@@ -9,25 +9,39 @@ function bsWriteInvResultsIntoSegyFiles(GPreInvParam, invResults, title)
         
         
         if ~iscell(data)
-            dstFileName = getDstFileName(GPreInvParam, invResults{i}.name, invResults{i}.type, title);
+            dstFileName = getDstFileName(GInvParam, invResults{i}.name, invResults{i}.type, title);
             
-            bsWriteInvResultIntoSegyFile(invResults{i}, data, ...
-                GPreInvParam.preSeisData.segyFileName, ...
-                GPreInvParam.preSeisData.segyInfo, dstFileName);
+            switch GInvParam.flag
+                case {'prestack', 'pre-stack'}
+                bsWriteInvResultIntoSegyFile(invResults{i}, data, ...
+                    GInvParam.preSeisData.fileName, ...
+                    GInvParam.preSeisData.segyInfo, dstFileName);
+                case {'poststack', 'post-stack'}
+                bsWriteInvResultIntoSegyFile(invResults{i}, data, ...
+                    GInvParam.postSeisData.fileName, ...
+                    GInvParam.postSeisData.segyInfo, dstFileName);
+            end
             
         else
             for j = 1 : length(data)
-                dstFileName = getDstFileName(GPreInvParam, invResults{i}.name, invResults{i}.type{j}, title);
+                dstFileName = getDstFileName(GInvParam, invResults{i}.name, invResults{i}.type{j}, title);
+                switch GInvParam.flag
+                    case {'prestack', 'pre-stack'}
+                        bsWriteInvResultIntoSegyFile(invResults{i}, data{j}, ...
+                            GInvParam.preSeisData.fileName, ...
+                            GInvParam.preSeisData.segyInfo, dstFileName);
+                    case {'poststack', 'post-stack'}
+                        bsWriteInvResultIntoSegyFile(invResults{i}, data{j}, ...
+                            GInvParam.postSeisData.fileName, ...
+                            GInvParam.posteisData.segyInfo, dstFileName);
+                end
                 
-                bsWriteInvResultIntoSegyFile(invResults{i}, data{j}, ...
-                    GPreInvParam.preSeisData.fileName, ...
-                    GPreInvParam.preSeisData.segyInfo, dstFileName);
             end
         end
         
     end
 end
 
-function str = getDstFileName(GPreInvParam, name, type, title)
-    str = sprintf('%s/sgy_results/%s-%s-%s.sgy', GPreInvParam.modelSavePath, type, name, title);
+function str = getDstFileName(GInvParam, name, type, title)
+    str = sprintf('%s/sgy_results/%s-%s-%s.sgy', GInvParam.modelSavePath, type, name, title);
 end
