@@ -85,8 +85,8 @@ function model = bsPostPrepareModel(GPostInvParam, inline, crossline, horizonTim
                 model.Ub = log(GPostInvParam.bound.Ub);
             end
         case 'based_on_init'
-            model.Lb = log(model.initLog - GPostInvParam.bound.offset_init);
-            model.Ub = log(model.initLog + GPostInvParam.bound.offset_init);
+            model.Lb = log(model.initLog - GPostInvParam.bound.offset_init.ip);
+            model.Ub = log(model.initLog + GPostInvParam.bound.offset_init.ip);
         otherwise
             validatestring(GPostInvParam.bound.mode, ['off', 'fixed', 'based_on_init']);
     end

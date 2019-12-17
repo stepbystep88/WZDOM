@@ -67,6 +67,7 @@ function options = bsCreateGShowProfileParam(varargin)
     
     % how many traces are displayed with respect to the right-most well location
     addParameter(p, 'showRightTrNumByWells', 10000);
+
     
     % along time, which vertical part of a profile will be display, see
     % function of bsShowVerticalPartData in bsShowInvProfiles.m for details

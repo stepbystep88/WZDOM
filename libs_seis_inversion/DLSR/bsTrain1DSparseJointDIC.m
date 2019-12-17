@@ -5,6 +5,10 @@ function [DIC, rangeCoef] = bsTrain1DSparseJointDIC(datas, GTrainDICParam)
 % Programming dates: Dec 2019
 % -------------------------------------------------------------------------
 
+    if nargin <= 3
+        isNormalize = 1;
+    end
+    
     nWell = length(datas);
     allPatchs = [];
     
@@ -39,8 +43,10 @@ function [DIC, rangeCoef] = bsTrain1DSparseJointDIC(datas, GTrainDICParam)
             for k = index
                 subData = data(k : k+GTrainDICParam.sizeAtom-1, i);
                 
-                subData = (subData - rangeCoef(i, 1)) / (rangeCoef(i, 2) - rangeCoef(i, 1));
-
+                if GTrainDICParam.isNormalize
+                    subData = (subData - rangeCoef(i, 1)) / (rangeCoef(i, 2) - rangeCoef(i, 1));
+                end
+                
                 patchs = [patchs, subData];
             end
         end

@@ -28,20 +28,14 @@ function invResults = bsReshapeInvResultsAs3D(invResults, rangeInline, rangeCros
         
         if ~iscell(data)
             fprintf('Reshaping %s data of %s...\n', invResults{i}.type, invResults{i}.name);
-            invResults{i}.data = bsReshapeData(invResults{i}.data, nInline, nCrossline);
+            invResults{i}.data = bsReshapeDataAs3D(invResults{i}.data, nInline, nCrossline);
         else
             for j = 1 : length(data)
                 fprintf('Reshaping %s data of %s...\n', invResults{i}.type{j}, invResults{i}.name);
-                invResults{i}.data{j} = bsReshapeData(invResults{i}.data{j}, nInline, nCrossline);
+                invResults{i}.data{j} = bsReshapeDataAs3D(invResults{i}.data{j}, nInline, nCrossline);
             end
         end
         
     end
 end
 
-function volume = bsReshapeData(data, nInline, nCrossline)
-    [sampNum, nTrace] = size(data);
-    assert(nTrace==nInline*nCrossline, 'the number of traces must be equal to #inline * #crossline');
-    
-    volume = reshape(data, sampNum, nCrossline, nInline);
-end

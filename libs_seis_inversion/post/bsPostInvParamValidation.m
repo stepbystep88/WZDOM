@@ -1,3 +1,0 @@
-function bsPostInvParamValidation(GPostInvParam)
-    
-end

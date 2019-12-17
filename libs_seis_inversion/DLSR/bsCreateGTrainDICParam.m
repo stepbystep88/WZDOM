@@ -25,7 +25,7 @@ function options = bsCreateGTrainDICParam(flag, varargin)
     addParameter(p, 'stride', 1); 
     
     % the number of iterations to train a dictionary
-    addParameter(p, 'iterNum', 100); 
+    addParameter(p, 'iterNum', 10); 
     
     % the coeficient of a low-pass filter which is used to pre-process the
     % well-log data
@@ -33,6 +33,10 @@ function options = bsCreateGTrainDICParam(flag, varargin)
     
     % whether to show the iteration information
     addParameter(p, 'isShowIterInfo', 0); 
+    
+        
+    % indicate the name of the trained dictionary
+    addParameter(p, 'title', []);
     
     switch lower(flag)
         case 'one'
@@ -47,6 +51,8 @@ function options = bsCreateGTrainDICParam(flag, varargin)
             % for flag='csr': train a joint dictionary which contains the coherence of
             % different elastic parameters
             addParameter(p, 'dicSavePath', './TrainedDictionaries/csr/'); 
+            addParameter(p, 'isNormalize', 1); 
+            
         otherwise
             validatestring(flag, {'ssr', 'csr', 'one'});
     end

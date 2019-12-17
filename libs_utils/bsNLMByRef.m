@@ -98,13 +98,13 @@ function [filteredData, weightInfo] = bsNLM3D(data, refData, options)
     end
     
     K = options.nPointsUsed;
-    filteredData = zeros(o1, o2, o3);
+    filteredData = inf(o1, o2, o3);
     filteredNum = zeros(o1, o2, o3);
     
     % average data by calculated patches
     for i = 1 : nPatches
         
-        if mod(i, 10000) == 0
+        if mod(i, 100000) == 0
             fprintf('Averaging patches as a whole volume %.2f%%...\n', i/nPatches*100);
         end
         
@@ -126,6 +126,8 @@ function [filteredData, weightInfo] = bsNLM3D(data, refData, options)
     end
     
     filteredData = filteredData ./ filteredNum;
+    index = isinf(filteredData) | isnan(filteredData);
+    filteredData(index) = data(index);
 end
 
 function [i1, i2, i3] = bsGetId3D(i, n1, n2, n3)

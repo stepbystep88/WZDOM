@@ -140,7 +140,7 @@ function [GInvParam, outputWelllogs, wavelet] = bsDepth2Time(GInvParam, timeLine
     if GInvParam.depth2time.isShowCompare
         
         figure;
-        bsSetPosition(0.78, 0.59);
+        bsSetPosition(0.78, 0.56);
         
         nSubFigure = min(wellNum, GInvParam.depth2time.showCompareNum);
         for i = 1 : nSubFigure

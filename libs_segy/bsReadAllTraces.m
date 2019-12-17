@@ -1,5 +1,5 @@
 function [trData, inIds, crossIds] = bsReadAllTraces(fileName, GSegyInfo, startTime, sampNum, dt)
-%% write volume header into a segy
+%% read all traces of a segy file
 %
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
 % Programming dates: Nov 2019

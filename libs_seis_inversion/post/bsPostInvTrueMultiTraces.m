@@ -75,6 +75,9 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
                         inIds, crossIds, startTimes, sampNum, GPostInvParam.dt);
                     
                     res.source = 'segy';
+                case 'assign'
+                    data = loadInfo.data;
+                    res.source = 'assign';
             end
             
         end
@@ -199,7 +202,7 @@ function [idata, model, output] = bsPostInvOneTrace(GPostInvParam, horizonTime, 
             inId, crossId, method.name);
     end
     
-    try
+%     try
         % create model data
         if GPostInvParam.isReadMode
             % in read mode, model is loaded from local file
@@ -222,13 +225,13 @@ function [idata, model, output] = bsPostInvOneTrace(GPostInvParam, horizonTime, 
 
         idata = exp(xOut);
         
-    catch err
-        fprintf(getReport(err));
-        
-        sampNum = GPostInvParam.upNum + GPostInvParam.downNum;
-        idata = zeros(sampNum, 1);
-        model = [];
-        output = [];
-    end
+%     catch err
+%         fprintf(getReport(err));
+%         
+%         sampNum = GPostInvParam.upNum + GPostInvParam.downNum;
+%         idata = zeros(sampNum, 1);
+%         model = [];
+%         output = [];
+%     end
     
 end

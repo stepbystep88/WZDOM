@@ -60,7 +60,7 @@ function bsShowPostInvLogResult(GPostInvParam, GShowProfileParam, invVals, trueL
             G = bsPostGenGMatrix(GPostInvParam.wavelet, sampNum);
             synFromInv = G * log(invVal.Ip);
             synFromTrue = G * log(model.trueLog);
-            seisData = model.origianl_d;
+            seisData = model.dTrue;
             
             bsShowPostSubSynSeisData(GPlotParam, ...
                 synFromTrue, synFromInv, seisData, ...
@@ -152,9 +152,9 @@ function bsShowPostSubSynSeisData(GPlotParam, ...
 
     bsSetSubPlotSize(nItems, iItem);
     
-    plot(synFromTrue, t(1:end-1), 'k', 'linewidth', GPlotParam.linewidth); hold on;
-    plot(seisData, t(1:end-1), 'b','LineWidth', GPlotParam.linewidth);    hold on;
-    plot(synFromInv, t(1:end-1), 'r', 'LineWidth', GPlotParam.linewidth);   hold on;
+    plot(synFromTrue/norm(synFromTrue), t(1:end-1), 'k', 'linewidth', GPlotParam.linewidth); hold on;
+    plot(seisData/norm(seisData), t(1:end-1), 'b','LineWidth', GPlotParam.linewidth);    hold on;
+    plot(synFromInv/norm(synFromInv), t(1:end-1), 'r', 'LineWidth', GPlotParam.linewidth);   hold on;
     
     ylabel('Time (s)');
     set(gca,'ydir','reverse');

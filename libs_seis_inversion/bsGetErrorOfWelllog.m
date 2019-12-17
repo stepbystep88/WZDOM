@@ -2,7 +2,7 @@ function [wellLogs, dataIndex, type] = bsGetErrorOfWelllog(GInvParam, timeLine, 
     nWell = length(wellLogs);
     
     p = inputParser;
-    addParameter(p, 'expandNum', 30);
+    addParameter(p, 'expandNum', 0);
     
     p.parse(varargin{:});  
     options = p.Results;
@@ -76,5 +76,5 @@ function wellInfo = bsGetSynTrace(GInvParam, inline, crossline, horizonTime, wel
     
     errorData = realData - synData;
     
-    wellInfo.wellLog = [wellData, [errorData; 0]];
+    wellInfo.wellLog = [wellData(1:end-1, :), realData, synData, errorData];
 end

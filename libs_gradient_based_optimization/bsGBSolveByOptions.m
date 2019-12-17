@@ -64,9 +64,9 @@ function  [x,fval,exitFlag,output] = bsGBSolveByOptions(inputObjFcnPkgs, xInit, 
         error('Lb and Ub must be empty or not empty at the same time.');
     else
         options.bounds.active = true;
-        if ~isempty( find(Lb >= Ub, 1) )
-            error('Lb must be less than Ub');
-        end
+%         if ~isempty( find(Lb >= Ub, 1) )
+%             error('Lb must be less than Ub');
+%         end
     end
     
     if options.bounds.active

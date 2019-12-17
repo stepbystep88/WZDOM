@@ -76,6 +76,7 @@ function bsShowDistribution(GShowProfileParam, wellLogs, data)
         subplot(nRow, 5, i);
         
         histogram(data{i}(:, 3), 20, 'facecolor', 'b');
+        title(wellLogs{i}.name);
     end
     
     bsSetDefaultPlotSet(GShowProfileParam.plotParam);

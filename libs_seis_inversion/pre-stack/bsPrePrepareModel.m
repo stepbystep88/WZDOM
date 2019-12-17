@@ -121,7 +121,7 @@ function [Lb, Ub] = bsGetBound(GPreInvParam, initLog)
                         GPreInvParam.lsdCoef);
             end
         case 'based_on_init'
-            offset = repmat([0, bound.vp.offset_init, bound.vs.offset_init, bound.rho.offset_init], sampNum, 1);
+            offset = repmat([0, bound.offset_init.vp, bound.offset_init.vs, bound.offset_init.rho], sampNum, 1);
             
             Lb = bsPreBuildModelParam(...
                     initLog - offset, ...

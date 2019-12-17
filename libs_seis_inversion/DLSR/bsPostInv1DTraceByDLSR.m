@@ -82,6 +82,14 @@ function [x, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, U
         
         % change the current initial guess
         inputObjFcnPkgs{2, 2} = [];
+        
+        if isfield(GSparseInvParam, 'isScale') && GSparseInvParam.isScale
+            Gx = mainData.A * xInit;
+            c = (Gx' * mainData.B) / (Gx' * Gx);
+            mainData.A = mainData.A * c;
+            inputObjFcnPkgs{1, 2} = mainData;
+        end
+        
         [xOut, fval, exitFlag, output_] = bsGBSolveByOptions(inputObjFcnPkgs, xInit, Lb, Ub, GBOptions);
         
         if GBOptions.isSaveMiddleRes
