@@ -25,7 +25,8 @@ function bsFilterSegyFile(GInvParam, timeLine, inputFileName, outFileName, GSegy
 
     data = bsReadTracesByIds(inputFileName, GSegyInfo, inIds, crossIds, startTime, sampNum, GInvParam.dt);
     
-    filteredData = bsFilterProfileData(data, options.filtCoef);
+    filteredData = bsFilterProfileData(data', options.filtCoef);
+    filteredData = filteredData';
     
     res.inIds = inIds;
     res.crossIds = crossIds;

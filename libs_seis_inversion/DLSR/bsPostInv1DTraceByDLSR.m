@@ -93,8 +93,8 @@ function [x, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, U
         [xOut, fval, exitFlag, output_] = bsGBSolveByOptions(inputObjFcnPkgs, xInit, Lb, Ub, GBOptions);
         
         if GBOptions.isSaveMiddleRes
-            midX = [midX, output_.midResults.x];
-            midF = [midF, output_.midResults.f];
+            midX = [output_.midResults.x, midX];
+            midF = [output_.midResults.f, midF];
         end
         
         % sparse reconstruction

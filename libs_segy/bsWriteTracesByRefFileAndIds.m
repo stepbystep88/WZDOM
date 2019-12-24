@@ -23,7 +23,7 @@ function bsWriteTracesByRefFileAndIds(refFileName, dstfileName, GSegyInfo, trDat
     index = -1;
     
     for i = 1 : trNum
-        if mod(i, 1000) == 0
+        if mod(i, 10000) == 0
             % print information
             fprintf('Writing %d%% data into segy file %s...\n', round(i/trNum*100), dstfileName);
         end
