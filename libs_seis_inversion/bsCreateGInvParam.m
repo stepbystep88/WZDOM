@@ -71,7 +71,9 @@ function [p] = bsAddCommonParam(p, GSegyInfo)
     addParameter(p, 'postSeisData', struct(...
         'segyInfo', GSegyInfo, ...
         'fileName', '', ...
-        'shiftFileName', '' ...
+        'shiftFileName', '', ...
+        'mode', 'segy', ...
+        'fcn', [] ...
     ));
     
     % the sample interval of the current work area, in ms
@@ -110,6 +112,11 @@ function [p] = bsAddCommonParam(p, GSegyInfo)
     % wavelet information
     addParameter(p, 'wavelet', []);
     
+    % whether to scale the matrix G to avoid improper wavelet magnitude
+    addParameter(p, 'isScale', 0);
+    % this one will be used if isScale = true
+    addParameter(p, 'bestPostSeisData', []);
+    
     % the coeficient of a low-pass filter used for processing seismic data
     addParameter(p, 'seismicFiltCoef', 1);
     
@@ -132,11 +139,8 @@ function [p] = bsAddCommonParam(p, GSegyInfo)
         'saveOffsetNum', 20 ...
     ));
 
-    % the function handle of finding regularization parameter
-    addParameter(p, 'searchRegParamFcn', @bsBestParameterByLCurve);
-    
     % the information of initial model
-    info = struct('segyInfo', GSegyInfo, 'fileName', '');
+    info = struct('segyInfo', GSegyInfo, 'fileName', '', 'fcn', []);
     addParameter(p, 'initModel', struct(...
         'mode', 'filter_from_true_log', ... % see bsPrePrepareModel for details
         'filtCoef', 0.1, ...

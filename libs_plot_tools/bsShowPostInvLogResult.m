@@ -57,7 +57,9 @@ function bsShowPostInvLogResult(GPostInvParam, GShowProfileParam, invVals, trueL
             invVal = invVals{iItem};
             model = invVal.model;
 
-            G = bsPostGenGMatrix(GPostInvParam.wavelet, sampNum);
+            G = model.orginal_G;
+            
+%             G = bsPostGenGMatrix(GPostInvParam.wavelet, sampNum);
             synFromInv = G * log(invVal.Ip);
             synFromTrue = G * log(model.trueLog);
             seisData = model.dTrue;

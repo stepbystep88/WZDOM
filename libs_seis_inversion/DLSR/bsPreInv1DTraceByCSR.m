@@ -69,8 +69,7 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByCSR(d, G, xInit, Lb, Ub,
     GBOptions.maxIter = options.innerIter;
     
     % create packages for sparse inversion 
-    parampkgs = bsInitDLSRPkgs(parampkgs, regParam.gamma, sampNum);
-    GSparseInvParam = parampkgs.GSparseInvParam;
+    GSparseInvParam = bsInitDLSRPkgs(parampkgs, regParam.gamma, sampNum);
     
     ncell = GSparseInvParam.ncell;
     sizeAtom = GSparseInvParam.sizeAtom;
@@ -171,12 +170,10 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByCSR(d, G, xInit, Lb, Ub,
     
 end
 
-function parampkgs = bsInitDLSRPkgs(parampkgs, gamma, sampNum)
+function GSparseInvParam = bsInitDLSRPkgs(GSparseInvParam, gamma, sampNum)
     
-    if isfield(parampkgs.GSparseInvParam, 'omp_G')
+    if isfield(GSparseInvParam, 'omp_G')
         return;
-    else
-        GSparseInvParam = parampkgs.GSparseInvParam;
     end
 
     validatestring(string(GSparseInvParam.reconstructType), {'equation', 'simpleAvg'});
@@ -226,7 +223,6 @@ function parampkgs = bsInitDLSRPkgs(parampkgs, gamma, sampNum)
         GSparseInvParam.omp_G = GSparseInvParam.DIC' * GSparseInvParam.DIC;
     end
         
-    parampkgs.GSparseInvParam = GSparseInvParam;
 end
 
 

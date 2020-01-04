@@ -1,4 +1,15 @@
-function profileData = bsFilterProfileData(profileData, showFiltCoef)
+function profileData = bsFilterProfileData(profileData, showFiltCoef, isHorizonFilter)
+
+    if nargin < 3
+        isHorizonFilter = 1;
+    end
+    
+    
+    
+    if ~isHorizonFilter
+        profileData = profileData';
+    end
+    
     [sampNum, ~] = size(profileData);
     
     % filter data along with horizon
@@ -15,4 +26,9 @@ function profileData = bsFilterProfileData(profileData, showFiltCoef)
         catch
         end
     end
+    
+    if ~isHorizonFilter
+        profileData = profileData';
+    end
+    
 end

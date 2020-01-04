@@ -77,6 +77,9 @@ function [options] = bsCreateSeisInv1DOptions(nDim, varargin)
     % set default regularization function
     addParameter(parser, 'regFunc', [] );
     
+    % whether to show the figure of choosing regularization paramter
+    addParameter(parser, 'isShowRegParamPlot', 1 );
+    
     parser.parse(varargin{:});  
     options = parser.Results;
    

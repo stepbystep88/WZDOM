@@ -59,6 +59,9 @@ function options = bsCreateGShowProfileParam(varargin)
     % the scale factor of showing a profile, must be a non-negative integer
     addParameter(p, 'scaleFactor', 2);
     
+    % the scale factor of showing a profile, must be a non-negative integer
+    addParameter(p, 'edgeOffsetNum', 5);
+    
     % whether set the colormap as reverse mode
     addParameter(p, 'isColorReverse', 0);
 

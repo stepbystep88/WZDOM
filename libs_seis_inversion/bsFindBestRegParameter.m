@@ -57,11 +57,11 @@ function [bestRegParam] = bsFindBestRegParameter(options, inputObjFcnPkgs, xInit
     switch strSearchRegParamFcn
         case 'bsBestParameterByLCurve'
             % get the best regParam by L-curve method
-            bestRegParam = bsBestParameterByLCurve(lambdas, inputObjFcnPkgs, xInit, Lb, Ub, GBOptions, 0);
+            bestRegParam = bsBestParameterByLCurve(lambdas, inputObjFcnPkgs, xInit, Lb, Ub, GBOptions, options.isShowRegParamPlot);
 %             cprintf('*red', sprintf('The best regularization choosen by L-curve is %d\n', bestRegParam));
             
         case 'bsBestParameterByGCV'
-            bestRegParam = bsBestParameterByGCV(lambdas, inputObjFcnPkgs, xInit, Lb, Ub, GBOptions, 0);
+            bestRegParam = bsBestParameterByGCV(lambdas, inputObjFcnPkgs, xInit, Lb, Ub, GBOptions, options.isShowRegParamPlot);
         case 'bsBestParameterByBisection'
             % get the best regParam by bisection method
             bestRegParam = bsBestParameterByBisection(...
@@ -72,7 +72,7 @@ function [bestRegParam] = bsFindBestRegParameter(options, inputObjFcnPkgs, xInit
 %             cprintf('*red', sprintf('The best regularization choosen by bisection is %d\n', bestRegParam));
         case 'bsBestParameterBySearch'
             % get the best regParam by linear search method
-            bestRegParam = bsBestParameterBySearch(lambdas, options.optimalX, inputObjFcnPkgs, xInit, Lb, Ub, GBOptions, 0);
+            bestRegParam = bsBestParameterBySearch(lambdas, options.optimalX, inputObjFcnPkgs, xInit, Lb, Ub, GBOptions, options.isShowRegParamPlot);
 %             cprintf('*red', sprintf('The best regularization choosen by linear search is %d\n', bestRegParam));
     end
 end

@@ -125,12 +125,20 @@ function [bestLambda, curveData] = bsBestParameterByLCurve(lambdas, inputObjFcnP
     
     if nargin > 2 && isShowFigure == 1
         figure;
+        x = (curveData(:, 2));
+        y = (curveData(:, 1));
+        plot(x, y, 'k-*', 'linewidth', 2);
         
-        plot(log(curveData(:, 2)), log(curveData(:, 1)), 'k-*', 'linewidth', 2);
+        strs = cell(1, nLambdas);
+        for k = 1 : nLambdas
+            strs{k} = sprintf('%.3f', lambdas(k));
+        end
+        
+        text(x+0.02*(max(x) - min(x)), y+0.02*(max(y)-min(y)), strs);
         
         xlabel('Regularization term');
         ylabel('Residual term');
-        bsPlotSetDefault(bsGetDefaultPlotSet());
+        bsSetDefaultPlotSet(bsGetDefaultPlotSet());
     end
     
 end

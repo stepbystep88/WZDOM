@@ -23,7 +23,7 @@ function model = bsPostPrepareModel(GPostInvParam, inline, crossline, horizonTim
                 sampNum, ...
                 GPostInvParam.dt);
             initLog = bsButtLowPassFilter(initLog, GPostInvParam.initModel.filtCoef);
-            
+           
         case 'filter_from_true_log' % get initial model by filtering the true model
             if isempty(trueLog)
                 error('When initModel.mode is filter_from_true_log, true welllog data must be inputed.');
@@ -33,9 +33,9 @@ function model = bsPostPrepareModel(GPostInvParam, inline, crossline, horizonTim
         case 'function' % get initial model by calling a function
             
             if isempty(GPostInvParam.initModel.fcn)
-                error('When GPostInvParam.initModel.mode is function, the GPreInvParam.initModel.fcn could not be empty!\n');
+                error('When GInvParam.initModel.mode is function, the GInvParam.initModel.fcn could not be empty!\n');
             end
-            initLog = GPostInvParam.initModel.fcn(GPostInvParam, inline, crossline, startTime);
+            initLog = GPostInvParam.initModel.fcn(inline, crossline, startTime);
             
         otherwise
             validatestring(GPostInvParam.initModel.mode, ['segy', 'filter_from_true_log', 'function']);

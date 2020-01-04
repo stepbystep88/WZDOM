@@ -58,7 +58,7 @@ function [x,fval,exitFlag,output] = bsAHSACSByShe2019(objFunc, Lb, Ub, varargin)
     fitness = inf * ones(nNest, 1);   
     
     % objective function, this function will calcuate the gradient information
-    noGradientObjFunc = @(x)(objFunc(x, 0));
+    noGradientObjFunc = objFunc;
     % calculate the fitness of the initilized population. 
     [~, ~, nests, fitness, ~] = bsGetBestNest(noGradientObjFunc, nests, nests, fitness);
     nfev = nNest;   % count the number of evaluations of objective functions

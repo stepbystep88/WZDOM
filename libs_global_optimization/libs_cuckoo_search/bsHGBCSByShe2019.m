@@ -55,7 +55,7 @@ function [x,fval,exitFlag,output] = bsHGBCSByShe2019(objFunc, Lb, Ub, varargin)
     gradient = zeros(nDim, nNest);
     
 %     gradientObjFunc = @(x)(objFunc(x, 0));
-    gradientObjFunc = @(x)(objFunc(x, 1));
+    gradientObjFunc = objFunc;
     [globalMinFVal, globalBestNest, nests, fitness, gradient] = bsGetBestNestWithGradient(gradientObjFunc, nests, nests, fitness, gradient);
     
     nfev = nNest;   %count the number of evaluations of objective functions

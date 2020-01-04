@@ -58,8 +58,19 @@ function bsShowPreInvLogResult(GPreInvParam, GPlotParam, GShowProfileParam, ...
 
     function bsShowSyntheticSeisData()
         hf = figure;
-        bsSetFigureSize(nItems);
+        bsSetPreFigureSize(ceil((nItems+2)/3));
+        angleData = model.angleData;
+        if max(angleData < 5)
+            angleData = angleData / pi * 180;
+        end
+        angleData = round(angleData);
         
+        synFromTrue = reshape(model.G * model.trueX, sampNum-1, GPreInvParam.angleTrNum);
+        seisData = reshape(model.original_d, sampNum-1, GPreInvParam.angleTrNum);
+        
+        bsShowPreSubSynSeisData(GPlotParam, 'real', seisData, t, angleData, nItems, 1);
+        bsShowPreSubSynSeisData(GPlotParam, 'synthetic from welllog', synFromTrue, t, angleData, nItems, 2);
+            
         for iItem = 1 : nItems
         
             figure(hf);
@@ -67,21 +78,21 @@ function bsShowPreInvLogResult(GPreInvParam, GPlotParam, GShowProfileParam, ...
 
             invVal = invVals{iItem};
             
-            G = bsPostGenGMatrix(GPreInvParam.wavelet, sampNum);
-            synFromInv = G * log(invVal.vp .* invVal.vs);
-            synFromTrue = G * log(trueLog(:, 2) .* trueLog(:, 4));
-            seisData = bsGetPostSeisData(GPreInvParam, invVal.inline, invVal.crossline,...
-                model.t0, sampNum-1);
+            invLog = [bsGetDepth(invVal.vp, GPreInvParam.dt), invVal.vp, invVal.vs, invVal.rho];
+            x1 = bsPreBuildModelParam(invLog, GPreInvParam.mode, model.lsdCoef);
             
-            bsShowPostSubSynSeisData(GPlotParam, ...
-                synFromTrue, synFromInv, seisData, ...
-                t, invVal.name, ...
-                GShowProfileParam.range.seismic, nItems, iItem);
-
+            synFromInv = reshape(model.G * x1, sampNum-1, GPreInvParam.angleTrNum);
+            
+            
+            
+            bsShowPreSubSynSeisData(GPlotParam, invVal.name, synFromInv, t, angleData, nItems, iItem+2);
+            
+%             bsShowPreSubSynSeisData(GPlotParam, 
+%                 t, invVal.name, GShowProfileParam.range.seismic, nItems, iItem)
         end
 
-        legends = {'Synthetic from true welllog', 'Real data', 'Synthetic from inversion result'};
-        bsSetLegend(GPlotParam, {'b-.', 'k', 'r'}, legends, 'Seismic');
+%         legends = {'Real data', 'Synthetic from true welllog', 'Synthetic from inversion result'};
+%         bsSetLegend(GPlotParam, {'k', 'b', 'r'}, legends, 'Seismic');
     end
 end
 
@@ -179,7 +190,7 @@ function bsShowPostSubInvLogResult(GPlotParam, ...
 
     if k == 2
         title(sprintf('(%s) %s', char( 'a' + (iItem-1) ), tmethod), ...
-            'fontsize', GPlotParam.fontsize+2, 'fontweight', 'bold');
+            'fontsize', GPlotParam.fontsize+2, 'fontweight', 'bold', 'interpreter','latex');
     end
     
     if iItem == nItems
@@ -219,6 +230,34 @@ function bsShowPostSubSynSeisData(GPlotParam, ...
     end
     set(gca, 'ylim', [t(1) t(end)]);
 %     bsTextSeqIdFit(ichar - 'a' + 1, 0, 0, 12);
+
+    set(gca , 'fontsize', GPlotParam.fontsize,'fontweight', GPlotParam.fontweight, 'fontname', GPlotParam.fontname);
+end
+
+function bsShowPreSubSynSeisData(GPlotParam, tmethod, data, t, angleData, nItems, iItem)
+
+%     bsSetPreSubPlotSize(nItems, iItem, k);
+    nRow = ceil((nItems+2)/3);
+%     subplot(nRow, 3, iItem);
+    bsSubPlotFit(nRow, 3, iItem, 0.93, 0.96, 0.02, 0.09, 0.06, 0.0);
+    
+    wiggles = {'k', 'b', 'r'};
+    peaks = {'k', 'b', 'r'};
+    
+    seismic = s_convert(data, t(1), t(2)-t(1));
+    s_wplot(seismic, {'figure', 'old'}, {'xaxis', angleData});%, ...
+%         {'wiggle_color', wiggles{k}}, ...
+%         {'peak_fill', peaks{k}});
+    
+    
+    if mod(iItem, 3) == 1
+        ylabel('Time (s)');
+    else
+        set(gca, 'ytick', [], 'yticklabel', []);
+    end
+    
+    xlabel(sprintf('(%s) %s', char( 'a' + (iItem-1) ), tmethod), ...
+            'fontsize', GPlotParam.fontsize+2, 'fontweight', 'bold');
 
     set(gca , 'fontsize', GPlotParam.fontsize,'fontweight', GPlotParam.fontweight, 'fontname', GPlotParam.fontname);
 end

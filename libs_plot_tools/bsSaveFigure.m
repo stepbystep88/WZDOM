@@ -4,23 +4,18 @@ function bsSaveFigure(path, name)
         return;
     end
 
-%     try
-        mkdir(sprintf('%s/figure', path));
-%         mkdir(sprintf('%s/jpg', path));
-%         mkdir(sprintf('%s/emf', path));
-        mkdir(sprintf('%s/eps', path));
-        mkdir(sprintf('%s/pdf', path));
-%         mkdir(sprintf('%s/tif', path));
-        mkdir(sprintf('%s/png', path));
-%     catch
-%     end
+    warning('off');
+    mkdir(sprintf('%s/figure', path));
+    mkdir(sprintf('%s/jpg', path));
+    mkdir(sprintf('%s/emf', path));
+    mkdir(sprintf('%s/eps', path));
+    mkdir(sprintf('%s/pdf', path));
+    mkdir(sprintf('%s/tif', path));
+    mkdir(sprintf('%s/png', path));
+    mkdir(sprintf('%s/mat', path));
     
-%     img=getimage(gcf);
+    
     set(gcf, 'paperPositionMode', 'auto');
-%     set(gcf, 'paperUnits', 'points');
-%     pos = get(gcf, 'position');
-%     set(gcf, 'paperposition', pos);
-%     set(gcf, 'PaperSize', pos(3:4));
     fig = gcf;
     fig.PaperPositionMode = 'auto';
     fig_pos = fig.PaperPosition;
@@ -31,29 +26,30 @@ function bsSaveFigure(path, name)
     
     fig.PaperSize = [fig_pos(3) fig_pos(4)];
 
-%     fileName = sprintf('%s/figure/%s.fig', path, name);
-%     saveas(gcf, fileName, 'fig');
+    fileName = sprintf('%s/mat/%s.mat', path, name);
+    save(fileName);
+    warning('on');
     
-    fileName = sprintf('%s/jpg/%s.jpg', path, name);
-%     imwrite(img, fileName, 'jpg', 'Resolution', 600);
-    print('-djpeg', '-r600', fileName);
+    fileName = sprintf('%s/figure/%s.fig', path, name);
+    savefig(gcf, fileName);
+    
+%     fileName = sprintf('%s/jpg/%s.jpg', path, name);
+%     print('-djpeg', '-r600', fileName);
     
 %     fileName = sprintf('%s/tif/%s.tif', path, name);
-% %     imwrite(img, fileName, 'tiff', 'Resolution', 600);
 %     print('-dtiff', '-r600', fileName);
 %     
 %     fileName = sprintf('%s/emf/%s.emf', path, name);
 %     print('-dmeta', fileName);
 %     
     fileName = sprintf('%s/png/%s.png', path, name);
-%     imwrite(img, fileName, 'tiff', 'Resolution', 600);
     print('-dpng', '-r600', fileName);
 %     
-%     fileName = sprintf('%s/eps/%s.eps', path, name);
-%     print('-depsc', fileName);
+    fileName = sprintf('%s/eps/%s.eps', path, name);
+    print('-depsc', fileName);
 % %     
-%     fileName = sprintf('%s/pdf/%s.pdf', path, name);
-% %     print('-dpdf', '-bestfit', fileName);
-%     saveas(gcf, fileName);
+    fileName = sprintf('%s/pdf/%s.pdf', path, name);
+%     print('-dpdf', '-bestfit', fileName);
+    saveas(gcf, fileName);
     
 end

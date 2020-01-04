@@ -41,7 +41,7 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
     
 % -------------------------------------------------------------------------
     % build d, G, m
-    [model.d, model.G, model.initX, model.lsdCoef] ...
+    [model.d, model.G, model.initX, model.lsdCoef, model.angleData] ...
         = bsPreBuild_d_G_m(GPreInvParam, inline, crossline, startTime, initLog);
     GPreInvParam.lsdCoef = model.lsdCoef;
     
@@ -64,6 +64,7 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
     model.inline = inline;
     model.crossline = crossline;
     model.initLog = initLog;
+    model.original_d = model.d;
     
     if exist('trueLog', 'var') && ~isempty(trueLog)
         model.trueLog = trueLog;
@@ -74,6 +75,12 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
     % set boundary information
     [model.Lb, model.Ub] = bsGetBound(GPreInvParam, initLog);
     
+    if GPreInvParam.isScale && ~isempty(GPreInvParam.bestPostSeisData)
+        postData = bsGetPostSeisData(GPreInvParam, inline, crossline, startTime, sampNum-1);
+        c = bsComputeGain(postData, GPreInvParam.bestPostSeisData);
+        model.G = model.G * c;
+    end
+        
     % normalize
     if GPreInvParam.isNormal
         model.maxAbsD = norm(model.d);

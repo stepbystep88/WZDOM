@@ -1,4 +1,4 @@
-function [d, G, initX, lsdCoef] = bsPreBuild_d_G_m(GPreInvParam, inline, crossline, startTime, initLog)
+function [d, G, initX, lsdCoef, angleData] = bsPreBuild_d_G_m(GPreInvParam, inline, crossline, startTime, initLog)
     sampNum = GPreInvParam.upNum + GPreInvParam.downNum; 
     
     % load prestack seismic data

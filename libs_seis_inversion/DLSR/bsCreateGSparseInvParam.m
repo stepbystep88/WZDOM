@@ -24,10 +24,6 @@ function options = bsCreateGSparseInvParam(DIC, flag, varargin)
     % the trained dictionary
     addParameter(p, 'DIC', DIC); 
     
-    % whether to scale the data so that we ignore the magnitude of data,
-    % only consider the similarity of two vectors
-    addParameter(p, 'isScale', 0); 
-    
     % whether to rebuild the inversion results by using dictionary
     addParameter(p, 'isSparseRebuild', 0); 
     

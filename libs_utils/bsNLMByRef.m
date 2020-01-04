@@ -26,11 +26,11 @@ function [filteredData, weightInfo] = bsNLMByRef(data, refData, varargin)
     
     p = inputParser;
     
-    addParameter(p, 'searchOffset', 3);
+    addParameter(p, 'searchOffset', 4);
     addParameter(p, 'stride', [1 1 1]);
     addParameter(p, 'searchStride', [1 2 2]);
-    addParameter(p, 'windowSize', 5);
-    addParameter(p, 'nPointsUsed', 5);
+    addParameter(p, 'windowSize', 4);
+    addParameter(p, 'nPointsUsed', 4);
     addParameter(p, 'weightInfo', []);
     addParameter(p, 'isParallel', 1);   
     addParameter(p, 'numWorkers', bsGetMaxNumWorkers());

@@ -309,15 +309,15 @@ function [basicInfo] = bsInitBasicInfo(GShowProfileParam, GInvParam, wellLogs, t
     % scale the horiozon and get the time information
     scaleFactor = GShowProfileParam.scaleFactor;
     traceNum = length(basicInfo.traceIds);
-    sampNum = size(profile.data, 1);
+    sampNum = GInvParam.upNum + GInvParam.downNum;
     
     dt = GInvParam.dt;
     newDt = dt / scaleFactor;
     newTraceIds = linspace(basicInfo.traceIds(1), basicInfo.traceIds(end), traceNum * scaleFactor);
     
     time0 = basicInfo.horizon - GInvParam.upNum * dt;
-    minTime = min(time0) - 5 * dt;
-    maxTime = max(time0) + sampNum * dt + 10 * dt;
+    minTime = min(time0) - GShowProfileParam.edgeOffsetNum * dt;
+    maxTime = max(time0) + sampNum * dt + GShowProfileParam.edgeOffsetNum * dt;
     
     sequence = linspace(0, dt*(sampNum-1), sampNum);
     timeGrid = repmat(sequence', 1, traceNum)...
@@ -637,7 +637,7 @@ function bsShowHorizonedData(GShowProfileParam, basicInfo, profileData, minTime,
         for i = 1 : nWell
             x = mod(i, 2);
             
-            ipos = GShowProfileParam.scaleFactor * basicInfo.wellPos(i) - 0.05*traceNum;
+            ipos = GShowProfileParam.scaleFactor * basicInfo.wellPos(i) - 0.01*traceNum;
             text(ipos, 0.95*sampNum - 0.07*sampNum*x, basicInfo.wellNames{i}, ...
                 'fontsize', GShowProfileParam.plotParam.fontsize,...
                 'fontweight', 'bold', ...

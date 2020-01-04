@@ -69,8 +69,7 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByDLSR(d, G, xInit, Lb, Ub
     GBOptions.maxIter = options.innerIter;
     
     % create packages for sparse inversion 
-    parampkgs = bsInitDLSRPkgs(parampkgs, regParam.gamma, sampNum);
-    GSparseInvParam = parampkgs.GSparseInvParam;
+    GSparseInvParam = bsInitDLSRPkgs(parampkgs, regParam.gamma, sampNum);
     
     ncell = GSparseInvParam.ncell;
     sizeAtom = GSparseInvParam.sizeAtom;
@@ -84,13 +83,6 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByDLSR(d, G, xInit, Lb, Ub
         
         % change the current initial guess
         inputObjFcnPkgs{2, 2} = [];
-        
-        if isfield(GSparseInvParam, 'isScale') && GSparseInvParam.isScale
-            Gx = mainData.A * xInit;
-            c = (Gx' * mainData.B) / (Gx' * Gx);
-            mainData.A = mainData.A * c;
-            inputObjFcnPkgs{1, 2} = mainData;
-        end
         
         [xOut, fval, exitFlag, output_] = bsGBSolveByOptions(inputObjFcnPkgs, xInit, Lb, Ub, GBOptions);
         
@@ -152,12 +144,10 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByDLSR(d, G, xInit, Lb, Ub
     
 end
 
-function parampkgs = bsInitDLSRPkgs(parampkgs, gamma, sampNum)
+function GSparseInvParam = bsInitDLSRPkgs(GSparseInvParam, gamma, sampNum)
     
-    if isfield(parampkgs.GSparseInvParam, 'omp_G')
+    if isfield(GSparseInvParam, 'omp_G')
         return;
-    else
-        GSparseInvParam = parampkgs.GSparseInvParam;
     end
 
     validatestring(string(GSparseInvParam.reconstructType), {'equation', 'simpleAvg'});
@@ -189,7 +179,6 @@ function parampkgs = bsInitDLSRPkgs(parampkgs, gamma, sampNum)
         GSparseInvParam.omp_G{i} = GSparseInvParam.DIC{i}' * GSparseInvParam.DIC{i};
     end
     
-    parampkgs.GSparseInvParam = GSparseInvParam;
 end
 
 

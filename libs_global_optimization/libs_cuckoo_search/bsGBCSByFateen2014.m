@@ -42,7 +42,7 @@ function [x,fval,exitFlag,output] = bsGBCSByFateen2014(objFunc, Lb, Ub, varargin
     gradient = zeros(nDim, nNest);
     
 %     gradientObjFunc = @(x)(objFunc(x, 0));
-    gradientObjFunc = @(x)(objFunc(x, 1));
+    gradientObjFunc = objFunc;
     
     [globalMinFVal, globalBestNest, nests, fitness, gradient] = bsGetBestNestWithGradient(gradientObjFunc, nests, nests, fitness, gradient);
     xInit = globalBestNest;

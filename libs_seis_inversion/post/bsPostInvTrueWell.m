@@ -1,4 +1,4 @@
-function [invVals, outputs] = bsPostInvTrueWell(GPostInvParam, wellInfo, timeLine, methods)
+function [invVals, outputs, model] = bsPostInvTrueWell(GPostInvParam, wellInfo, timeLine, methods)
 %% inverse welllog data
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
 % Programming dates: Nov 2019
@@ -51,6 +51,8 @@ function [invVals, outputs] = bsPostInvTrueWell(GPostInvParam, wellInfo, timeLin
         fprintf('Solving the trace of inline=%d and crossline=%d by using method %s...\n', ...
             wellInfo.inline, wellInfo.crossline, ...
             method.name);
+        
+%         method.options.optimalX = model.trueX;
         
         tic;
         [xOut, fval, exitFlag, output] = bsPostInv1DTrace(...

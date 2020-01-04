@@ -23,16 +23,12 @@ function [f, g] = bsLinearTwoNormSimilarity(x, data)
     
     d1 = data.A * x;
     d2 = data.B;
-    d1d1 = d1' * d1;
+    c = 1 / norm(d1);
     
-    c = (d1'*d2) / d1d1;
-    
+    % method 1
     z = c*d1 - d2;
-
-    f = sum(z.^2, 1);
+    f = sum(z.^2, 1);    
+    g = 2*data.A'*(c*z - c^3*d1*(d1'*z));
     
-    g1 = 2*c*z;
-    g2 = 2*(d1'*z)/d1d1*(-2*c*d1 + d2);
-%     g = 2*(c - (d1'*z)/d1d1)*(data.A' * z);
-    g = data.A' * (g1 + g2);
+    
 end

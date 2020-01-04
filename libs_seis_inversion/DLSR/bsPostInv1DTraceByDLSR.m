@@ -69,8 +69,7 @@ function [x, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, U
     GBOptions.maxIter = options.innerIter;
     
     % create packages for sparse inversion 
-    parampkgs = bsInitDLSRPkgs(parampkgs, regParam.lambda, regParam.gamma, sampNum, G);
-    GSparseInvParam = parampkgs.GSparseInvParam;
+    GSparseInvParam = bsInitDLSRPkgs(parampkgs, regParam.lambda, regParam.gamma, sampNum, G);
     
     ncell = GSparseInvParam.ncell;
     sizeAtom = GSparseInvParam.sizeAtom;
@@ -93,8 +92,8 @@ function [x, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, U
         [xOut, fval, exitFlag, output_] = bsGBSolveByOptions(inputObjFcnPkgs, xInit, Lb, Ub, GBOptions);
         
         if GBOptions.isSaveMiddleRes
-            midX = [output_.midResults.x, midX];
-            midF = [output_.midResults.f, midF];
+            midX = [midX, output_.midResults.x];
+            midF = [midF, output_.midResults.f];
         end
         
         % sparse reconstruction
@@ -154,12 +153,10 @@ function [x, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, U
     
 end
 
-function parampkgs = bsInitDLSRPkgs(parampkgs, lambda, gamma, sampNum, G)
+function GSparseInvParam = bsInitDLSRPkgs(GSparseInvParam, lambda, gamma, sampNum, G)
     
-    if isfield(parampkgs.GSparseInvParam, 'omp_G')
+    if isfield(GSparseInvParam, 'omp_G')
         return;
-    else
-        GSparseInvParam = parampkgs.GSparseInvParam;
     end
 
     validatestring(string(GSparseInvParam.reconstructType), {'equation', 'simpleAvg'});
@@ -188,5 +185,4 @@ function parampkgs = bsInitDLSRPkgs(parampkgs, lambda, gamma, sampNum, G)
 %     GSparseInvParam.invG = inv(G' * G + gamma * tmp + lambda * eye(sampNum));
     GSparseInvParam.omp_G = GSparseInvParam.DIC' * GSparseInvParam.DIC;
     
-    parampkgs.GSparseInvParam = GSparseInvParam;
 end

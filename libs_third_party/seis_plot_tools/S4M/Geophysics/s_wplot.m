@@ -192,6 +192,8 @@ param.scale='no';
 param.spacing='equal';
 param.times=[];
 param.title=strrep(seismic.name,'_','\_');
+param.xaxis = [];
+
 try
    param.title(1)=upper(param.title(1));
 catch
@@ -477,13 +479,12 @@ end
 
 
 %     Add annotation of horizontal axis
-global GWPlotParam;
 if true || ~annotlog
    v=axis;
    xil=xi(indices);
    
-   if( isfield(GWPlotParam, 'xAxis') && ~isempty(GWPlotParam.xAxis))
-       annol = GWPlotParam.xAxis(indices);
+   if ~isempty(param.xaxis)
+       annol = param.xaxis(indices);
    else
        annol=annotation(indices);
    end
@@ -597,7 +598,7 @@ for ii=1:ntr
 
    if wiggle
       handles(ii,3)=line(y_data(2:end-1)+location(ii),x_data(2:end-1),'Color',param.wiggle_color, ...
-           'EraseMode','none','LineWidth',param.wiggle_width);
+           'LineWidth',param.wiggle_width);
    end
               end
 end

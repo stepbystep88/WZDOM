@@ -1,4 +1,5 @@
-function [GInvParam, outputWelllogs, wavelet] = bsDepth2Time(GInvParam, timeLine, inputWelllogs, waveletType)
+function [GInvParam, outputWelllogs, wavelet] ...
+    = bsDepth2Time(GInvParam, timeLine, inputWelllogs, waveletType)
 %% get time information of welllog data
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
 % Programming dates: Nov 2019
@@ -131,11 +132,23 @@ function [GInvParam, outputWelllogs, wavelet] = bsDepth2Time(GInvParam, timeLine
     % re-scale wavelet
     [~, index] = bsMaxK(similarities, ceil(0.8*wellNum));
     meanScaleFactor = mean(scaleFactors(index));
-
+    bestIndex = index(1);
+    bestSeisData = postSeisData(:, bestIndex);
+    bestScale = scaleFactors(bestIndex);
+    
+    
 %     meanScaleFactor = 1;
     wavelet = GInvParam.wavelet * meanScaleFactor;
     GInvParam.wavelet = wavelet;
+    
     GInvParam.indexInWellData.time = size(inputWelllogs{1}.wellLog, 2) + 1;
+    
+    if GInvParam.isScale 
+        GInvParam.bestPostSeisData = bestSeisData / bestScale * meanScaleFactor;
+    else
+        GInvParam.bestPostSeisData = bestSeisData;
+    end
+    
     
     if GInvParam.depth2time.isShowCompare
         
