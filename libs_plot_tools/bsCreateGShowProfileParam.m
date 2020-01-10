@@ -49,6 +49,7 @@ function options = bsCreateGShowProfileParam(varargin)
     
     % whether to display the colored well
     addParameter(p, 'isShowColorWells', 1);
+    addParameter(p, 'isShowWellNames', 1);
     
     % the coeficient of low-pass fiter for showing the welllog data
     addParameter(p, 'showWellFiltCoef', 1); 

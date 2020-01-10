@@ -6,7 +6,7 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
     
     nProfile = length(profiles);
     GPlotParam = GShowProfileParam.plotParam;
-    isSameType = bsCheckIsSameType(profiles);
+    [isSameType, type] = bsCheckIsSameType(profiles);
     
     if nProfile < 1
         return;
@@ -59,7 +59,11 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
         axis off;
         
         % set colormap
-        colorTbl = GShowProfileParam.colormap.allTheSame;
+        if strcmpi(type, 'seismic')
+            colorTbl = bsGetColormap('seismic');
+        else
+            colorTbl = GShowProfileParam.colormap.allTheSame;
+        end
         if GShowProfileParam.isColorReverse
             colorTbl = flipud(colorTbl);
             set(gca, 'colormap', colorTbl);
@@ -172,8 +176,10 @@ function [nRow, nCol, loc, colorbar_pos] = setShareFigureSize(nProfile)
             bsSetPosition(0.3, 0.65);
             nRow = 3;
             nCol = 1;
-            loc = [0.79, 0.95, 0.01, 0.04, 0.09, 0.01];
-            colorbar_pos = [0.87 0.05 0.01 0.92];
+%             loc = [0.79, 0.95, 0.01, 0.04, 0.09, 0.01];
+%             colorbar_pos = [0.87 0.05 0.01 0.92];
+            loc = [0.86, 0.95, 0.01, 0.04, 0.06, 0.01];
+            colorbar_pos = [0.91 0.05 0.01 0.92];
         case 4
             bsSetPosition(0.6, 0.42);
             nRow = 2;
@@ -221,7 +227,7 @@ function [nRow, nCol, loc] = setFigureSize(nProfile)
             bsSetPosition(0.6, 0.65);
             nRow = 3;
             nCol = 2;
-            loc = [0.93, 0.93, 0.02, 0.04, 0.05, 0.01];
+            loc = [0.93, 0.93, 0.02, 0.04, 0.05, 0.00];
         case {7, 8, 9}
             bsSetPosition(0.8, 0.65);
             nRow = 3;
@@ -230,7 +236,7 @@ function [nRow, nCol, loc] = setFigureSize(nProfile)
     end
 end
 
-function isSameType = bsCheckIsSameType(profiles)
+function [isSameType, type] = bsCheckIsSameType(profiles)
     nProfiles = length(profiles);
     isSameType = 1;
     if nProfiles == 0
@@ -368,30 +374,7 @@ function [profileData, range, wellData, wellTime] ...
     end
 end
 
-function [wellPos, wellIndex, wellNames] = bsFindWellLocation(wellLogs, inIds, crossIds)
 
-    wellPos = [];
-    wellIndex = [];
-    wellNames = {};
-    
-    if isempty(wellLogs)
-        return;
-    end
-    
-    wells = cell2mat(wellLogs);
-    wellInIds = [wells.inline];
-    wellCrossIds = [wells.crossline];
-    
-    for i = 1 : length(inIds)
-        for j = 1 : length(wellInIds)
-            if wellInIds(j) == inIds(i) && wellCrossIds(j) == crossIds(i)
-                wellPos = [wellPos, i];
-                wellIndex = [wellIndex, j];
-                wellNames = [wellNames, wellLogs{j}.name];
-            end
-        end
-    end
-end
 
 function [wellData, wellTime] = bsGetWellData(wellLogs, wellIndex, dataIndex, timeIndex, showWellFiltCoef)
 
@@ -631,7 +614,7 @@ function bsShowHorizonedData(GShowProfileParam, basicInfo, profileData, minTime,
     end
     
     % show the name of wells
-    if ~isempty(wellData) && GShowProfileParam.isShowColorWells
+    if ~isempty(wellData) && GShowProfileParam.isShowWellNames
         nWell = length(basicInfo.wellPos);
         
         for i = 1 : nWell

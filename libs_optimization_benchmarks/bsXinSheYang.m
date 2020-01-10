@@ -1,4 +1,4 @@
-function [f, g] = bsXinSheYang(x, isGradient, o)
+function [f, g] = bsXinSheYang(x, isGradient, c)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % -------------------------------------------------------------------------
 % Xin-She Yang Function Function
@@ -35,9 +35,11 @@ function [f, g] = bsXinSheYang(x, isGradient, o)
     seq = (1 : n)';
     seq = repmat(seq, 1, m);
     
-    o = rand(n, m);
-    
-%     o = repmat(o, 1, m);
+    if length(c) == 1
+        o = rand(n, m) * c;
+    else
+        o = repmat(c, 1, m);
+    end
     
     tmp = o .* absx .^ (seq - 1);
     

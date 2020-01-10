@@ -39,6 +39,10 @@ function bsShowPostInvLogResult(GPostInvParam, GShowProfileParam, invVals, trueL
                 invVal.Ip/1000, trueLog/1000, model.initLog/1000, ...
                 t, invVal.name, ...
                 GShowProfileParam.range.ip/1000, nItems, iItem);
+            
+            MRRMSE = bsCalcRRSE(trueLog, model.initLog, invVal.Ip);
+            fprintf('[RRMSE=%.3f]\n', MRRMSE);
+        
 
         end
 

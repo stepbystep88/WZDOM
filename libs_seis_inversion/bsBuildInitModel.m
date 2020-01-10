@@ -100,28 +100,8 @@ function [inIds, crossIds, GInvParam, dstFileNames, segyInfo] = bsBuildInitModel
     GInvParam.downNum = GInvParam.downNum - options.expandNum;
     
 end
-    
+   
 
-function wellData = bsGetWellData(GInvParam, wellLogs, wellHorizonTimes, dataIndex, filtCoef)
-
-    sampNum = GInvParam.upNum + GInvParam.downNum;
-    wellNum = length(wellLogs);
-    
-    wellData = zeros(sampNum, wellNum);
-    
-    for i = 1 : wellNum
-        
-        wellData(:, i) = bsExtractWellDataByHorizon(...
-            wellLogs{i}.wellLog, ...
-            wellHorizonTimes(i), ...
-            dataIndex, ...
-            GInvParam.indexInWellData.time, ...
-            GInvParam.upNum, ...
-            GInvParam.downNum, ...
-            filtCoef);
-        
-    end
-end
 
 function [isExist, GInvParam, dstFileNames] = checkExists(GInvParam, type, dataIndex, options, segyInfo)
     isExist = true;

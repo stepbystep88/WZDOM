@@ -30,9 +30,11 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
     
     % create folder to save the intermediate results
     try
+        warning('off');
         mkdir([GPostInvParam.modelSavePath,'/models/']);
         mkdir([GPostInvParam.modelSavePath,'/mat_results/']);
         mkdir([GPostInvParam.modelSavePath,'/sgy_results/']);
+        warning('on');
     catch
     end
     

@@ -73,10 +73,10 @@ function [inIds, crossIds, GInvParam, dstFileNames, segyInfo, type] = bsPostBuil
             inIds, ...
             crossIds, ...
             startTimes, ...
-            sampNum - 1,...
+            sampNum,...
             GInvParam.dt);
     
-        GSparseInvParam = bsInitDLSRPkgs(GSparseInvParam, options.gamma, sampNum-1);
+        GSparseInvParam = bsInitDLSRPkgs(GSparseInvParam, options.gamma, sampNum);
         
         errorData = bsHandleAllTraces();
         synData = postSeisData - errorData;
@@ -97,7 +97,7 @@ function [inIds, crossIds, GInvParam, dstFileNames, segyInfo, type] = bsPostBuil
     
     function data = bsHandleAllTraces()
         % tackle the inverse task
-        data = zeros(sampNum-1, traceNum);
+        data = zeros(sampNum, traceNum);
         gamma = options.gamma;
         
         if GInvParam.isParallel
@@ -137,7 +137,7 @@ end
 
 function errorData = bsHandleOneTrace(GInvParam, GSparseInvParam, realData, gamma)
 
-    sampNum = GInvParam.upNum + GInvParam.downNum - 1;
+    sampNum = GInvParam.upNum + GInvParam.downNum;
     ncell = GSparseInvParam.ncell;
     sizeAtom = GSparseInvParam.sizeAtom;
     patches = zeros(sizeAtom, ncell);
@@ -166,8 +166,8 @@ function errorData = bsHandleOneTrace(GInvParam, GSparseInvParam, realData, gamm
         case 'simpleAvg'
             % get reconstructed results by averaging patches
             avgLog = bsAvgPatches(new_patches, GSparseInvParam.index, sampNum);
-%             errorData = avgLog * gamma + (realData - avgLog) * (1 - gamma);
-            errorData = avgLog;
+%             errorData = avgLog * gamma + realData * (1 - gamma);
+            errorData = avgLog * gamma;
     end
     
 end

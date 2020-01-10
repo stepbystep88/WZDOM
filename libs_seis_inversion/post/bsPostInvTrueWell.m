@@ -63,10 +63,10 @@ function [invVals, outputs, model] = bsPostInvTrueWell(GPostInvParam, wellInfo, 
         invVals{i}.model = model;
         invVals{i}.name = method.name;
         output.timeCost = toc;
-        output.MRRMSE = sqrt(mse(invVals{i}.Ip - trueLog));
+        output.MRRMSE = bsCalcRRSE(trueLog, model.initLog, invVals{i}.Ip);
         outputs{i} = output;
         
-        fprintf('[RRMSE=%.2e, fval=%.3e, timeCost=%.2f, exitFlag=%d]\n', output.MRRMSE, fval, output.timeCost, exitFlag);
+        fprintf('[RRMSE=%.3f, fval=%.3f, timeCost=%.3f, exitFlag=%d]\n', output.MRRMSE, fval, output.timeCost, exitFlag);
     end
     
 end
