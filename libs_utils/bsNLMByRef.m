@@ -98,7 +98,7 @@ function [filteredData, weightInfo] = bsNLM3D(data, refData, options)
     end
     
     K = options.nPointsUsed;
-    filteredData = inf(o1, o2, o3);
+    filteredData = zeros(o1, o2, o3);
     filteredNum = zeros(o1, o2, o3);
     
     % average data by calculated patches
@@ -113,9 +113,13 @@ function [filteredData, weightInfo] = bsNLM3D(data, refData, options)
         iIndex = index(:, i);
         weight = weights(:, i);
 
-        avgPatch = zeros(ws(1), ws(2), ws(3));
-        for k = 1 : K
-            avgPatch = avgPatch + weight(k) * patches{iIndex(k)};
+        if isinf(weight)
+            avgPatch = patches{i};
+        else
+            avgPatch = zeros(ws(1), ws(2), ws(3));
+            for k = 1 : K
+                avgPatch = avgPatch + weight(k) * patches{iIndex(k)};
+            end
         end
 
         filteredData(p1(i1):p1(i1)+ws(1)-1, p2(i2):p2(i2)+ws(2)-1, p3(i3):p3(i3)+ws(3)-1) = ...
@@ -165,21 +169,21 @@ function [weights, index] = bsGetKNearestWeights3D(patches, n1, n2, n3, options)
     p = options.p;
     searchStride = options.searchStride;
     
-%     if options.isParallel
-%         pbm = bsInitParforProgress(options.numWorkers, nPatches, 'Calculating the weight information', [], 1);
-%         
-%         parfor i = 1 : nPatches
-%             [weights(:, i), index(:, i)] = bsGetIWeight3D(patches, normCoef, i, n1, n2, n3, N, K, -p, searchStride);
-%             bsIncParforProgress(pbm, i, 2000);
-%         end
-%     else
-    for i = 1 : nPatches
-        if mod(i, 2000) == 0
-            fprintf('Calculating the weight information %.2f%%...\n', i/nPatches*100);
+    if options.isParallel
+        pbm = bsInitParforProgress(options.numWorkers, nPatches, 'Calculating the weight information', [], 1);
+        
+        parfor i = 1 : nPatches
+            [weights(:, i), index(:, i)] = bsGetIWeight3D(patches, normCoef, i, n1, n2, n3, N, K, -p, searchStride);
+            bsIncParforProgress(pbm, i, 2000);
         end
-        [weights(:, i), index(:, i)] = bsGetIWeight3D(patches, normCoef, i, n1, n2, n3, N, K, -p, searchStride);
+    else
+        for i = 1 : nPatches
+            if mod(i, 2000) == 0
+                fprintf('Calculating the weight information %.2f%%...\n', i/nPatches*100);
+            end
+            [weights(:, i), index(:, i)] = bsGetIWeight3D(patches, normCoef, i, n1, n2, n3, N, K, -p, searchStride);
+        end
     end
-%     end
 end
 
 function [weight, index] = bsGetIWeight3D(patches, normCoef, i, n1, n2, n3, N, K, e, searchStride)

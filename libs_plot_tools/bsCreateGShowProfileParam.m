@@ -60,6 +60,8 @@ function options = bsCreateGShowProfileParam(varargin)
     % the scale factor of showing a profile, must be a non-negative integer
     addParameter(p, 'scaleFactor', 2);
     
+    addParameter(p, 'isScaleHorizon', 1);
+    
     % the scale factor of showing a profile, must be a non-negative integer
     addParameter(p, 'edgeOffsetNum', 5);
     

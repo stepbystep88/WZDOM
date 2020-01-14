@@ -25,22 +25,14 @@ function invResults = bsReshapeInvResultsAs2D(invResults)
         
         if ~iscell(data)
             fprintf('Reshaping %s data of %s...\n', invResults{i}.type, invResults{i}.name);
-            invResults{i}.data = bsReshapeData(invResults{i}.data);
+            invResults{i}.data = bsReshapeDataAs2D(invResults{i}.data);
         else
             for j = 1 : length(data)
                 fprintf('Reshaping %s data of %s...\n', invResults{i}.type{j}, invResults{i}.name);
-                invResults{i}.data{j} = bsReshapeData(invResults{i}.data{j});
+                invResults{i}.data{j} = bsReshapeDataAs2D(invResults{i}.data{j});
             end
         end
         
     end
 end
 
-function volume = bsReshapeData(data)
-    % the original data follows the order of sampNum, inline, crossline, so
-    % we need to premute the data
-    data = permute(data, [1 3 2]);
-    
-    [sampNum, nCrossline, nInline] = size(data);
-    volume = reshape(data, sampNum, nCrossline*nInline);
-end
