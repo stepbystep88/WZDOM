@@ -43,7 +43,7 @@ function [f, g] = bsGriewank(x, isGradient)
     
     if isGradient
         
-        g = 2 * term1 + prodTerm2 ./ term2 .* sin(tmp) ./ sqrt(seq);
+        g = 2/4000 * x + prodTerm2 ./ term2 .* sin(tmp) ./ sqrt(seq);
     else
         g = [];
     end
