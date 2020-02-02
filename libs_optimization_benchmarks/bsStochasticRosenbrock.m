@@ -39,8 +39,8 @@ function [f, g] = bsStochasticRosenbrock(x, isGradient, sigma)
     
 %     sigma = repmat(n, m);
     
-%     sigma = repmat(sigma, 1, m);
-    sigma = rand(n, m);
+    sigma = repmat(sigma, 1, m);
+%     sigma = rand(n, m);
     
     f = sum ( 100 * (sigma(1:n-1, :) .* (xip1 - xi_2).^2) +  (xi - 1).^2, 1);
 %     f = f';

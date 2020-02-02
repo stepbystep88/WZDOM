@@ -33,6 +33,7 @@ function [f, g] = bsStochasticGriewank(x, isGradient, o)
     
     seq = (1 : n)';
     seq = repmat(seq, 1, m);
+    o = repmat(o, 1, m);
     
     term1 = o .* x.^2 / 4000;
     tmp = x ./ sqrt(seq);
