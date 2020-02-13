@@ -54,12 +54,37 @@ function [invVals, outputs, model] = bsPostInvTrueWell(GPostInvParam, wellInfo, 
         
 %         method.options.optimalX = model.trueX;
         
-        tic;
-        [xOut, fval, exitFlag, output] = bsPostInv1DTrace(...
-            model.d, model.G, model.initX, model.Lb, model.Ub, method);       
+        if isfield(method, 'load')
+            loadInfo = method.load;
+            switch loadInfo.mode
+                % load results directly
+                case 'segy'
+                    startTime = horizonTime - GPostInvParam.dt * GPostInvParam.upNum;
+                    sampNum = length(trueLog);
+                    
+                    % from sgy file
+                    [Ip, loadInfo.segyInfo] = bsReadTracesByIds(...
+                        loadInfo.fileName, ...
+                        loadInfo.segyInfo, ...
+                        wellInfo.inline, wellInfo.crossline, ...
+                        startTime, sampNum, GPostInvParam.dt);
+                    
+                case 'assign'
+                    Ip = loadInfo.data;
+            end
+            fval = inf;
+            exitFlag = 0;
+        else
+            tic;
+            [xOut, fval, exitFlag, output] = bsPostInv1DTrace(...
+                model.d, model.G, model.initX, model.Lb, model.Ub, method);       
+            Ip = exp(xOut);
+        end
+        
+        
  
 
-        invVals{i}.Ip = exp(xOut);
+        invVals{i}.Ip = Ip;
         invVals{i}.model = model;
         invVals{i}.name = method.name;
         output.timeCost = toc;
