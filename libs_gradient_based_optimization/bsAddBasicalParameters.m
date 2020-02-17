@@ -17,19 +17,19 @@ function p = bsAddBasicalParameters(p, nDim)
     addParameter(p, 'maxFunctionEvaluations', nDim * 2000);
 %     addParameter(p, 'maxFunctionEvaluations', 2000);
     
-    addParameter(p, 'stepTolerance', 1e-20 ); % this is only for gradient based optimization algorithm
-    addParameter(p, 'functionTolerance', 1e-10 );
-    addParameter(p, 'optimalGradientTolerance', 1e-10);
-    addParameter(p, 'optimalityTolerance', 1e-10);
-    addParameter(p, 'optimalFunctionTolerance', 1e-6);
-    addParameter(p, 'optimalModelTolerance', 1e-6);
+%     addParameter(p, 'stepTolerance', 1e-20 ); % this is only for gradient based optimization algorithm
+%     addParameter(p, 'functionTolerance', 1e-10 );
+%     addParameter(p, 'optimalGradientTolerance', 1e-10);
+%     addParameter(p, 'optimalityTolerance', 1e-10);
+%     addParameter(p, 'optimalFunctionTolerance', 1e-6);
+%     addParameter(p, 'optimalModelTolerance', 1e-6);
     
-%     addParameter(p, 'stepTolerance', 1e-50 ); % this is only for gradient based optimization algorithm
-%     addParameter(p, 'functionTolerance', 1e-50);
-%     addParameter(p, 'optimalGradientTolerance', 1e-50);
-%     addParameter(p, 'optimalityTolerance', 1e-50);
-%     addParameter(p, 'optimalFunctionTolerance', 1e-50);
-%     addParameter(p, 'optimalModelTolerance', 1e-50);
+    addParameter(p, 'stepTolerance', 1e-50 ); % this is only for gradient based optimization algorithm
+    addParameter(p, 'functionTolerance', 1e-50);
+    addParameter(p, 'optimalGradientTolerance', 1e-50);
+    addParameter(p, 'optimalityTolerance', 1e-50);
+    addParameter(p, 'optimalFunctionTolerance', 1e-50);
+    addParameter(p, 'optimalModelTolerance', 1e-50);
     
     addParameter(p, 'optimalX', [] );
     addParameter(p, 'optimalF', [] );
