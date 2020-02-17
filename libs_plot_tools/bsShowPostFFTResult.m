@@ -1,4 +1,4 @@
-function bsShowPostFFTResult(GPostInvParam, GShowProfileParam, invVals)
+function bsShowPostFFTResult(GPostInvParam, GShowProfileParam, invVals, wellInfo)
 
     GPlotParam = GShowProfileParam.plotParam;
     
@@ -28,7 +28,7 @@ function bsShowPostFFTResult(GPostInvParam, GShowProfileParam, invVals)
 
         invVal = invVals{iItem};
         Ip = invVal.Ip;
-        index = find(Ip ~= 0);
+        index = find(Ip > 0);
         nonzeroIp = Ip(min(index) : max(index));
 
         if length(nonzeroIp) < length(trueLog)
@@ -38,7 +38,7 @@ function bsShowPostFFTResult(GPostInvParam, GShowProfileParam, invVals)
             plot(pf, pInv, 'color', cTbl{iItem + 4}, 'linewidth', 2); hold on;
         else
             pInv = bsGetFrequencies(Ip, dt);
-            pInv = pInv / norm(pInv) * norm(pTrue);
+%             pInv = pInv / norm(pInv) * norm(pTrue);
             plot(f, pInv, 'color', cTbl{iItem + 4}, 'linewidth', 2); hold on;
         end
 
@@ -49,7 +49,7 @@ function bsShowPostFFTResult(GPostInvParam, GShowProfileParam, invVals)
     plot(f, pTrue, '-.', 'color', cTbl{2}, 'linewidth', 2);
 %     plot(fd, pD, '--', 'color', cTbl{4}, 'linewidth', 2);
 
-    legends = [legends, '初始模型', '实际测井', '归一化地震数据频带'];
+    legends = [legends, '初始模型', '实际测井'];
 
     lgd = legend(legends);
     set(lgd, ...
@@ -58,6 +58,10 @@ function bsShowPostFFTResult(GPostInvParam, GShowProfileParam, invVals)
         'fontname', GPlotParam.fontname);
     xlabel('Frequency');
     ylabel('Amplitude');
+    
+    if exist('wellInfo', 'var')
+        title(wellInfo.name);
+    end
 %         set(gca, 'ylim', [0, 2000]);
     set(gca , 'fontsize', GPlotParam.fontsize,'fontweight', GPlotParam.fontweight, 'fontname', GPlotParam.fontname);
 

@@ -106,7 +106,9 @@ end
 function bsSetFigureSize(nPlot)
     switch nPlot
         case {1, 2, 3}
-            set(gcf, 'position', [  336   240   509   406]);
+%             set(gcf, 'position', [  336   240   509   406]);
+            set(gcf, 'position', [  336   240   818   406]);
+            
         case 4
             set(gcf, 'position', [  336   240   678   406]);
         case 5

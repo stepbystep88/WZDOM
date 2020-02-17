@@ -19,6 +19,7 @@ function bsShowFFTResultsComparison(GPostInvParam, GShowProfileParam, curves, ti
 
         if length(nonzeroIp) < size(curves, 1)
             [pInv, pf] = bsGetFrequencies(nonzeroIp, dt);
+%             pInv = pInv / norm(pInv) * norm(curves(:, 1));
             plot(pf, pInv, shapes{iItem}, 'color', cTbl{iItem}, 'linewidth', 2); hold on;
         else
             [pInv, f] = bsGetFrequencies(Ip, dt);

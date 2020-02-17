@@ -286,7 +286,10 @@ function [x,fval,exitFlag,output] = bsHAGCSByShe2019(objFunc, Lb, Ub, varargin)
             stopFEV = stopFEV + intervalFEV;
         end
 
-%         mid_results = [mid_results, [iter; nfev; globalMinFVal]];
+        if params.isSaveMiddleRes
+            mid_results = [mid_results, [iter; nfev; globalMinFVal]];
+        end
+%         
         
         data.fNew = globalMinFVal;
         data.nfev = nfev;
