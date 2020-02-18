@@ -192,8 +192,8 @@ function [x,fval,exitFlag,output] = bsHAGCSByShe2019(objFunc, Lb, Ub, varargin)
             
             if iter == 1
                 mid_results = [0; 0; globalMinFVal];
-            else
-                mid_results = [mid_results, [iter; nfev; globalMinFVal]];
+%             else
+%                 mid_results = [mid_results, [iter; nfev; globalMinFVal]];
             end
         end
         
