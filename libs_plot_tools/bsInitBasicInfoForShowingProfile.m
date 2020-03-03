@@ -75,11 +75,15 @@ function [basicInfo] = bsInitBasicInfoForShowingProfile(GShowProfileParam, GInvP
         basicInfo.newHorizons = horizons;
     end
     
+    
     basicInfo.dt = dt;
     basicInfo.minTime = minTime;
     basicInfo.newTimeSeq = minTime : newDt : maxTime;
-    basicInfo.newDt = newDt;
+    basicInfo.newTime0 = basicInfo.newHorizon - GInvParam.upNum * dt;
+    basicInfo.timeSeq = minTime : dt : maxTime;
     
+    basicInfo.newDt = newDt;
+    basicInfo.scaleFactor = scaleFactor;
     basicInfo.timeGrid = timeGrid;
     
 end

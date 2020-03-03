@@ -1,42 +1,27 @@
 function [newProfileData] = bsReScaleAndRestoreData(basicInfo, profileData, isParallel)
 
-    time = basicInfo.timeGrid;
+    
+    [sampNum, ~] = size(profileData);
+    minTime = basicInfo.minTime;
+    newTime0 = basicInfo.newTime0;
     newT = basicInfo.newTimeSeq;
-    newSampNum = length(newT);
-    
-    [X, Y] = meshgrid(basicInfo.traceIds, newT);
-    Z = inf(size(X));
-    [Xq,Yq] = meshgrid(basicInfo.newTraceIds, newT);
-    
-    
-    
-    [sampNum, traceNum] = size(profileData);
-    
-    if isParallel
-        parfor j = 1 : traceNum
-            for i = 1 : newSampNum
-                ti = newT(i);
+    newDt = basicInfo.newDt;
+    newSampNum = round(basicInfo.scaleFactor*sampNum);
+    newTrNum = length(basicInfo.newTraceIds);
 
-                if ti >= time(1, j) && ti<= time(sampNum, j)
-                    Z(i, j) = bsCalVal(ti, time(:, j), profileData(:, j));
-                end
-            end
-        end
-    else
-        for j = 1 : traceNum
-            for i = 1 : newSampNum
-                ti = newT(i);
-
-                if ti >= time(1, j) && ti<= time(sampNum, j)
-                    Z(i, j) = bsCalVal(ti, time(:, j), profileData(:, j));
-                end
-            end
-        end
-    end
+    [X, Y] = meshgrid(basicInfo.traceIds, 1:sampNum);
+    [Xq,Yq] = meshgrid(basicInfo.newTraceIds, linspace(1, sampNum, newSampNum));
     
     if length(basicInfo.newTraceIds) == length(basicInfo.traceIds)
-        newProfileData = Z;
+        Z = profileData;
     else
-        newProfileData = interp2(X, Y, Z, Xq, Yq,'cubic');
+        Z = interp2(X, Y, profileData, Xq, Yq,'cubic');
     end
+    
+    newProfileData = inf(length(newT), newTrNum);
+    for i = 1 : newTrNum
+        s = round((newTime0(i) - minTime) / newDt);
+        newProfileData(s:s+newSampNum-1, i) = Z(:, i);
+    end
+    
 end

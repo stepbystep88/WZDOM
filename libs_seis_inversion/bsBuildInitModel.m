@@ -113,7 +113,7 @@ function [isExist, GInvParam, dstFileNames] = checkExists(GInvParam, type, dataI
         dstFileNames{j} = dstFileName;
         
         if exist(dstFileName, 'file') && ~options.isRebuild
-            warning('Initial model %s exists already!', dstFileName);
+            fprintf('Initial model %s exists already!\n', dstFileName);
         else
             isExist = false;
         end

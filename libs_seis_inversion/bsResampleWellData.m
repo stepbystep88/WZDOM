@@ -29,7 +29,7 @@ function wellData = bsResampleWellData(data, dataIndex, vpIndex, depthIndex, tim
 %                     time = wellData(end, end) + dt;
 %                     wellData = [wellData; [depth, sumData/num, time]];
 %                 end
-                time = data(i, timeIndex) * 1000;
+                time = data(i, timeIndex);
                 wellData = [wellData; [depth, sumData/num, time]];
                 
             end

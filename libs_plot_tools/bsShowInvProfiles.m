@@ -235,6 +235,8 @@ end
 
 function [isSameType, type] = bsCheckIsSameType(profiles)
     nProfiles = length(profiles);
+    type = profiles{1}.type;
+    
     isSameType = 1;
     if nProfiles == 0
         error('There profile data to show is empty.');
@@ -243,7 +245,7 @@ function [isSameType, type] = bsCheckIsSameType(profiles)
         return;
     end
     
-    type = profiles{1}.type;
+    
     for i = 2 : nProfiles
         itype = profiles{i}.type;
         

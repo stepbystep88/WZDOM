@@ -44,10 +44,13 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
     
     startTimes = horizonTimes - GPostInvParam.dt * GPostInvParam.upNum;
     
+%     startTimes = bsButtLowPassFilter(startTimes, 0.1);
+    
     for i = 1 : nMethod
         method = methods{i};
         methodName = method.name;
         matFileName = bsGetFileName('mat');
+        segyFileName = bsGetFileName('segy');
         
         res.source = [];
         
@@ -71,12 +74,21 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
                     
                 case 'segy'
                     % from sgy file
-                    [data, loadInfo.segyInfo] = bsReadTracesByIds(...
-                        loadInfo.fileName, ...
-                        loadInfo.segyInfo, ...
-                        inIds, crossIds, startTimes, sampNum, GPostInvParam.dt);
+                    try
+                        if ~isfield(loadInfo, 'fileName') || isempty(loadInfo.fileName)
+                            loadInfo.fileName = segyFileName;
+                        end
+
+                        [data, loadInfo.segyInfo] = bsReadTracesByIds(...
+                            loadInfo.fileName, ...
+                            loadInfo.segyInfo, ...
+                            inIds, crossIds, startTimes, sampNum, GPostInvParam.dt);
+
+                        res.source = 'segy';
+                    catch
+                        warning('load segy file failed.');
+                    end
                     
-                    res.source = 'segy';
                 case 'assign'
                     data = loadInfo.data;
                     res.source = 'assign';
@@ -115,8 +127,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
         
         
         % save sgy file
-        if isfield(method, 'isSaveSegy') && method.isSaveSegy
-            segyFileName = bsGetFileName('segy');
+        if isfield(method, 'isSaveSegy') && method.isSaveSegy && ~strcmp(res.source, 'segy')
             fprintf('Writing segy file:%s ....\n', segyFileName);
             bsWriteInvResultIntoSegyFile( ...
                 res, data, ...
@@ -127,7 +138,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GPostInvParam, inIds, crossIds,
         end
         
         % save mat file
-        if isfield(method, 'isSaveMat') && method.isSaveMat
+        if isfield(method, 'isSaveMat') && method.isSaveMat && ~strcmp(res.source, 'mat')
             fprintf('Writing mat file:%s...\n', matFileName);
             try
                 save(matFileName, 'data', 'horizonTimes', 'inIds', 'crossIds', 'GPostInvParam', 'method');

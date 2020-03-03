@@ -34,7 +34,7 @@ function gathers = bsReadGathersByIds(fileName, GSegyInfo, inIds, crossIds, star
         
         if ~isempty(trHeader) && trHeader.inId == inId && trHeader.crossId == crossId
         else
-            index = bsIndexOfTraceSetOnInIdAndCrossId(GSegyInfo, inId, crossId);
+            [index, returnHeader] = bsIndexOfTraceSetOnInIdAndCrossId(GSegyInfo, inId, crossId);
             if(index == -1)
                 warning("The trace of inline=%d and cossline=%d doesn't exist in the file %s!\n", ...
                     inId, crossId, fileName);

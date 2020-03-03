@@ -1,9 +1,9 @@
-function bsShowFFTResultsComparison(GPostInvParam, GShowProfileParam, curves, titles)
+function bsShowFFTResultsComparison(dt, curves, titles)
 
+    GShowProfileParam = bsCreateGShowProfileParam();
     GPlotParam = GShowProfileParam.plotParam;
     
     nItems = size(curves, 2);
-    dt = GPostInvParam.dt;
 
 
     hf = figure;
@@ -19,11 +19,11 @@ function bsShowFFTResultsComparison(GPostInvParam, GShowProfileParam, curves, ti
 
         if length(nonzeroIp) < size(curves, 1)
             [pInv, pf] = bsGetFrequencies(nonzeroIp, dt);
-%             pInv = pInv / norm(pInv) * norm(curves(:, 1));
+            pInv = pInv / norm(pInv) * norm(curves(:, 1));
             plot(pf, pInv, shapes{iItem}, 'color', cTbl{iItem}, 'linewidth', 2); hold on;
         else
             [pInv, f] = bsGetFrequencies(Ip, dt);
-            pInv = pInv / norm(pInv) * norm(curves(:, 1));
+%             pInv = pInv / norm(pInv) * norm(curves(:, 1));
             plot(f, pInv, shapes{iItem}, 'color', cTbl{iItem}, 'linewidth', 2); hold on;
         end
 

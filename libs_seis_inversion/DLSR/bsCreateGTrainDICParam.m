@@ -34,6 +34,7 @@ function options = bsCreateGTrainDICParam(flag, varargin)
     % whether to show the iteration information
     addParameter(p, 'isShowIterInfo', 0); 
     
+    addParameter(p, 'isRebuild', 0); 
         
     % indicate the name of the trained dictionary
     addParameter(p, 'title', []);
@@ -52,7 +53,6 @@ function options = bsCreateGTrainDICParam(flag, varargin)
             % different elastic parameters
             addParameter(p, 'dicSavePath', './TrainedDictionaries/csr/'); 
             addParameter(p, 'isNormalize', 1); 
-            
         otherwise
             validatestring(flag, {'ssr', 'csr', 'one'});
     end

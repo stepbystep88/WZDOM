@@ -1,11 +1,12 @@
-function bsShowPreInvLogResult(GPreInvParam, GPlotParam, GShowProfileParam, ...
+function bsShowPreInvLogResult(GPreInvParam, GShowProfileParam, ...
     invVals, trueLogFiltcoef, isShowSynSeisComparasion)
 
     if ~exist('isShowSynSeisComparasion', 'var')
         isShowSynSeisComparasion = 1;
     end
     
-
+    GPlotParam = GShowProfileParam.plotParam;
+    
     nItems = length(invVals);
     model = invVals{1}.model;
     trueLog = model.trueLog;
@@ -138,7 +139,7 @@ end
 function bsSetSubPlotSize(nItems, iItem)
     switch nItems
         case {1, 2, 3}
-            bsSubPlotFit(1, nItems, iItem, 0.96, 0.92, 0.08, 0.11, 0.085, 0.045);
+            bsSubPlotFit(1, nItems, iItem, 0.96, 0.9, 0.08, 0.11, 0.085, 0.045);
         case 4
             bsSubPlotFit(1, nItems, iItem, 0.96, 0.92, 0.08, 0.11, 0.085, 0.045);
     end
@@ -239,7 +240,7 @@ function bsShowPreSubSynSeisData(GPlotParam, tmethod, data, t, angleData, nItems
 %     bsSetPreSubPlotSize(nItems, iItem, k);
     nRow = ceil((nItems+2)/3);
 %     subplot(nRow, 3, iItem);
-    bsSubPlotFit(nRow, 3, iItem, 0.93, 0.96, 0.02, 0.09, 0.06, 0.0);
+    bsSubPlotFit(nRow, 3, iItem, 0.93, 0.92, 0.02, 0.11, 0.06, -0.02);
     
     wiggles = {'k', 'b', 'r'};
     peaks = {'k', 'b', 'r'};

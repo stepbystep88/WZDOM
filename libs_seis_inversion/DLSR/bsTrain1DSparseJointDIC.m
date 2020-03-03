@@ -4,10 +4,6 @@ function [DIC, rangeCoef] = bsTrain1DSparseJointDIC(datas, GTrainDICParam)
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
 % Programming dates: Dec 2019
 % -------------------------------------------------------------------------
-
-    if nargin <= 3
-        isNormalize = 1;
-    end
     
     nWell = length(datas);
     allPatchs = [];

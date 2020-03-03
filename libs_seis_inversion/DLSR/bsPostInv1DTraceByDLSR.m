@@ -82,7 +82,7 @@ function [x, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, U
         % change the current initial guess
         inputObjFcnPkgs{2, 2} = [];
         
-%         if i > 3
+%         if isfield(GSparseInvParam, 'isChangeK') && GSparseInvParam.isChangeK && i >= 3
 %             GSparseInvParam.sparsity = 2;
 %         end
         
