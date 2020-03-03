@@ -14,7 +14,7 @@ function pbm = bsInitParforProgress(numWorkers, nLoop, title, basePath, isPrintB
         pbm.isPrintBySavingFile = isPrintBySavingFile;
     end
     
-    pbm.name = [basePath, '/parfor_progress.txt'];
+    pbm.name = [basePath, sprintf('/parfor_progress_%d.txt', round(rand()*10000))];
     p = gcp('nocreate');
     pbm.numWorkers = p.NumWorkers;
     pbm.nLoop = nLoop;
