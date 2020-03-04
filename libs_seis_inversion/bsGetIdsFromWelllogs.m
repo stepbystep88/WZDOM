@@ -18,4 +18,6 @@ function ids = bsGetIdsFromWelllogs(welllogs, names)
             
         end
     end
+    
+    ids(find(ids==0)) = [];
 end
