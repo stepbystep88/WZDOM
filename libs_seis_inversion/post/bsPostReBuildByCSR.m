@@ -8,7 +8,6 @@ function [outputData] = bsPostReBuildByCSR(GInvParam, GSparseInvParam, inputData
         % tackle the inverse task
     outputData = zeros(sampNum, traceNum);
     dt = GInvParam.dt;
-    GInvParam.isParallel = 0;
     if GInvParam.isParallel
 
         pbm = bsInitParforProgress(GInvParam.numWorkers, ...
@@ -20,7 +19,7 @@ function [outputData] = bsPostReBuildByCSR(GInvParam, GSparseInvParam, inputData
         % parallel computing
         parfor iTrace = 1 : traceNum
             outputData(:, iTrace) = bsHandleOneTrace(GSparseInvParam, inputData(:, iTrace), options, dt);
-            bsIncParforProgress(pbm, iTrace, 10000);
+            bsIncParforProgress(pbm, iTrace, 20000);
         end
 
 
@@ -70,17 +69,20 @@ function newData = bsHandleOneTrace(GSparseInvParam, realData, options, dt)
                 avgLog = avgLog + GSparseInvParam.R{j}' * new_patches(:, j);
             end
 
-            newData = GSparseInvParam.invR * avgLog;
+            tmpData = GSparseInvParam.invR * avgLog;
         case 'simpleAvg'
             % get reconstructed results by averaging patches
             avgLog = bsAvgPatches(new_patches, GSparseInvParam.index, sampNum);
-            newData = avgLog * options.gamma + realData * (1 - options.gamma);
+            tmpData = avgLog * options.gamma + realData * (1 - options.gamma);
     end
     
     % 合并低频和中低频
     if strcmp(options.mode, 'low_high')
         ft = 1/dt*1000/2;
-        newData = bsMixTwoSignal(realData, newData, options.lowCut*ft, options.highCut*ft, dt/1000);
+        newData = bsMixTwoSignal(realData, tmpData, options.lowCut*ft, options.lowCut*ft, dt/1000);
+%         bsShowFFTResultsComparison(2, [realData, tmpData, newData], {'反演结果', '高频', '合并'});
+    else
+        newData = tmpData;
     end
     
 end

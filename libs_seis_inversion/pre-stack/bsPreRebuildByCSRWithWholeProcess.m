@@ -26,6 +26,7 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
     p.parse(varargin{:});  
     options = p.Results;
     GTrainDICParam = options.GTrainDICParam;
+    GTrainDICParam.filtCoef = 1;
     
     switch options.mode
         case 'full_freq'
@@ -84,12 +85,12 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
         options.rangeCoef = rangeCoef;
         [testData] = bsPostReBuildByCSR(GInvParam, GInvWellSparse, wellInvResults{1}.data{i}, options);
     
-        figure; plot(testData(:, 1), 'r', 'linewidth', 2); hold on; 
-        plot(outLogs{1}.wellLog(:, 2), 'k', 'linewidth', 2); 
-        plot(outLogs{1}.wellLog(:, 1), 'b', 'linewidth', 2);
-        legend('重构结果', '实际测井', '反演结果', 'fontsize', 11);
-        set(gcf, 'position', [261   558   979   420]);
-        bsShowFFTResultsComparison(GInvParam.dt, [outLogs{1}.wellLog, testData(:, 1)], {'反演结果', '实际测井', '重构结果'});
+%         figure; plot(testData(:, 1), 'r', 'linewidth', 2); hold on; 
+%         plot(outLogs{1}.wellLog(:, 2), 'k', 'linewidth', 2); 
+%         plot(outLogs{1}.wellLog(:, 1), 'b', 'linewidth', 2);
+%         legend('重构结果', '实际测井', '反演结果', 'fontsize', 11);
+%         set(gcf, 'position', [261   558   979   420]);
+%         bsShowFFTResultsComparison(GInvParam.dt, [outLogs{1}.wellLog, testData(:, 1)], {'反演结果', '实际测井', '重构结果'});
 
         % 联合字典稀疏重构
         fprintf('联合字典稀疏重构: 参考数据为反演结果...\n');
