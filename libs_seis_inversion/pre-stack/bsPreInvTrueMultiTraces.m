@@ -232,7 +232,10 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
                     bsIncParforProgress(pbm, iTrace, 101);
             end
             
-
+            try
+                delete(pbm.name);
+            catch
+            end
         else
             % non-parallel computing 
             for iTrace = 2 : traceNum

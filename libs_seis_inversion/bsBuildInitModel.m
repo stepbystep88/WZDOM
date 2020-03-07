@@ -10,6 +10,7 @@ function [inIds, crossIds, GInvParam, dstFileNames, segyInfo] = bsBuildInitModel
         = bsGetWorkAreaRangeByParam(GInvParam);
     
     addParameter(p, 'filtCoef', 0.1);
+    addParameter(p, 'lateralFiltCoef', 0.1);
     addParameter(p, 'title', '');
     addParameter(p, 'dstPath', sprintf('%s/model/', GInvParam.modelSavePath));
     addParameter(p, 'rangeInline', rangeInline);
@@ -91,16 +92,41 @@ function [inIds, crossIds, GInvParam, dstFileNames, segyInfo] = bsBuildInitModel
         
         fprintf('Interpolating the %s data by calculated weights...\n', type{i});
         data = bsInterpolate3DData(nTrace, wellData, weights, indexies);
-        
+%         newData = bsLateralSmoothData(data);
+        newData = data;
         dstFileName = bsGetDstFileName(type{i}, options);
-        bsWriteInvResultIntoSegyFile(res, data, fileName, segyInfo, dstFileName);
+        bsWriteInvResultIntoSegyFile(res, newData, fileName, segyInfo, dstFileName);
     end
     
     GInvParam.upNum = GInvParam.upNum - options.expandNum;
     GInvParam.downNum = GInvParam.downNum - options.expandNum;
     
+    function newData = bsLateralSmoothData(data)
+        if length(find(options.rangeInline == rangeInline)) ==2  ...
+            && length(find(options.rangeCrossline == rangeCrossline)) == 2
+            % volume data
+            nInline = rangeInline(2) - rangeInline(1) + 1;
+            nCrossline = rangeCrossline(2) - rangeCrossline(1) + 1;
+            
+            data3D = bsReshapeDataAs3D(data, nInline, nCrossline);
+%             filter = fspecial('average',[5 5]);
+%             for k = size(data, 1)
+%                 data3D(k, :, :) = imfilter(data3D(k, :, :), filter);
+%             end
+            newData3D = smooth3(data3D, 'box', 5);
+            newData = bsReshapeDataAs2D(newData3D);
+            
+        else
+            % profile data
+%             filter = fspecial('average', [5 20]);
+%             newData = imfilter(data, filter);
+            newData = bsFilterProfileData(data, 0.1, 1);
+        end
+    end
+
 end
    
+
 
 
 function [isExist, GInvParam, dstFileNames] = checkExists(GInvParam, type, dataIndex, options, segyInfo)

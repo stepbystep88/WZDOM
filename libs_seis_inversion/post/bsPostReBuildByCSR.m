@@ -22,7 +22,10 @@ function [outputData] = bsPostReBuildByCSR(GInvParam, GSparseInvParam, inputData
             bsIncParforProgress(pbm, iTrace, 20000);
         end
 
-
+        try
+            delete(pbm.name);
+        catch
+        end
     else
         % non-parallel computing 
         for iTrace = 1 : traceNum

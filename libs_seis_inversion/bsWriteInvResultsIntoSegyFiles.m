@@ -6,7 +6,7 @@ function bsWriteInvResultsIntoSegyFiles(GInvParam, invResults, title)
     
     switch GInvParam.flag
         case {'prestack', 'pre-stack'}
-            if ~isempty(GInvParam.preSeisData.fileName)
+            if isempty(GInvParam.postSeisData.fileName)
                 fileName = GInvParam.preSeisData.fileName;
                 GSegyInfo = GInvParam.preSeisData.segyInfo;
             else
@@ -38,5 +38,8 @@ function bsWriteInvResultsIntoSegyFiles(GInvParam, invResults, title)
 end
 
 function str = getDstFileName(GInvParam, name, type, title)
+    warning('off');
+    mkdir(sprintf('%s/sgy_results', GInvParam.modelSavePath));
     str = sprintf('%s/sgy_results/%s-%s-%s.sgy', GInvParam.modelSavePath, type, name, title);
+    warning('on');
 end

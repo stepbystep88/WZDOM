@@ -78,12 +78,18 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByDLSR(d, G, xInit, Lb, Ub
     midF = [];
     data = zeros(sampNum, 4);
     newData = data;
+    maxIter = options.maxIter;
     
-    for iter = 1 : options.maxIter
+    for iter = 1 : maxIter
+        
+        if length(regParam.gamma) == 2
+            gamma  = (maxIter - iter)*(regParam.gamma(2) - regParam.gamma(1))/(maxIter - 1) + regParam.gamma(1);
+        else
+            gamma = regParam.gamma;
+        end
         
         % change the current initial guess
         inputObjFcnPkgs{2, 2} = [];
-        
         [xOut, fval, exitFlag, output_] = bsGBSolveByOptions(inputObjFcnPkgs, xInit, Lb, Ub, GBOptions);
         
         if GBOptions.isSaveMiddleRes
@@ -109,7 +115,7 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByDLSR(d, G, xInit, Lb, Ub
             %% reconstruct model by equations
             switch GSparseInvParam.reconstructType
                 case 'equation'
-                    avgLog = regParam.gamma * data(:, i);
+                    avgLog = gamma * data(:, i);
                     % get reconstructed results by equation
                     for j = 1 : ncell
                         avgLog = avgLog + GSparseInvParam.R{j}' * new_patches(:, j);
@@ -119,7 +125,7 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByDLSR(d, G, xInit, Lb, Ub
                 case 'simpleAvg'
                     % get reconstructed results by averaging patches
                     avgLog = bsAvgPatches(new_patches, GSparseInvParam.index, sampNum);
-                    newData(:, i) = avgLog * regParam.gamma + data(:, i) * (1 - regParam.gamma);
+                    newData(:, i) = avgLog * gamma + data(:, i) * (1 - gamma);
             end
         end
         
@@ -172,7 +178,7 @@ function GSparseInvParam = bsInitDLSRPkgs(GSparseInvParam, gamma, sampNum)
         tmp = tmp + GSparseInvParam.R{iCell}' * GSparseInvParam.R{iCell};
     end
     GSparseInvParam.invTmp = tmp;
-    GSparseInvParam.invR = inv(gamma * eye(sampNum) + GSparseInvParam.invTmp);
+    GSparseInvParam.invR = inv(gamma(1) * eye(sampNum) + GSparseInvParam.invTmp);
     
     GSparseInvParam.omp_G = cell(1, 3);
     for i = 1 : 3

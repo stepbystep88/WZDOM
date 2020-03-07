@@ -99,8 +99,8 @@ function [GInvParam, outputWelllogs, wavelet] ...
         end
             
         targetDep = wellData(bestIndex, indexInWell.depth, :);
-        wellData = wellData(expandNum+1:end-expandNum, :);
-        bestIndex = bestIndex - expandNum;
+%         wellData = wellData(expandNum+1:end-expandNum, :);
+%         bestIndex = bestIndex - expandNum;
         upIndex = bestIndex - GInvParam.upNum - saveOffsetNum;
         downIndex = bestIndex + GInvParam.downNum - 1 + saveOffsetNum;
         

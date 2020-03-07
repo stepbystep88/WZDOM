@@ -80,18 +80,16 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByCSR(d, G, xInit, Lb, Ub,
     midF = [];
     data = zeros(sampNum, 4);
     newData = data;
+    maxIter = options.maxIter;
     
-    
-    
-    for iter = 1 : options.maxIter
+    for iter = 1 : maxIter
         
         % change the current initial guess
         inputObjFcnPkgs{2, 2} = [];
-        if isfield(GSparseInvParam, 'isScale') && GSparseInvParam.isScale
-            Gx = mainData.A * xInit;
-            c = (Gx' * mainData.B) / (Gx' * Gx);
-            mainData.A = mainData.A * c;
-            inputObjFcnPkgs{1, 2} = mainData;
+        if length(regParam.gamma) == 2
+            gamma  = (maxIter - iter)*(regParam.gamma(2) - regParam.gamma(1))/(maxIter - 1) + regParam.gamma(1);
+        else
+            gamma = regParam.gamma;
         end
         
         [xOut, fval, exitFlag, output_] = bsGBSolveByOptions(inputObjFcnPkgs, xInit, Lb, Ub, GBOptions);
@@ -133,7 +131,7 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByCSR(d, G, xInit, Lb, Ub,
             
             switch GSparseInvParam.reconstructType
                 case 'equation'
-                    avgLog = regParam.gamma * data(:, i+1);
+                    avgLog = gamma * data(:, i+1);
                     % get reconstructed results by equation
                     for j = 1 : ncell
                         
@@ -144,7 +142,7 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByCSR(d, G, xInit, Lb, Ub,
                 case 'simpleAvg'
                     % get reconstructed results by averaging patches
                     avgLog = bsAvgPatches(i_new_patches, GSparseInvParam.index, sampNum);
-                    newData(:, i+1) = avgLog * regParam.gamma + data(:, i+1) * (1 - regParam.gamma);
+                    newData(:, i+1) = avgLog * gamma + data(:, i+1) * (1 - gamma);
             end
         end
         
@@ -200,7 +198,7 @@ function GSparseInvParam = bsInitDLSRPkgs(GSparseInvParam, gamma, sampNum)
         tmp = tmp + GSparseInvParam.R{iCell}' * GSparseInvParam.R{iCell};
     end
     GSparseInvParam.invTmp = tmp;
-    GSparseInvParam.invR = inv(gamma * eye(sampNum) + GSparseInvParam.invTmp);
+    GSparseInvParam.invR = inv(gamma(1) * eye(sampNum) + GSparseInvParam.invTmp);
     
     if GSparseInvParam.isModifiedDIC
         I = eye(sizeAtom * 3);
