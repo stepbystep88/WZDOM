@@ -49,17 +49,18 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByCSR(d, G, xInit, Lb, Ub,
     mainData.A = G;
     mainData.B = d;
     sampNum = length(xInit)/3;
+    initLambda = options.initRegParam(1);
     
     % re-organize the input objective function pakages
     inputObjFcnPkgs = {
         options.mainFunc,       mainData,   1; 
-        @bsReg1DTKInitModel,    struct('xInit', xInit), options.initRegParam;
-        @bsReg1DTKInitModel,    struct('xInit', xInit), options.initRegParam;
+        @bsReg1DTKInitModel,    struct('xInit', xInit), initLambda;
+        @bsReg1DTKInitModel,    struct('xInit', xInit), initLambda;
     };
     
     % if the regParam is not given, I search it by a search subroutine
     % which is save in options.searchRegParamFcn. 
-    if ~isfield(regParam, 'lambda') || regParam.lambda < 0
+    if ~isfield(regParam, 'lambda')
         % find the best regularization parameter
         regParam.lambda = bsFindBestRegParameter(options, inputObjFcnPkgs, xInit, Lb, Ub);
     end
@@ -81,6 +82,8 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByCSR(d, G, xInit, Lb, Ub,
     data = zeros(sampNum, 4);
     newData = data;
     maxIter = options.maxIter;
+    lambda = regParam.lambda(1);
+    
     
     for iter = 1 : maxIter
         
@@ -90,6 +93,16 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByCSR(d, G, xInit, Lb, Ub,
             gamma  = (maxIter - iter)*(regParam.gamma(2) - regParam.gamma(1))/(maxIter - 1) + regParam.gamma(1);
         else
             gamma = regParam.gamma;
+        end
+        
+        if length(regParam.lambda) == 2
+            lambda  = lambda * regParam.lambda(2);
+            inputObjFcnPkgs{2, 3} = lambda;
+        end
+        
+        if length(options.initRegParam) == 2
+            initLambda = initLambda * options.initRegParam(2);
+            inputObjFcnPkgs{3, 3} = initLambda;
         end
         
         [xOut, fval, exitFlag, output_] = bsGBSolveByOptions(inputObjFcnPkgs, xInit, Lb, Ub, GBOptions);
