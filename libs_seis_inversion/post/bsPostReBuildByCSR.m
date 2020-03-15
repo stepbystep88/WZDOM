@@ -12,7 +12,7 @@ function [outputData] = bsPostReBuildByCSR(GInvParam, GSparseInvParam, inputData
 
         pbm = bsInitParforProgress(GInvParam.numWorkers, ...
             traceNum, ...
-            'Reconstruct synthetic data progress information', ...
+            'Rebuid data progress information', ...
             GInvParam.modelSavePath, ...
             GInvParam.isPrintBySavingFile);
 
@@ -21,11 +21,9 @@ function [outputData] = bsPostReBuildByCSR(GInvParam, GSparseInvParam, inputData
             outputData(:, iTrace) = bsHandleOneTrace(GSparseInvParam, inputData(:, iTrace), options, dt);
             bsIncParforProgress(pbm, iTrace, 20000);
         end
-
-        try
-            delete(pbm.name);
-        catch
-        end
+        
+        bsDeleteParforProgress(pbm);
+        
     else
         % non-parallel computing 
         for iTrace = 1 : traceNum
@@ -49,8 +47,24 @@ function newData = bsHandleOneTrace(GSparseInvParam, realData, options, dt)
         patches(:, j) = realData(js : js+sizeAtom-1);
     end
     
+    
+    
     if strcmp(options.mode, 'low_high')
-        patches = (patches - rangeCoef(1, 1)) / (rangeCoef(1, 2) - rangeCoef(1, 1));
+        switch GSparseInvParam.trainDICParam.normalizationMode
+            case 'patch_max_min'
+                max_values = max(patches, [], 1);
+                min_values = min(patches, [], 1);
+                max_values = repmat(max_values, sizeAtom, 1);
+                min_values = repmat(min_values, sizeAtom, 1);
+                patches = (patches - min_values) ./ (max_values - min_values);
+            case 'whole_data_max_min'
+                patches = (patches - rangeCoef(1, 1)) / (rangeCoef(1, 2) - rangeCoef(1, 1));
+%             case 'patch_mean_norm'
+%                 mean_vlaues = norm(patches, 1);
+%                 mean_vlaues = repmat(mean_vlaues, sizeAtom, 1);
+%                 patches = (patches - min_values) ./ (max_values - min_values);
+        end
+        
     end
         
     gammas = omp(GSparseInvParam.D1'*patches, ...
@@ -60,7 +74,13 @@ function newData = bsHandleOneTrace(GSparseInvParam, realData, options, dt)
     
     new_patches = GSparseInvParam.D2 *  gammas;
     if strcmp(options.mode, 'low_high')
-        new_patches = new_patches * (rangeCoef(2, 2) - rangeCoef(2, 1)) + rangeCoef(2, 1); 
+        switch GSparseInvParam.trainDICParam.normalizationMode
+            case 'patch_max_min'
+                new_patches = new_patches .* (max_values - min_values) + min_values; 
+            case 'whole_data_max_min'
+                new_patches = new_patches .* (rangeCoef(2, 2) - rangeCoef(2, 1)) + rangeCoef(2, 1); 
+        end
+        
     end
 
     switch GSparseInvParam.reconstructType

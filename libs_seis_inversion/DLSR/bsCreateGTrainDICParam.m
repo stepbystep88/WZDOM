@@ -44,15 +44,19 @@ function options = bsCreateGTrainDICParam(flag, varargin)
             % for flag = 'one': train only one dictionary. It mostly used
             % in the poststack inversion
             addParameter(p, 'dicSavePath', './TrainedDictionaries/poststack/'); 
+            addParameter(p, 'normalizationMode', 'none'); 
         case 'ssr'
             % for flag='ssr': train different dictionaries for different elastic parameters
             % the path of saving the trained dictionary
             addParameter(p, 'dicSavePath', './TrainedDictionaries/ssr/'); 
+            addParameter(p, 'normalizationMode', 'none'); 
+            
         case 'csr'
             % for flag='csr': train a joint dictionary which contains the coherence of
             % different elastic parameters
             addParameter(p, 'dicSavePath', './TrainedDictionaries/csr/'); 
-            addParameter(p, 'isNormalize', 1); 
+            addParameter(p, 'normalizationMode', 'whole_data_max_min'); 
+            
         otherwise
             validatestring(flag, {'ssr', 'csr', 'one'});
     end
@@ -60,5 +64,7 @@ function options = bsCreateGTrainDICParam(flag, varargin)
     p.parse(varargin{:});  
     options = p.Results;
     options.flag = flag;
+    
+    
 end
 

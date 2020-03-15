@@ -61,7 +61,9 @@ function [inIds, crossIds, GInvParam, dstFileNames, segyInfo] = bsBuildInitModel
     if isExist
         return;
     end
+    warning('off');
     mkdir(options.dstPath);
+    warning('on');
     
     GInvParam.upNum = GInvParam.upNum + options.expandNum;
     GInvParam.downNum = GInvParam.downNum + options.expandNum;
@@ -95,7 +97,7 @@ function [inIds, crossIds, GInvParam, dstFileNames, segyInfo] = bsBuildInitModel
 %         newData = bsLateralSmoothData(data);
         newData = data;
         dstFileName = bsGetDstFileName(type{i}, options);
-        bsWriteInvResultIntoSegyFile(res, newData, fileName, segyInfo, dstFileName);
+        bsWriteInvResultIntoSegyFile(res, newData, fileName, segyInfo, dstFileName, 1);
     end
     
     GInvParam.upNum = GInvParam.upNum - options.expandNum;

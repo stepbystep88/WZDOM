@@ -17,7 +17,7 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
     addParameter(p, 'highCut', 1);
     addParameter(p, 'sparsity', 5);
     addParameter(p, 'gamma', 0.5);
-    addParameter(p, 'title', 'high_freq_rebuit');
+    addParameter(p, 'title', 'HLF');
     addParameter(p, 'trainNum', length(wellLogs));
     addParameter(p, 'exception', []);
     addParameter(p, 'mustInclude', []);
@@ -30,14 +30,14 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
     
     switch options.mode
         case 'full_freq'
-            GTrainDICParam.isNormalize = 0;
-            DICTitle = sprintf('%s_isNormal_%d', ...
-                GTrainDICParam.title, GTrainDICParam.isNormalize);
+            GTrainDICParam.normailzationMode = 'off';
+            DICTitle = sprintf('%s_highCut_%.2f', ...
+                GTrainDICParam.title, options.highCut);
         case 'low_high'
-            GTrainDICParam.isNormalize = 1;
+            GTrainDICParam.normailzationMode = 'patch_max_min';
             options.gamma = 1;
-            DICTitle = sprintf('%s_isNormal_%d_lowCut_%.2f', ...
-                GTrainDICParam.title, GTrainDICParam.isNormalize, options.lowCut);
+            DICTitle = sprintf('%s_lowCut_%.2f_highCut_%.2f', ...
+                GTrainDICParam.title, options.lowCut, options.highCut);
     end
     
     wells = cell2mat(wellLogs);
@@ -45,42 +45,50 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
     wellCrossIds = [wells.crossline];
 
     % inverse a profile
-    [~, ~, GInvParamWell] = bsBuildInitModel(GInvParam, timeLine, wellLogs, ...
-        'title', 'all_wells', ...
-        'inIds', wellInIds, ...
-        'filtCoef', options.wellFiltCoef, ...
-        'crossIds', wellCrossIds ...
-    );
+%     [~, ~, GInvParamWell] = bsBuildInitModel(GInvParam, timeLine, wellLogs, ...
+%         'title', 'all_wells', ...
+%         'inIds', wellInIds, ...
+%         'filtCoef', options.wellFiltCoef, ...
+%         'isRebuild', 1, ...
+%         'crossIds', wellCrossIds ...
+%     );
 
     fprintf('反演所有测井中...\n');
-    wellInvResults = bsPreInvTrueMultiTraces(GInvParamWell, wellInIds, wellCrossIds, timeLine, {method});
-
+    wellInvResults = bsPreInvTrueMultiTraces(GInvParam, wellInIds, wellCrossIds, timeLine, {method});
+    [wellInvResults, ~, ~] = bsPreGetOtherAttributesByInvResults(wellInvResults, GInvParam, wellLogs);
+    
     set_diff = setdiff(1:length(wellInIds), options.exception);
     train_ids = bsRandSeq(set_diff, options.trainNum);
     train_ids = unique([train_ids, options.mustInclude]);
     outResult = bsSetFields(invResult, {'name', name});
     
     %% 叠前有三种属性
-    for i = 1 : 3
-        switch i
-            case 1
+    for i = 1 : length(invResult.type)
+        switch lower(invResult.type{i})
+            case 'vp'
                 dataIndex = GInvParam.indexInWellData.vp;
                 GTrainDICParam.title = ['vp_', DICTitle];
-            case 2
+            case 'vs'
                 dataIndex = GInvParam.indexInWellData.vs;
                 GTrainDICParam.title = ['vs_', DICTitle];
-            case 3
+            case 'rho'
                 dataIndex = GInvParam.indexInWellData.rho;
                 GTrainDICParam.title = ['rho_', DICTitle];
+            case {'vpvs_ratio', 'vp_vs'}
+                dataIndex = GInvParam.indexInWellData.vpvs_ratio;
+                GTrainDICParam.title = ['vpvs_ratio_', DICTitle];
+            case 'possion'
+                dataIndex = GInvParam.indexInWellData.possion;
+                GTrainDICParam.title = ['possion_', DICTitle];
         end
         
         [outLogs] = bsGetPairOfInvAndWell(GInvParam, timeLine, wellLogs, wellInvResults{1}.data{i}, dataIndex, options);
         fprintf('训练联合字典中...\n');
         [DIC, train_ids, rangeCoef] = bsTrainDics(GTrainDICParam, outLogs, train_ids, ...
             [ 1, 2], GTrainDICParam.isRebuild);
-        GInvWellSparse = bsCreateGSparseInvParam(DIC, 'csr', ...
-        'sparsity', options.sparsity, ...
-        'stride', 1);
+        GInvWellSparse = bsCreateGSparseInvParam(DIC, GTrainDICParam, ...
+            'sparsity', options.sparsity, ...
+            'stride', 1);
     
         options.rangeCoef = rangeCoef;
         [testData] = bsPostReBuildByCSR(GInvParam, GInvWellSparse, wellInvResults{1}.data{i}, options);
@@ -100,6 +108,6 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
 
     end
     
-    bsWriteInvResultsIntoSegyFiles(GInvParam, {outResult}, options.title);
+    bsWriteInvResultsIntoSegyFiles(GInvParam, {outResult}, options.title, 0);
 
 end

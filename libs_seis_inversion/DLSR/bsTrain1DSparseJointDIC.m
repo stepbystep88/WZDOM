@@ -28,6 +28,8 @@ function [DIC, rangeCoef] = bsTrain1DSparseJointDIC(datas, GTrainDICParam)
         datas{j} = data;
     end
     
+    validatestring(string(GTrainDICParam.normalizationMode), {'whole_data_max_min', 'patch_max_min', 'off'});
+    
     for i = 1 : nAtt
         patchs = [];
 
@@ -39,8 +41,14 @@ function [DIC, rangeCoef] = bsTrain1DSparseJointDIC(datas, GTrainDICParam)
             for k = index
                 subData = data(k : k+GTrainDICParam.sizeAtom-1, i);
                 
-                if GTrainDICParam.isNormalize
-                    subData = (subData - rangeCoef(i, 1)) / (rangeCoef(i, 2) - rangeCoef(i, 1));
+                switch GTrainDICParam.normalizationMode
+                    case 'whole_data_max_min'
+                        subData = (subData - rangeCoef(i, 1)) / (rangeCoef(i, 2) - rangeCoef(i, 1));
+                    case 'patch_max_min'
+                        subData = (subData - min(subData)) / (max(subData) - min(subData));
+                    case 'off'
+%                         subData = subData;
+                        % do not need to do normalization
                 end
                 
                 patchs = [patchs, subData];

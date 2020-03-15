@@ -115,18 +115,39 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByCSR(d, G, xInit, Lb, Ub,
         % sparse reconstruction
         [data(:, 2), data(:, 3), data(:, 4)] = bsPreRecoverElasticParam(xOut, mode, lsdCoef);
         
+        max_values = cell(1, 3);
+        min_values = cell(1, 3);
+        
+        
         for j = 1 : ncell
             js = GSparseInvParam.index(j);
             for i = 1 : 3
+                
                 sPos = sizeAtom*(i-1) + 1;
                 ePos = sPos + sizeAtom - 1;
-                
+
                 iData = data(js : js+sizeAtom-1, i+1);
-                % normalization
-                patches(sPos:ePos, j) = (iData - rangeCoef(i, 1))/(rangeCoef(i, 2) - rangeCoef(i, 1));
+                patches(sPos:ePos, j) = iData;
             end
         end
 
+        for i = 1 : 3
+            sPos = sizeAtom*(i-1) + 1;
+            ePos = sPos + sizeAtom - 1;
+            % normalization
+            switch GSparseInvParam.trainDICParam.normalizationMode
+                case 'patch_max_min'
+                    max_values{i} = max(patches(sPos:ePos, :), [], 1);
+                    min_values{i} = min(patches(sPos:ePos, :), [], 1);
+                    max_values{i} = repmat(max_values{i}, sizeAtom, 1);
+                    min_values{i} = repmat(min_values{i}, sizeAtom, 1);
+                    patches(sPos:ePos, :) = (patches(sPos:ePos, :) - min_values{i}) ./ (max_values{i} - min_values{i});
+                case 'whole_data_max_min'
+                    patches(sPos:ePos, :) = (patches(sPos:ePos, :) - rangeCoef(i, 1))/(rangeCoef(i, 2) - rangeCoef(i, 1));
+            end
+        end
+        
+                
         if GSparseInvParam.isModifiedDIC
             patches = GSparseInvParam.M  * patches;
         end
@@ -140,7 +161,13 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByCSR(d, G, xInit, Lb, Ub,
         for i = 1 : 3
             sPos = sizeAtom*(i-1) + 1;
             ePos = sPos + sizeAtom - 1;
-            i_new_patches = new_patches(sPos:ePos, :) * (rangeCoef(i, 2) - rangeCoef(i, 1)) + rangeCoef(i, 1);
+            
+            switch GSparseInvParam.trainDICParam.normalizationMode
+                case 'patch_max_min'
+                    i_new_patches = new_patches(sPos:ePos, :) .* (max_values{i} - min_values{i}) + min_values{i}; 
+                case 'whole_data_max_min'
+                    i_new_patches = new_patches(sPos:ePos, :) * (rangeCoef(i, 2) - rangeCoef(i, 1)) + rangeCoef(i, 1);
+            end
             
             switch GSparseInvParam.reconstructType
                 case 'equation'

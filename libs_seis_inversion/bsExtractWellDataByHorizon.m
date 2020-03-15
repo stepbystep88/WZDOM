@@ -10,6 +10,7 @@ function [subWellData, wellData] = bsExtractWellDataByHorizon(wellLog, horizon, 
         data(:, i) = bsButtLowPassFilter(data(:, i), filtCoef);
     end
     
+    
     time = wellLog(:, timeIndex);
     dist = horizon - time;
     [~, index] = min(abs(dist));

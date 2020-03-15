@@ -1,22 +1,31 @@
-function bsWriteInvResultsIntoSegyFiles(GInvParam, invResults, title)
+function bsWriteInvResultsIntoSegyFiles(GInvParam, invResults, title, isSort, fileName, GSegyInfo)
     
     if isempty(invResults)
         return;
     end
     
-    switch GInvParam.flag
-        case {'prestack', 'pre-stack'}
-            if isempty(GInvParam.postSeisData.fileName)
-                fileName = GInvParam.preSeisData.fileName;
-                GSegyInfo = GInvParam.preSeisData.segyInfo;
-            else
+    if nargin <= 3
+        isSort = 1;
+    end
+    
+    if nargin < 6
+        switch GInvParam.flag
+            case {'prestack', 'pre-stack'}
+                if isempty(GInvParam.initModel.vp.fileName)
+                    fileName = GInvParam.initModel.vp.fileName;
+                    GSegyInfo = GInvParam.initModel.vp.segyInfo;
+                elseif isempty(GInvParam.postSeisData.fileName)
+                    fileName = GInvParam.preSeisData.fileName;
+                    GSegyInfo = GInvParam.preSeisData.segyInfo;
+                else
+                    fileName = GInvParam.postSeisData.fileName;
+                    GSegyInfo = GInvParam.postSeisData.segyInfo;
+                end
+
+            case {'poststack', 'post-stack'}
                 fileName = GInvParam.postSeisData.fileName;
                 GSegyInfo = GInvParam.postSeisData.segyInfo;
-            end
-
-        case {'poststack', 'post-stack'}
-            fileName = GInvParam.postSeisData.fileName;
-            GSegyInfo = GInvParam.postSeisData.segyInfo;
+        end
     end
             
     for i = 1 : length(invResults)
@@ -25,12 +34,12 @@ function bsWriteInvResultsIntoSegyFiles(GInvParam, invResults, title)
         
         if ~iscell(data)
             dstFileName = getDstFileName(GInvParam, invResults{i}.name, invResults{i}.type, title);
-            bsWriteInvResultIntoSegyFile(invResults{i}, data, fileName, GSegyInfo, dstFileName);
+            bsWriteInvResultIntoSegyFile(invResults{i}, data, fileName, GSegyInfo, dstFileName, isSort);
                 
         else
             for j = 1 : length(data)
                 dstFileName = getDstFileName(GInvParam, invResults{i}.name, invResults{i}.type{j}, title);
-                bsWriteInvResultIntoSegyFile(invResults{i}, data{j}, fileName, GSegyInfo, dstFileName);
+                bsWriteInvResultIntoSegyFile(invResults{i}, data{j}, fileName, GSegyInfo, dstFileName, isSort);
             end
         end
         
@@ -40,6 +49,6 @@ end
 function str = getDstFileName(GInvParam, name, type, title)
     warning('off');
     mkdir(sprintf('%s/sgy_results', GInvParam.modelSavePath));
-    str = sprintf('%s/sgy_results/%s-%s-%s.sgy', GInvParam.modelSavePath, type, name, title);
+    str = sprintf('%s/sgy_results/%s-%s-%s.sgy', GInvParam.modelSavePath, type, title, name);
     warning('on');
 end

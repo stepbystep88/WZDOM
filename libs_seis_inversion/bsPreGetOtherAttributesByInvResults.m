@@ -24,8 +24,8 @@ function [invResults, GInvParam, wellLogs] = bsPreGetOtherAttributesByInvResults
 
             profile.data{nData+1} = vp_vs;
             profile.type{nData+1} = 'vp_vs';
-            profile.data{nData+2} = possion;
-            profile.type{nData+2} = 'possion';
+%             profile.data{nData+2} = possion;
+%             profile.type{nData+2} = 'possion';
         end
         invResults{i} = profile;
     end

@@ -1,4 +1,4 @@
-function options = bsCreateGSparseInvParam(DIC, flag, varargin)
+function options = bsCreateGSparseInvParam(DIC, GTrainDICParam, varargin)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % create a struct to control the DLSR-based inversion process
 %
@@ -6,10 +6,6 @@ function options = bsCreateGSparseInvParam(DIC, flag, varargin)
 % Programming dates: Dec 2019
 % -------------------------------------------------------------------------
     p = inputParser;
-    
-    if nargin < 2
-        flag = 'ssr';
-    end
     
     % the sparsity controlling the sparse representation 
     addParameter(p, 'sparsity', 1); 
@@ -22,7 +18,9 @@ function options = bsCreateGSparseInvParam(DIC, flag, varargin)
     addParameter(p, 'reconstructType', 'simpleAvg'); 
     
     % the trained dictionary
-    addParameter(p, 'DIC', DIC); 
+    addParameter(p, 'trainDICParam', GTrainDICParam); 
+    
+    addParameter(p, 'DIC', DIC);
     
     % whether to rebuild the inversion results by using dictionary
     addParameter(p, 'isSparseRebuild', 0); 
@@ -34,9 +32,9 @@ function options = bsCreateGSparseInvParam(DIC, flag, varargin)
     
     % for flag='csr': train a joint dictionary which contains the coherence of
     % different elastic parameters
-    validatestring(lower(flag), {'ssr', 'csr', 'one'});
+%     validatestring(lower(flag), {'ssr', 'csr', 'one'});
     
-    if strcmpi(flag, 'csr')
+    if strcmpi(GTrainDICParam.flag, 'csr')
         % the coeficient of normalization, for training CSR dictionary
         addParameter(p, 'rangeCoef', []); 
     
@@ -47,7 +45,7 @@ function options = bsCreateGSparseInvParam(DIC, flag, varargin)
     
     p.parse(varargin{:});  
     options = p.Results;
-    options.flag = flag;
+    options.flag = GTrainDICParam.flag;
     
 end
 

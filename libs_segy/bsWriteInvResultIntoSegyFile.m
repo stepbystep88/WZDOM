@@ -1,17 +1,23 @@
-function bsWriteInvResultIntoSegyFile(res, data, sourceFileName, sourceSegyInfo, dstFileName)
+function bsWriteInvResultIntoSegyFile(res, data, sourceFileName, sourceSegyInfo, dstFileName, isSort)
     
     inIds = res.inIds;
     crossIds = res.crossIds;
     horizon = res.horizon;
     
-            % resort the ids 
-    [ids, index] = sortrows([inIds', crossIds'], [1, 2]);
-    index = index';
+    if nargin <= 5
+        isSort = 1;
+    end
     
-    inIds = ids(:, 1);
-    crossIds = ids(:, 2);
-    data = data(:, index);
-    horizon = horizon(index);
+    if isSort
+        % resort the ids 
+        [ids, index] = sortrows([inIds', crossIds'], [1, 2]);
+        index = index';
+
+        inIds = ids(:, 1);
+        crossIds = ids(:, 2);
+        data = data(:, index);
+        horizon = horizon(index);
+    end
     
     [newProfileData, minTime] = bsHorizonRestoreData(data, horizon, res.upNum, res.dt, sourceSegyInfo.t0, 1);
     newProfileData(isnan(newProfileData)) = -99999;
