@@ -34,7 +34,7 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
             DICTitle = sprintf('%s_highCut_%.2f', ...
                 GTrainDICParam.title, options.highCut);
         case 'low_high'
-            GTrainDICParam.normailzationMode = 'patch_max_min';
+            GTrainDICParam.normailzationMode = 'whole_data_max_min';
             options.gamma = 1;
             DICTitle = sprintf('%s_lowCut_%.2f_highCut_%.2f', ...
                 GTrainDICParam.title, options.lowCut, options.highCut);
@@ -68,21 +68,26 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
             case 'vp'
                 dataIndex = GInvParam.indexInWellData.vp;
                 GTrainDICParam.title = ['vp_', DICTitle];
+                iData = 1;
             case 'vs'
                 dataIndex = GInvParam.indexInWellData.vs;
                 GTrainDICParam.title = ['vs_', DICTitle];
+                iData = 2;
             case 'rho'
                 dataIndex = GInvParam.indexInWellData.rho;
                 GTrainDICParam.title = ['rho_', DICTitle];
+                iData = 3;
             case {'vpvs_ratio', 'vp_vs'}
                 dataIndex = GInvParam.indexInWellData.vpvs_ratio;
                 GTrainDICParam.title = ['vpvs_ratio_', DICTitle];
+                iData = 4;
             case 'possion'
                 dataIndex = GInvParam.indexInWellData.possion;
                 GTrainDICParam.title = ['possion_', DICTitle];
+                iData = 5;
         end
         
-        [outLogs] = bsGetPairOfInvAndWell(GInvParam, timeLine, wellLogs, wellInvResults{1}.data{i}, dataIndex, options);
+        [outLogs] = bsGetPairOfInvAndWell(GInvParam, timeLine, wellLogs, wellInvResults{1}.data{iData}, dataIndex, options);
         fprintf('ÑµÁ·ÁªºÏ×ÖµäÖÐ...\n');
         [DIC, train_ids, rangeCoef] = bsTrainDics(GTrainDICParam, outLogs, train_ids, ...
             [ 1, 2], GTrainDICParam.isRebuild);
@@ -91,7 +96,7 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
             'stride', 1);
     
         options.rangeCoef = rangeCoef;
-        [testData] = bsPostReBuildByCSR(GInvParam, GInvWellSparse, wellInvResults{1}.data{i}, options);
+        [testData] = bsPostReBuildByCSR(GInvParam, GInvWellSparse, wellInvResults{1}.data{iData}, options);
     
 %         figure; plot(testData(:, 1), 'r', 'linewidth', 2); hold on; 
 %         plot(outLogs{1}.wellLog(:, 2), 'k', 'linewidth', 2); 

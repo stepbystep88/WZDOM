@@ -11,13 +11,13 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
         'filtCoef', 1);
     
 
-    addParameter(p, 'mode', 'full_freq');
+    addParameter(p, 'mode', 'low_high');
     addParameter(p, 'lowCut', 0.1);
     addParameter(p, 'highCut', 1);
     addParameter(p, 'sparsity', 5);
     addParameter(p, 'gamma', 0.5);
     addParameter(p, 'wellFiltCoef', 0.1);
-    addParameter(p, 'title', 'high_freq_rebuit');
+    addParameter(p, 'title', 'HLF');
     addParameter(p, 'trainNum', length(wellLogs));
     addParameter(p, 'exception', []);
     addParameter(p, 'mustInclude', []);
@@ -30,14 +30,14 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
     
     switch options.mode
         case 'full_freq'
-            GTrainDICParam.isNormalize = 0;
-            GTrainDICParam.title = sprintf('%s_isNormal_%d_highCut_%.2f', ...
-                GTrainDICParam.title, GTrainDICParam.isNormalize, options.highCut);
+            GTrainDICParam.normailzationMode = 'off';
+            GTrainDICParam.title = sprintf('%s_highCut_%.2f', ...
+                GTrainDICParam.title, options.highCut);
         case 'low_high'
-            GTrainDICParam.isNormalize = 1;
+            GTrainDICParam.normailzationMode = 'whole_data_max_min';
             options.gamma = 1;
-            GTrainDICParam.title = sprintf('%s_isNormal_%d_lowCut_%.2f_highCut_%.2f', ...
-                GTrainDICParam.title, GTrainDICParam.isNormalize, options.lowCut, options.highCut);
+            GTrainDICParam.title = sprintf('%s_lowCut_%.2f_highCut_%.2f', ...
+                GTrainDICParam.title, options.lowCut, options.highCut);
     end
     
     wells = cell2mat(wellLogs);
@@ -71,7 +71,7 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
     [DIC, train_ids, rangeCoef] = bsTrainDics(GTrainDICParam, outLogs, train_ids, ...
         [ 1, 2], GTrainDICParam.isRebuild);
 
-    GInvWellSparse = bsCreateGSparseInvParam(DIC, 'csr', ...
+    GInvWellSparse = bsCreateGSparseInvParam(DIC, GTrainDICParam, ...
         'sparsity', options.sparsity, ...
         'stride', 1);
     
