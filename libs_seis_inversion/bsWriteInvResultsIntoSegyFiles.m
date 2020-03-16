@@ -11,15 +11,15 @@ function bsWriteInvResultsIntoSegyFiles(GInvParam, invResults, title, isSort, fi
     if nargin < 6
         switch GInvParam.flag
             case {'prestack', 'pre-stack'}
-                if isempty(GInvParam.initModel.vp.fileName)
+                if ~isempty(GInvParam.initModel.vp.fileName)
                     fileName = GInvParam.initModel.vp.fileName;
                     GSegyInfo = GInvParam.initModel.vp.segyInfo;
-                elseif isempty(GInvParam.postSeisData.fileName)
-                    fileName = GInvParam.preSeisData.fileName;
-                    GSegyInfo = GInvParam.preSeisData.segyInfo;
-                else
+                elseif ~isempty(GInvParam.postSeisData.fileName)
                     fileName = GInvParam.postSeisData.fileName;
                     GSegyInfo = GInvParam.postSeisData.segyInfo;
+                else
+                    fileName = GInvParam.preSeisData.fileName;
+                    GSegyInfo = GInvParam.preSeisData.segyInfo;
                 end
 
             case {'poststack', 'post-stack'}
