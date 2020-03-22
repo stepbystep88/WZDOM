@@ -6,7 +6,7 @@ function z = bsMixTwoSignal(x, y, fs1, fs2, dt)
     fftx = fft(x, n);
 %     fftx = fftshift(fftx);
     
-    ffty = fft(y, n);
+    ffty = fft(y, n) * 0.7;
 %     ffty = fftshift(ffty);
     
     fz = zeros(size(fftx));

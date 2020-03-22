@@ -1,0 +1,44 @@
+% Conjugate Gradients optimization function. Received "as is".
+
+function x = CGmz1(func,x0,b,par,varargin)
+%w = CGmz1(@fw,w0,mu*b,par);
+
+
+
+% Solve equation Hx = b
+global Niter
+
+% begin initialization
+%Max_Iter = 100;
+epsilon = 1e-9;
+epsilonsq=epsilon^2;
+
+beta=0;
+p=0;
+x=x0;
+Hx=feval(func,x,par,varargin{:});
+%[ttt,Hx]=feval(func,x,varargin{:});
+r= Hx - b;
+sqnormr=norm(r(:))^2;
+sqnormr0=sqnormr;
+
+%figure;imagesc(x);colormap(gray);colorbar;
+
+for Niter=1:par.max_iter,
+    p=-r+beta*p;
+    Hp=feval(func,p,par,varargin{:});
+    %[ttt, Hp]=feval(func,p,varargin{:});
+    alpha = sqnormr/(p(:)' * Hp(:));
+    x=x+alpha*p;
+    if mod(Niter,5)==0,
+		%report(x,Niter,par,varargin{:})
+		%report_local(x,Niter,par,varargin{:})
+		if isfield(par, 'report'), par.report(x,Niter,par,varargin{:}); end  % Call user-defined function for progress report 
+		%imagesc(x);colorbar;title(sprintf('Iteration %d',Niter));
+	end
+    r=r+alpha*Hp;
+    sqnormr_new=norm(r(:))^2;
+    beta=sqnormr_new/sqnormr;
+    sqnormr=sqnormr_new;
+%    if sqnormr/sqnormr0<epsilonsq, break;end
+end

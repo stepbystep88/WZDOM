@@ -19,7 +19,7 @@ function [outputData] = bsPostReBuildByCSR(GInvParam, GSparseInvParam, inputData
         % parallel computing
         parfor iTrace = 1 : traceNum
             outputData(:, iTrace) = bsHandleOneTrace(GSparseInvParam, inputData(:, iTrace), options, dt);
-            bsIncParforProgress(pbm, iTrace, 20000);
+            bsIncParforProgress(pbm, iTrace, 10);
         end
         
         bsDeleteParforProgress(pbm);
@@ -41,12 +41,12 @@ function newData = bsHandleOneTrace(GSparseInvParam, realData, options, dt)
     sizeAtom = GSparseInvParam.sizeAtom;
     patches = zeros(sizeAtom, ncell);
     rangeCoef = options.rangeCoef;
+    nAtom = GSparseInvParam.nAtom;
     
     for j = 1 : ncell
         js = GSparseInvParam.index(j);
         patches(:, j) = realData(js : js+sizeAtom-1);
     end
-    
     
     
     if strcmp(options.mode, 'low_high')
@@ -69,7 +69,15 @@ function newData = bsHandleOneTrace(GSparseInvParam, realData, options, dt)
         
     gammas = omp(GSparseInvParam.D1'*patches, ...
                     GSparseInvParam.omp_G, ...
-                    GSparseInvParam.sparsity);
+                    5);
+
+    gamms = zeros(nAtom, ncell);
+    warning('off');
+    for i = 1 : ncell
+        gammas(:, i) = lasso(GSparseInvParam.D1, patches(:, i), 'Lambda', 0.08, 'MaxIter', 100);
+%         gammas(:, i) = SolveDALM(GSparseInvParam.D1, patches(:, i), 'lambda', 0.99, 'maxiteration', 1000);
+    end
+    warning('on');
 %     gammas = gammas .* GSparseInvParam.C;
     
     new_patches = GSparseInvParam.D2 *  gammas;
@@ -103,7 +111,7 @@ function newData = bsHandleOneTrace(GSparseInvParam, realData, options, dt)
     if strcmp(options.mode, 'low_high')
         ft = 1/dt*1000/2;
         newData = bsMixTwoSignal(realData, tmpData, options.lowCut*ft, options.lowCut*ft, dt/1000);
-%         bsShowFFTResultsComparison(2, [realData, tmpData, newData], {'反演结果', '高频', '合并'});
+%         bsShowFFTResultsComparison(1, [realData, tmpData, newData], {'反演结果', '高频', '合并'});
     else
         newData = tmpData;
     end

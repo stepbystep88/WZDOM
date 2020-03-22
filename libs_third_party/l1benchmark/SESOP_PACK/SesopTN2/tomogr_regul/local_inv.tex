@@ -1,0 +1,132 @@
+% cd work-related\PAPERS\local_inverse\
+% texify --run-viewer local_inv.tex
+% dvipdfm local_inv
+\documentclass{article}
+
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+
+\sloppy
+%********************** General Definitions ******************************
+\bibliographystyle{ieeetr}
+
+
+%********************** General Definitions ******************************
+\def\tr{{\rm Trace}}
+\def\mat{{\rm mat}}
+\def\vec{{\rm vec}}
+\def\paragraph{\subsubsection*} 
+
+\newcommand{\la}{\langle}
+\newcommand{\ra}{\rangle}
+\newcommand{\al}{\alpha}
+\newcommand{\bt}{\beta}
+\newcommand{\lam}{\lambda}
+\newcommand{\ffi}{\varphi}
+\newcommand{\beq}{\begin{equation}}
+\def\eeq{\end{equation}}
+%
+\newcommand{\be}{\begin{enumerate}}
+\newcommand{\ee}{\end{enumerate}}
+%
+\newcommand{\bi}{\begin{itemize}}
+\newcommand{\ei}{\end{itemize}}
+%
+\newcommand{\bc}{\begin{center}}
+\newcommand{\ec}{\end{center}}
+%\newcommand{\bth}{\begin{theorem}}
+%\newcommand{\eth}{\end{theorem}}
+%
+\newtheorem{theorem}{Theorem}
+\newtheorem{alg}{Algorithm}
+\newtheorem{defin}{Definition}
+%\newtheorem{exa}{Example}[section]
+%\newtheorem{prop}{Proposition}[section]
+\newtheorem{prop}{Proposition}
+\newtheorem{lem}{Lemma}
+%\newtheorem{th}{Theorem}[section]
+%\newtheorem{cor}{Corollary}
+%
+
+
+
+%\linespread{1.6}
+\newcommand{\eps}{\epsilon}
+\DeclareGraphicsExtensions{.eps,.ps,.png,.wmf} %,.pdf,.jpg
+
+\begin{document}
+
+
+%\title{Windowed Local Adaptive Inversion}
+
+\author{Michael Zibulevsky}
+%\today
+
+%\maketitle
+Volodya, 
+
+here is how I compute  a linear finctional for 
+windowed local adaptive inversion.
+
+Best,
+
+Misha Z.
+
+14.04.06
+
+\ \\
+\ \\
+
+
+Suppose we need to restore a vector $x$ given noisy indirect observations
+\beq
+y=Ax+\xi
+\eeq
+where $A$ -- a linear operator; $\xi$ -- zero-mean white Gaussian noise with 
+unit standard deviation $ \sigma$.
+
+Consider estimation of a component (pixel) $x_t$ of the vector $x$.
+Let  $D$ be a diagonal operator which defines a window around the pixel $t$,
+and $\bar{D}$ -- complimentary window (for example, $\bar{D}= I -D$ )
+
+We are looking for a linear estimate
+\begin{eqnarray}
+\hat{x}_t &=& \langle w, y \rangle = \langle w,  A(Dx+\bar{D}x) + \xi \rangle \\
+&=& \langle DA'w,x\rangle + \langle\bar{D}A'w,x\rangle +  \langle w, \xi \rangle
+\end{eqnarray}
+In this formula, the first two terms determine bias, and the last one -- stochastic error.
+In order to build an adaptive procedure with nested windows $D$,  we want to 
+minimize  the stochastic error  $\langle w, \xi \rangle$ given the bias related to the 
+term $\langle\bar{D}A'w,x\rangle$.
+Skipping  rigorous motivation,  I just write the optimization problem
+we solve in $L_2$ case:
+\begin{eqnarray}
+ &\min_w& ||{\bar{D}A'w}||_2^2 + \lam ||w||_2^2 \\
+ &\mbox{subject to}& {\bf 1'}DA'w=1
+ \end{eqnarray}
+Here ${\bf 1}$ is a vector of ones, and $\lam$ controls tradeoff between bias and stochastic error.
+Using a quadratic penalty for the constraint, we can solve instead the following
+unconstrained problem 
+\beq
+\min_w \{f(w)= ||{\bar{D}A'w}||_2^2 + \lam ||w||_2^2+\mu ( {\bf 1'}DA'w-1)^2 \}
+\label{unconstr}
+\eeq
+with large enough penalty parameter $\mu$.
+Denote 
+$$ b' \equiv {\bf1'}DA'. $$
+The optimality condition for (\ref{unconstr}) is
+\beq
+\nabla f = A \bar{D}^2A'w +\lam w +\mu b(b'w-1)=0,
+\eeq
+or
+\beq
+(A \bar{D}^2A'  + \lam I +\mu bb')w=\mu b
+\eeq
+We will solve this equation with respect to $w$ using, for example Conjugate Gradient method.
+
+
+
+
+\end{document}
+

@@ -1,0 +1,174 @@
+%% this script is used to analyze how to select the regualarization parameter
+close all; 
+clear;
+load model.mat;
+IpModel = trueModel;
+
+% SNRs = 1 : 10;
+SNRs = 0 : 2 : 10;
+% dts = 1 : 0.5 : 4;
+% dts = [1 2];
+dts = 1;
+% dts = 2;
+
+% waveletFreqs = 15 : 5 : 60;
+% waveletFreqs = 15 : 15 : 55;
+waveletFreqs = 40;
+filtCoefs = 0.3 : 0.1 : 0.6;
+% filtCoefs = 0.03;
+% sampNums = floor(linspace(100, 349, 10));
+% sampNums = floor(linspace(100, 349, 5));
+% sampNums = [200 349];
+sampNums = [349];
+% sampNums = 350;
+noiseType = 1 : 6;
+
+nSNR = length(SNRs);
+nSampNum = length(sampNums);
+nCase = 1;
+nFiltCoef = length(filtCoefs);
+nWavelteFreq = length(waveletFreqs);
+nDt = length(dts);
+nNoiseType = length(noiseType);
+nTrace = size(trueModel, 2);
+rho = 0.001;
+
+% initObjFunc = {@bsReg1DTKInitModel, [], rho};
+initObjFunc = [];
+maxIter = 200;
+searchLambdaNIter = 10;
+
+mainFunc = @bsLinearTwoNorm;
+regFunc = @bsReg1DTV;
+% optParameters = {@bsOptLBFGS, [{mainFunc, [], 1;  regFunc, [], 0};  initObjFunc ],  ...
+%                             [], [], 'maxIter', maxIter, 'isSaveMiddleRes', 0};
+
+nTest = nSNR*nSampNum*nCase*nFiltCoef*nWavelteFreq*nDt*nNoiseType;
+trainData = zeros(nTest, 29);    
+iter = 0;
+lambdas = -10 : 0.5 : 5;
+lambdas = exp(lambdas);
+
+
+
+for i1 = 1 : nSampNum
+    sampNum = sampNums(i1);
+%     sampNum = 150;
+    D = bsGen1DDiffOperator(sampNum, 1, 1);
+    regData.D = bsGen1DDiffOperator(sampNum, 1, 1);
+    
+    % update the data used in regularization function
+%     optParameters{2}{3} = regData;
+    
+    for i2 = 1 : nWavelteFreq
+        waveletFreq = waveletFreqs(i2);
+        
+        for i3 = 1 : nDt
+            dt = dts(i3);
+            W = bsWaveletMatrix(sampNum-1, waveletFreq, dt);
+            % generate the kernel matrix
+            G = 0.5 * W * D;
+            mainData.A = G;
+            
+            for i4 = 1 : nSNR
+                SNR = SNRs(i4);
+                
+                for i5 = 1 : nFiltCoef
+                    filtCoef = filtCoefs(i5);
+                    
+                    for i6 = 1 : nNoiseType
+
+                        res = zeros(nCase, 29);
+                        tic
+
+
+                        for i7 = 1 : nCase
+
+                            trueM = IpModel(end-sampNum+1:end, randi(nTrace));
+                            xTrue = log(trueM);
+                            % generate synthetic data
+                            pF = G * xTrue;
+
+                            
+                            % generate different initial model
+                            initModel = bsButtLowPassFilter(trueM, filtCoef);
+                            xInit = log(initModel);
+
+                            innerMainData = mainData;
+
+                            % add noise 
+                            pN = bsAddNoiseNew(i6, pF, 4, 1, xTrue, G);
+
+
+
+                            % set observed data
+                            innerMainData.B = pN;
+                            % update the data for the data fidelity function
+    %                         optParameters{2}{2} = mainData;
+
+                            fprintf('dealing with: i1=%d, i2=%d, i3=%d, i4=%d, i5=%d, i6=%d, i7=%d (%d/%d)...\n', i1, i2, i3, i4, i5, i6, i7, iter, nTest);
+
+                            options = bsCreateGBOptions(length(xInit), 'maxIter', maxIter, 'isSaveMiddleRes', 0, 'display', 'off');
+                            inputObjFcnPkgs = [{mainFunc, innerMainData, 1;  regFunc, regData, 0};  initObjFunc ];
+                            bestLambda = bsBestParameterByBisection(xTrue, -10, 5, searchLambdaNIter, ...
+                                inputObjFcnPkgs, xInit, [], [], options);
+
+                            if bestLambda > 4 || bestLambda < exp(-9)
+                                bestLambda = bsBestParameterBySearch(lambdas, xTrue, ...
+                                    inputObjFcnPkgs, xInit, [], [], options, 0);
+                                fprintf('old best parameter function performed.\n');
+                            end
+
+                            f1 = mainFunc(xInit, innerMainData);
+                            f2 = regFunc(xInit, regData, 0);
+
+                            residual = G * xInit - pN;
+
+                            baseD = [norm(pN), mean(pN), std(pN)];
+                            kurtosisD = kurtosis(pN);
+                            skewnessD = skewness(pN);
+                            gevFitD = gevfit(pN);
+%                                 normFitD = normfit(pN);
+
+
+                            baseE = [norm(residual), mean(residual), var(residual)];
+                            kurtosisE = skewness(residual);
+                            skewnessE = kurtosis(residual);
+                            gevFitE = gevfit(residual);
+%                                 normFitE = normfit(residual);
+
+
+                            figure;
+%                             plot(pF, 'r', 'linewidth', 2); hold on;
+%                             plot(pN, 'b', 'linewidth', 2);
+                            tstrs = {'Gaussian', 'Laplacian', 'GEV (K<0)', 'GEV (K=0)', 'GEV (K>0)', 'Model noise'};
+                            histogram(pN-pF, 100);
+                            title(sprintf('Type of noise distribut: %s', tstrs{i6}));
+                            bsPlotSetDefault(bsGetDefaultPlotSet());
+                            
+                            bsSaveFigure('pictures', sprintf('distribution_%d', i6));
+                            res(i7, :) = [bestLambda,...
+                                baseD, kurtosisD, skewnessD, gevFitD, ...
+                                baseE, kurtosisE, skewnessE, gevFitE, ...
+                                f1, f2, norm(xInit), sampNum, dt, waveletFreq, i1, i2, i3, i4, i5, i6];
+
+                        end
+
+                        toc
+
+                        trainData(iter+1:iter+nCase, :) = res;
+                        iter = iter + nCase;
+
+                    end
+
+                end
+            end
+        end
+    end
+end
+
+return;
+
+save(sprintf('trainData_%d.mat', floor(now)));
+save trainData7;
+

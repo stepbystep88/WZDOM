@@ -78,6 +78,7 @@ function [x, fval, exitFlag, output] = bsSeisInv1DTraceByRegFunc(d, G, xInit, Lb
     
     [x, fval, exitFlag, output] = bsGBSolveByOptions(inputObjFcnPkgs, xInit, Lb, Ub, GBOptions);
     output.regParam = regParam;
+    output.inputObjFcnPkgs{2, 2}.xInit = [];
     output.parampkgs = output.inputObjFcnPkgs{2, 2};
     
 end

@@ -104,9 +104,9 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByCSR(d, G, xInit, Lb, Ub,
             initLambda = initLambda * options.initRegParam(2);
             inputObjFcnPkgs{3, 3} = initLambda;
         end
-        
+
         [xOut, fval, exitFlag, output_] = bsGBSolveByOptions(inputObjFcnPkgs, xInit, Lb, Ub, GBOptions);
-        
+
         if GBOptions.isSaveMiddleRes
             midX = [midX, output_.midResults.x];
             midF = [midF, output_.midResults.f];
@@ -204,7 +204,7 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByCSR(d, G, xInit, Lb, Ub,
     output.midResults.x = midX;
     output.midResults.f = midF;
     output.regParam = regParam;
-    output.parampkgs = parampkgs;
+    output.parampkgs = GSparseInvParam;
     
 end
 

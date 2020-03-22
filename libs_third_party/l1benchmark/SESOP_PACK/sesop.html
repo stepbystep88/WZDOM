@@ -1,0 +1,495 @@
+<html xmlns:v="urn:schemas-microsoft-com:vml"
+xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns:st1="urn:schemas-microsoft-com:office:smarttags"
+xmlns="http://www.w3.org/TR/REC-html40">
+
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=us-ascii">
+<meta name=ProgId content=Word.Document>
+<meta name=Generator content="Microsoft Word 10">
+<meta name=Originator content="Microsoft Word 10">
+<link rel=File-List href="sesop_files/filelist.xml">
+<title>Michael Zibulevsky: SESOP_TN Optimization Tool</title>
+<o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
+ name="date"/>
+<o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
+ name="City"/>
+<o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
+ name="place"/>
+<!--[if gte mso 9]><xml>
+ <w:WordDocument>
+  <w:Compatibility>
+   <w:ApplyBreakingRules/>
+  </w:Compatibility>
+  <w:BrowserLevel>MicrosoftInternetExplorer4</w:BrowserLevel>
+ </w:WordDocument>
+</xml><![endif]--><!--[if !mso]><object
+ classid="clsid:38481807-CA0E-42D2-BF39-B33AF135CC4D" id=ieooui></object>
+<style>
+st1\:*{behavior:url(#ieooui) }
+</style>
+<![endif]-->
+<style>
+<!--
+ /* Font Definitions */
+ @font-face
+	{font-family:CMR10;
+	mso-font-alt:"Times New Roman";
+	mso-font-charset:0;
+	mso-generic-font-family:auto;
+	mso-font-pitch:auto;
+	mso-font-signature:0 0 0 0 0 0;}
+@font-face
+	{font-family:CMR17;
+	mso-font-alt:"Times New Roman";
+	mso-font-charset:0;
+	mso-generic-font-family:auto;
+	mso-font-pitch:auto;
+	mso-font-signature:0 0 0 0 0 0;}
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{mso-style-parent:"";
+	margin:0in;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";
+	color:black;}
+h2
+	{mso-style-link:"Heading 2 Char";
+	mso-margin-top-alt:auto;
+	margin-right:0in;
+	mso-margin-bottom-alt:auto;
+	margin-left:0in;
+	mso-pagination:widow-orphan;
+	mso-outline-level:2;
+	font-size:18.0pt;
+	font-family:"Times New Roman";
+	color:black;}
+a:link, span.MsoHyperlink
+	{color:blue;
+	text-decoration:underline;
+	text-underline:single;}
+a:visited, span.MsoHyperlinkFollowed
+	{color:blue;
+	text-decoration:underline;
+	text-underline:single;}
+span.Heading2Char
+	{mso-style-name:"Heading 2 Char";
+	mso-style-link:"Heading 2";
+	font-family:"Times New Roman";
+	mso-ascii-font-family:"Times New Roman";
+	mso-hansi-font-family:"Times New Roman";
+	mso-bidi-font-family:"Times New Roman";
+	color:#4F81BD;
+	font-weight:bold;}
+p.msolistparagraph, li.msolistparagraph, div.msolistparagraph
+	{mso-style-name:msolistparagraph;
+	margin-top:0in;
+	margin-right:0in;
+	margin-bottom:0in;
+	margin-left:.5in;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";
+	color:black;}
+p.msolistparagraphcxspfirst, li.msolistparagraphcxspfirst, div.msolistparagraphcxspfirst
+	{mso-style-name:msolistparagraphcxspfirst;
+	margin-top:0in;
+	margin-right:0in;
+	margin-bottom:0in;
+	margin-left:.5in;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";
+	color:black;}
+p.msolistparagraphcxspmiddle, li.msolistparagraphcxspmiddle, div.msolistparagraphcxspmiddle
+	{mso-style-name:msolistparagraphcxspmiddle;
+	margin-top:0in;
+	margin-right:0in;
+	margin-bottom:0in;
+	margin-left:.5in;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";
+	color:black;}
+p.msolistparagraphcxsplast, li.msolistparagraphcxsplast, div.msolistparagraphcxsplast
+	{mso-style-name:msolistparagraphcxsplast;
+	margin-top:0in;
+	margin-right:0in;
+	margin-bottom:0in;
+	margin-left:.5in;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";
+	color:black;}
+p.msochpdefault, li.msochpdefault, div.msochpdefault
+	{mso-style-name:msochpdefault;
+	mso-margin-top-alt:auto;
+	margin-right:0in;
+	mso-margin-bottom-alt:auto;
+	margin-left:0in;
+	mso-pagination:widow-orphan;
+	font-size:10.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+@page Section1
+	{size:595.3pt 841.9pt;
+	margin:1.0in 1.25in 1.0in 1.25in;
+	mso-header-margin:.5in;
+	mso-footer-margin:.5in;
+	mso-paper-source:0;}
+div.Section1
+	{page:Section1;}
+ /* List Definitions */
+ @list l0
+	{mso-list-id:1015110441;
+	mso-list-template-ids:-502109790;}
+@list l0:level1
+	{mso-level-number-format:bullet;
+	mso-level-text:\F0B7;
+	mso-level-tab-stop:.5in;
+	mso-level-number-position:left;
+	text-indent:-.25in;
+	mso-ansi-font-size:10.0pt;
+	font-family:Symbol;}
+@list l1
+	{mso-list-id:1225919049;
+	mso-list-template-ids:83811082;}
+@list l1:level1
+	{mso-level-number-format:bullet;
+	mso-level-text:\F0B7;
+	mso-level-tab-stop:.5in;
+	mso-level-number-position:left;
+	text-indent:-.25in;
+	mso-ansi-font-size:10.0pt;
+	font-family:Symbol;}
+@list l2
+	{mso-list-id:1623877744;
+	mso-list-template-ids:-1221568304;}
+@list l2:level1
+	{mso-level-number-format:bullet;
+	mso-level-text:\F0B7;
+	mso-level-tab-stop:.5in;
+	mso-level-number-position:left;
+	text-indent:-.25in;
+	mso-ansi-font-size:10.0pt;
+	font-family:Symbol;}
+@list l3
+	{mso-list-id:1783181612;
+	mso-list-template-ids:1336425130;}
+@list l4
+	{mso-list-id:1997369007;
+	mso-list-template-ids:584586832;}
+@list l4:level1
+	{mso-level-number-format:bullet;
+	mso-level-text:\F0B7;
+	mso-level-tab-stop:.5in;
+	mso-level-number-position:left;
+	text-indent:-.25in;
+	mso-ansi-font-size:10.0pt;
+	font-family:Symbol;}
+ol
+	{margin-bottom:0in;}
+ul
+	{margin-bottom:0in;}
+-->
+</style>
+<!--[if gte mso 10]>
+<style>
+ /* Style Definitions */
+ table.MsoNormalTable
+	{mso-style-name:"Table Normal";
+	mso-tstyle-rowband-size:0;
+	mso-tstyle-colband-size:0;
+	mso-style-noshow:yes;
+	mso-style-parent:"";
+	mso-padding-alt:0in 5.4pt 0in 5.4pt;
+	mso-para-margin:0in;
+	mso-para-margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:10.0pt;
+	font-family:"Times New Roman";}
+</style>
+<![endif]--><!--[if gte mso 9]><xml>
+ <o:shapedefaults v:ext="edit" spidmax="2050"/>
+</xml><![endif]--><!--[if gte mso 9]><xml>
+ <o:shapelayout v:ext="edit">
+  <o:idmap v:ext="edit" data="1"/>
+ </o:shapelayout></xml><![endif]-->
+</head>
+
+<body bgcolor=white lang=EN-US link=blue vlink=blue style='tab-interval:.5in'>
+
+<div class=Section1>
+
+<p class=MsoNormal style='text-autospace:none'><span style='font-size:18.0pt;
+font-family:CMR17;color:windowtext'>SESOP_PACK:&nbsp; Matlab Tool for </span><span
+style='font-size:18.0pt;font-family:CMR10;color:windowtext'>Sequential Subspace
+Optimization methods</span></p>
+
+<h2><span style='font-size:14.0pt;font-weight:normal'>Michael Zibulevsky </span></h2>
+
+<p class=MsoNormal style='text-autospace:none'>SESOP<span style='color:windowtext'>
+[1,4]&nbsp; is </span>a method for large-scale smooth unconstrained
+optimization, which can be considered as a natural extension of the conjugate
+gradients. At each iteration we search for a minimum of objective function over
+a subspace spanned by the current gradient and by directions of few previous
+steps.&nbsp; We can also include into this subspace direction from the starting
+point to the current point, and the weighted sum of all previous gradients,
+following [Nemirovski, 1982]. This safeguard measure provides an optimal worst
+case error decay of order 1/k^2 (for convex problems),&nbsp; where k is the
+iteration count.&nbsp; There is an important class of problems, where subspace
+optimization can be implemented extremely fast. This happens when the objective
+function is a combination of expensive linear mappings with cheap non-linear
+functions. This is typical situation in such applications, like tomography,
+signal and image denoising with basis pursuit, pattern recognition with support
+vector machines and many others.&nbsp; </p>
+
+<p class=MsoNormal style='text-autospace:none'>&nbsp;</p>
+
+<p class=MsoNormal style='text-autospace:none'>SESOP-TN method [5] <span
+style='color:windowtext'>combines ideas of SESOP with those of the Truncated
+Newton (TN) method [2]. Replacing TN line search with subspace optimization, we
+allow Conjugate Gradient (CG) iterations to stay matched through consequent TN
+steps. This resolves the problem of TN sensitivity to an early break of the CG
+process. For example, when an objective function is quadratic, the SESOP-TN
+trajectory coincides with the trajectory of CG as applied directly to the
+objective. Standard TN lacks this property and converges more slowly. Numerical
+experiments illustrate the effectiveness of the method.</span></p>
+
+<p class=MsoNormal style='text-autospace:none'>&nbsp;</p>
+
+<p class=MsoNormal style='margin-bottom:12.0pt'><b><span style='font-size:14.0pt'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span></b></p>
+
+<p class=MsoNormal style='margin-bottom:12.0pt'><b><span style='font-size:14.0pt'>MATLAB
+CODE:&nbsp; </span></b><span style='font-size:14.0pt'>&nbsp;&nbsp;&nbsp;<b><a
+href="SESOP_PACK_10_05_2010.zip">Newest version 10.05.2010 </a>;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Old:&nbsp; <a href="SesopTN_08_08_2008.zip">Version </a></b>08.08.2008&nbsp;&nbsp;&nbsp;
+<b><a href="SesopTN1_beta.zip">Version&nbsp; </a></b>04.02.2009&nbsp; </span></p>
+
+<p class=MsoNormal style='margin-bottom:12.0pt'><b><span style='font-size:14.0pt'>&nbsp;</span></b></p>
+
+<p class=MsoNormal style='margin-bottom:12.0pt'><b><span style='font-size:14.0pt'>&nbsp;&nbsp;&nbsp;
+</span></b></p>
+
+<p class=MsoNormal style='margin-bottom:12.0pt'><b><span style='font-size:14.0pt'>Implemented
+optimization methods (</span></b><b><span style='font-size:14.0pt;color:windowtext'>directory
+SESOPTN2)</span></b></p>
+
+<ul style='margin-top:0in' type=disc>
+ <li class=MsoNormal style='color:windowtext;mso-list:l1 level1 lfo1;
+     tab-stops:list .5in;text-autospace:none'>Polak-Ribiere nonlinear Conjugate
+     Gradients<o:p></o:p></li>
+ <li class=MsoNormal style='color:windowtext;mso-list:l1 level1 lfo1;
+     tab-stops:list .5in;text-autospace:none'>Truncated <st1:City><st1:place>Newton</st1:place></st1:City><o:p></o:p></li>
+ <li class=MsoNormal style='color:windowtext;mso-list:l1 level1 lfo1;
+     tab-stops:list .5in;text-autospace:none'>SESOP:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+     Sequential Subspace Optimization<o:p></o:p></li>
+ <li class=MsoNormal style='color:windowtext;mso-list:l1 level1 lfo1;
+     tab-stops:list .5in;text-autospace:none'>SESOP-TN:&nbsp; Sequential
+     Subspace Optimization combined with Truncated Newton <span
+     style='color:black'><a href="sesoptn_paper1.pdf">&nbsp;[5] </a></span><o:p></o:p></li>
+</ul>
+
+<p class=msolistparagraph style='text-indent:-.25in;text-autospace:none'><span
+style='font-family:Symbol;color:windowtext'>&middot;</span><span
+style='font-size:7.0pt;color:windowtext'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><span style='color:windowtext'>Methods for L1-L2 optimization
+&nbsp;[4,6], see directory </span>Sesop_SPmagazine</p>
+
+<p class=msolistparagraphcxspmiddle style='margin-left:1.0in;text-indent:-.25in;
+text-autospace:none'><span style='color:windowtext'>1.</span><span
+style='font-size:7.0pt;color:windowtext'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span
+style='color:windowtext'>PCD (Parallel Coordinate Descent);&nbsp;&nbsp;&nbsp;
+PCD-SESOP;&nbsp; PCD-CG</span></p>
+
+<p class=msolistparagraphcxspmiddle style='margin-left:1.0in;text-indent:-.25in;
+text-autospace:none'><span style='color:windowtext'>2.</span><span
+style='font-size:7.0pt;color:windowtext'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span
+style='color:windowtext'>SSF (Separable Surrogate Functions);
+SSF-SESOP;&nbsp;&nbsp; SSF-CG</span></p>
+
+<p class=msolistparagraphcxsplast style='margin-left:1.0in;text-indent:-.25in;
+text-autospace:none'><span style='color:windowtext'>3.</span><span
+style='font-size:7.0pt;color:windowtext'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><span
+style='color:windowtext'>FISTA (Fast Iterative Soft-Thresholding)&nbsp; </span></p>
+
+<p class=MsoNormal style='text-autospace:none'><span style='color:windowtext'>&nbsp;</span></p>
+
+<p class=MsoNormal style='margin-bottom:12.0pt'><b><span style='font-size:14.0pt'>&nbsp;</span></b></p>
+
+<p class=MsoNormal style='margin-bottom:12.0pt'><b><span style='font-size:14.0pt;
+color:windowtext'>Sub-directories in SESOPTN2 </span></b></p>
+
+<ul style='margin-top:0in' type=disc>
+ <li class=MsoNormal style='margin-bottom:12.0pt;mso-list:l2 level1 lfo2;
+     tab-stops:list .5in'>Sesop_Basic_BP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+     -&nbsp; Basis Pursuit simple example&nbsp; </li>
+ <li class=MsoNormal style='margin-bottom:12.0pt;mso-list:l2 level1 lfo2;
+     tab-stops:list .5in'>Sesop_PCD_BasisPursuit&nbsp; -&nbsp; Basis Pursuit
+     via PCD-SESOP (parallel coordinate descent)&nbsp; [4]</li>
+ <li class=MsoNormal style='margin-bottom:12.0pt;mso-list:l2 level1 lfo2;
+     tab-stops:list .5in'>Sesop_NeuralNet&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+     - Neural Net Training.&nbsp;&nbsp; Applications: Signal Denoising and
+     Prediction</li>
+ <li class=MsoNormal style='margin-bottom:12.0pt;mso-list:l2 level1 lfo2;
+     tab-stops:list .5in'>Sesop_SVM&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+     - Linear L1-L2 Support Vector Machine for Pattern Recognition, extension
+     of [3]</li>
+</ul>
+
+<p class=msolistparagraph style='text-indent:-.25in;text-autospace:none'><span
+style='font-family:Symbol'>&middot;</span><span style='font-size:7.0pt'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span>Sesop_SPmagazine&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+- Compressive Sensing, Image Deblurring and Tomography via L1-L2 optimization
+[6]</p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:0in;margin-bottom:12.0pt;
+margin-left:.5in'><b><span style='font-size:14.0pt;color:windowtext'>&nbsp;</span></b></p>
+
+<p class=MsoNormal><b><span style='font-size:14.0pt'>My collaborators at
+various stages of the work on SESOP and its applications</span></b></p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<ul style='margin-top:0in' type=disc>
+ <li class=MsoNormal style='mso-list:l0 level1 lfo3;tab-stops:list .5in'>Arkadi
+     Nemirovski, Guy Narkiss, Michael Elad, Boaz Matalon, Joseph Shtok, Grigory
+     Begelman, Eli&nbsp; Osherovich,&nbsp; Yehuda Pfeffer, Ehud Rivlin, Irad
+     Yavneh</li>
+</ul>
+
+<p class=MsoNormal style='margin-left:.25in'>&nbsp;</p>
+
+<p class=MsoNormal style='margin-left:.25in'>&nbsp;</p>
+
+<p class=MsoNormal><b><span style='font-size:14.0pt'>&nbsp;</span></b></p>
+
+<p class=MsoNormal><b><span style='font-size:14.0pt'>References: </span></b></p>
+
+<ol style='margin-top:0in' start=1 type=1>
+ <li class=MsoNormal style='mso-list:l3 level1 lfo4;tab-stops:list .5in'>Guy
+     Narkiss and Michael Zibulevsky (2005). &quot;Sequential Subspace
+     Optimization Method for Large-Scale Unconstrained Problems&quot;, Tech.
+     Report CCIT No 559, EE Dept., Technion. <a
+     href="sesop_report_version301005.pdf">pdf file</a> </li>
+ <li class=MsoNormal style='mso-list:l3 level1 lfo4;tab-stops:list .5in'>Stephen
+     G. Nash, <a href="http://iris.gmu.edu/%7Esnash/papers/nash_3_99.ps">&#8220;A
+     Survey of Truncated-Newton Methods&#8221;</a><a
+     href="http://bass.gmu.edu/%7Esnash/papers/nash_2_99.ps">,</a> <i>Journal
+     of Computational and Applied Mathematics</i>, 124 (2000), pp. 45-59.</li>
+ <li class=MsoNormal style='mso-list:l3 level1 lfo4;tab-stops:list .5in'>Guy
+     Narkiss and Michael Zibulevsky (2005). &quot;Support Vector Machine via
+     Sequential Subspace Optimization&quot;, Tech. Report CCIT No 557, EE
+     Dept., Technion. <a href="sesop_svm_report.pdf">pdf file</a> </li>
+ <li class=MsoNormal style='mso-list:l3 level1 lfo4;tab-stops:list .5in'>Michael
+     Elad, Boaz Matalon, and Michael Zibulevsky, &quot;Coordinate and Subspace
+     Optimization Methods for Linear Least Squares with Non-Quadratic
+     Regularization&quot;, Applied and Computational Harmonic Analysis, Vol.
+     23, pp. 346-367, November 2007. <a href="Iterated_Shrinkage2.pdf">pdf file</a>
+     </li>
+ <li class=MsoNormal style='mso-list:l3 level1 lfo4;tab-stops:list .5in'>Michael
+     Zibulevsky (2008), <a
+     href="http://iew3.technion.ac.il/%7Emcib/sesoptn.html">SESOP-TN: Combining
+     Sequential Subspace Optimization with Truncated Newton method </a></li>
+</ol>
+
+<p class=msolistparagraph style='text-indent:-.25in;text-autospace:none'>6.<span
+style='font-size:7.0pt'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Michael
+Zibulevsky and Michael Elad,&quot;L1-L2 Optimization in Signal and Image
+Processing: Iterative Shrinkage and Beyond&quot; ,&nbsp;&nbsp; IEEE Signal
+Processing Magazine, to appear</p>
+
+<p class=MsoNormal style='margin-left:.25in'>&nbsp;</p>
+
+<p class=MsoNormal style='margin-left:.75in'>&nbsp;</p>
+
+<p class=MsoNormal style='margin-left:.75in'><span style='font-size:14.0pt'>&nbsp;</span></p>
+
+<p class=MsoNormal style='margin-left:.75in'><st1:City><st1:place><i><span
+  style='font-size:14.0pt'>Haifa</span></i></st1:place></st1:City><i><span
+style='font-size:14.0pt'>,&nbsp;&nbsp; </span></i><st1:date Year="2008" Day="8"
+Month="8"><i><span style='font-size:14.0pt'>August 8, 2008</span></i></st1:date><i><span
+style='font-size:14.0pt'> &#8211; </span></i><st1:date Year="2010" Day="25"
+Month="2"><i><span style='font-size:14.0pt'>February 25,&nbsp; 2010</span></i></st1:date></p>
+
+<p class=MsoNormal style='margin-left:.25in'>&nbsp;</p>
+
+<p class=MsoNormal style='margin-bottom:12.0pt'><b><span style='font-size:14.0pt'>*********************************************************************</span></b></p>
+
+<p class=MsoNormal style='margin-bottom:12.0pt'><b><span style='font-size:14.0pt'>&nbsp;</span></b></p>
+
+<p class=MsoNormal style='margin-bottom:12.0pt'><b><span style='font-size:14.0pt'>&nbsp;</span></b></p>
+
+<p class=MsoNormal style='margin-bottom:12.0pt'><b><span style='font-size:14.0pt'>APPENDIX:</span></b></p>
+
+<p class=MsoNormal style='margin-bottom:12.0pt'><b><span style='font-size:14.0pt'>&nbsp;</span></b></p>
+
+<p class=MsoNormal style='margin-bottom:12.0pt'><b><span style='font-size:14.0pt'>Brief
+description of SESOP-TN algorithm</span></b></p>
+
+<p class=MsoNormal style='margin-bottom:12.0pt'>We minimize a function f(x),
+which has gradient g(x) and Hessian H(x).&nbsp; Note that the Hessian is not
+computed explicitly: just Hessian-vector products are used. </p>
+
+<p class=MsoNormal style='margin-bottom:12.0pt'>Iteration of&nbsp;&nbsp;
+SESOP-TN</p>
+
+<p class=MsoNormal style='margin-bottom:12.0pt'>&nbsp; 1.&nbsp; TN step: solve
+Newton system&nbsp; <i>Hd=-g </i>approximately, using limited number of
+Conjugate Gradient (CG) steps. </p>
+
+<p class=MsoNormal style='margin-bottom:12.0pt'>&nbsp; 2. Optimize <i>f(x)</i>
+over <i>affine subspace</i> spanned by: </p>
+
+<ul style='margin-top:0in' type=disc>
+ <li class=MsoNormal style='margin-bottom:12.0pt;mso-list:l4 level1 lfo5;
+     tab-stops:list .5in'>Directions of several previous steps and gradients
+     of&nbsp; <i>f(x_k)</i></li>
+ <li class=MsoNormal style='margin-bottom:12.0pt;mso-list:l4 level1 lfo5;
+     tab-stops:list .5in'>Direction of the TN step</li>
+ <li class=MsoNormal style='margin-bottom:12.0pt;mso-list:l4 level1 lfo5;
+     tab-stops:list .5in'>Exit value of the gradient of the quadratic model
+     minimized at TN step</li>
+ <li class=MsoNormal style='margin-bottom:12.0pt;mso-list:l4 level1 lfo5;
+     tab-stops:list .5in'>Last CG direction of TN step</li>
+</ul>
+
+<p class=MsoNormal style='margin-bottom:12.0pt'>&nbsp; 3.&nbsp; Goto&nbsp; Step
+1&nbsp; (TN), feeding the resulting subspace optimization step into CG starting
+condition.</p>
+
+<p class=MsoNormal style='margin-bottom:12.0pt'>Presented procedure allows
+resolving the typical TN problem, related to the early break of CG process. For
+example, when <i>f(x)</i> is quadratic, SESOP-TN trajectory is the same as one
+of CG applied to <i>f(x)</i>.&nbsp; Standard TN would converge slower in this
+case.</p>
+
+<p class=MsoNormal style='margin-bottom:12.0pt'>Note that subspace optimization
+step 2 can be carried very efficiently, if&nbsp; <i>f(x)= f1(Ax)+f2(x)</i>,&nbsp;
+where Ax is computationally heavy, and f1(.) and f2(.) are inexpensive (see [1]
+for the details).</p>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<p class=MsoNormal><b><span style='font-size:14.0pt'>&nbsp;</span></b></p>
+
+<p class=MsoNormal><b><span style='font-size:14.0pt'>&nbsp;</span></b></p>
+
+</div>
+
+</body>
+
+</html>

@@ -1,0 +1,31 @@
+clc;
+clear;
+close all;
+
+
+
+
+for iFunc = [1, 3, 4, 6]
+    load(sprintf("./new_data/func_new_%d_comparison", iFunc));
+    colors = {'ro', 'g*', 'b+', 'ms', 'k.'};
+    noiseIndex = params(noiseType_index, :);
+    for k = 1 : 3
+        bsNewFigure;
+    
+    
+        plot(log(lambda_results(:, 1)), log(lambda_results(:, 1)), 'k-', 'linewidth', 2); hold on;
+        for i = 1 : 5
+            index = find(noiseIndex == i);
+            plot(log(lambda_results(index, 1)), log(lambda_results(index, k+1)), colors{i}, 'linewidth', 2); 
+        end
+        
+%         legend({'Optimal', 'L-Curve', 'GCV', 'MLBP'});   
+        xlabel('Optimal \lambda (log scale)');
+        ylabel('Predicted/selected \lambda (log scale)');
+        legend('True', 'Gausian', 'Laplacian', 'GEV1', 'GEV2', 'GEV3');
+        
+        bsPlotSetDefault(bsGetDefaultPlotSet());
+    end
+    
+    
+end

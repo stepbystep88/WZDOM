@@ -1,0 +1,159 @@
+----- 8/26/2008 4:07:28 PM: Job 'New Job': ANALYSIS started by User on computer 'GIP24' (GoodSync v 7.2.9.5) -----
+Job 'New Job': 'G:\SesopTN' <-> 'D:\mzib\disc_D\work-related\SESOP\SesopTN', PropagateDeletions, SaveDisposedFiles, UseTmpDestFile, EstimateReqSpace, CopyLockedFiles
+Left: G: FAT, Free: 1.27 GB, Total: 1.90 GB, Right: D: NTFS, Free: 85.1 GB, Total: 149 GB
+Filters: ExcludeHidden ExcludeSystem Included='' Excluded='licens*.rfo|cache.rfo|mru.rfo|\System Volume Information|Thumbs.db'
+Left: No State File found, New State will be built
+Left: Files: 132 (excluded 1). Folders: 8 (excluded 1).
+Right: No State File found, New State will be built
+Right: Files: 115 (excluded 1). Folders: 7 (excluded 1).
+Changes: 20, Conflicts: 0, CopyTime: 0, CopyState: 120, Errors: 0
+----- 8/26/2008 4:07:28 PM: Analysis Completed. Time 00:00:00, Speed: Many files/s -----
+
+--------------------------------
+User Deleted file G:\SesopTN\sesoptn_roman\diag_penalty.m
+User Deleted file G:\SesopTN\sesoptn_roman\EMD_test.m
+User Deleted file G:\SesopTN\sesoptn_roman\fast_abs_smooth_mz.m
+User Deleted file G:\SesopTN\sesoptn_roman\ls_fgh.m
+User Deleted file G:\SesopTN\sesoptn_roman\muldm.m
+User Deleted file G:\SesopTN\sesoptn_roman\mult_global_matrix.m
+User Deleted file G:\SesopTN\sesoptn_roman\mult_global_matrix_adj.m
+User Deleted file G:\SesopTN\sesoptn_roman\mult_precond.m
+User Deleted file G:\SesopTN\sesoptn_roman\my_emd.m
+User Deleted file G:\SesopTN\sesoptn_roman\new_features_info.m
+User Deleted file G:\SesopTN\sesoptn_roman\optionset_sesoptn.m
+User Deleted file G:\SesopTN\sesoptn_roman\sesoptn.m
+User Deleted file G:\SesopTN\sesoptn_roman\sesoptn_optionset.m
+User Deleted folder G:\SesopTN\sesoptn_roman
+===== 8/26/2008 5:03:45 PM: Job 'New Job': SYNC started by User on computer 'GIP24' =====
+Job 'New Job': 'G:\SesopTN' <-> 'D:\mzib\disc_D\work-related\SESOP\SesopTN', PropagateDeletions, SaveDisposedFiles, UseTmpDestFile, EstimateReqSpace, CopyLockedFiles
+Copy State L>R: \Sesop_Basic_BP +
+Copy State L>R: \Sesop_Basic_BP\misc +
+Copy State L>R: \Sesop_Basic_BP\misc\BasisPursuitSesop.m +
+Copy Over 'G:\SesopTN\Sesop_Basic_BP\misc\BasisPursuitSesop_minFunc.asv' -> 'D:\mzib\disc_D\work-related\SESOP\SesopTN\Sesop_Basic_BP\misc\BasisPursuitSesop_minFunc.asv' +
+Copy Over 'G:\SesopTN\Sesop_Basic_BP\misc\BasisPursuitSesop_minFunc.m' -> 'D:\mzib\disc_D\work-related\SESOP\SesopTN\Sesop_Basic_BP\misc\BasisPursuitSesop_minFunc.m' +
+Copy State L>R: \Sesop_Basic_BP\misc\CGmz.m +
+Copy State L>R: \Sesop_Basic_BP\misc\Contents.m +
+Copy State L>R: \Sesop_Basic_BP\misc\ContentsBP.m +
+Copy State L>R: \Sesop_Basic_BP\misc\copy_files_to_SesopTN_BP.m +
+Copy State L>R: \Sesop_Basic_BP\misc\fast_abs_smooth_mz.m +
+Copy State L>R: \Sesop_Basic_BP\misc\fg.m +
+Copy State L>R: \Sesop_Basic_BP\misc\hadamard_matrix.m +
+Copy State L>R: \Sesop_Basic_BP\misc\ls_fgh.m +
+Copy State L>R: \Sesop_Basic_BP\misc\muldm.m +
+Copy State L>R: \Sesop_Basic_BP\misc\mult_diag_precond.m +
+Copy State L>R: \Sesop_Basic_BP\misc\multMatr.m +
+Copy State L>R: \Sesop_Basic_BP\misc\multMatrAdj.m +
+Copy State L>R: \Sesop_Basic_BP\misc\sesoptn.m +
+Copy State L>R: \Sesop_Basic_BP\misc\sesoptn_optionset.asv +
+Copy State L>R: \Sesop_Basic_BP\misc\sesoptn_optionset.m +
+Copy State L>R: \Sesop_Basic_BP\misc\StochasticCalcDiagAtA.m +
+Copy State L>R: \Sesop_Basic_BP\misc\sum_fast_abs_smooth.m +
+Copy State L>R: \Sesop_Basic_BP\BasisPursuitSesop.asv +
+Copy State L>R: \Sesop_Basic_BP\BasisPursuitSesop.m +
+Copy State L>R: \Sesop_Basic_BP\BasisPursuitSesop_minFunc.asv +
+Copy State L>R: \Sesop_Basic_BP\Contents.asv +
+Copy State L>R: \Sesop_Basic_BP\Contents.m +
+Copy State L>R: \Sesop_Basic_BP\ContentsBP.m +
+Copy State L>R: \Sesop_Basic_BP\copy_files_to_SesopTN_BP.m +
+Copy State L>R: \Sesop_Basic_BP\fast_abs_smooth_mz.m +
+Copy State L>R: \Sesop_Basic_BP\fg.asv +
+Copy State L>R: \Sesop_Basic_BP\fg.m +
+Copy State L>R: \Sesop_Basic_BP\hadamard_matrix.m +
+Copy State L>R: \Sesop_Basic_BP\ls_fgh.m +
+Copy State L>R: \Sesop_Basic_BP\muldm.m +
+Copy State L>R: \Sesop_Basic_BP\mult_diag_precond.m +
+Copy State L>R: \Sesop_Basic_BP\multMatr.m +
+Copy State L>R: \Sesop_Basic_BP\multMatrAdj.m +
+Copy State L>R: \Sesop_Basic_BP\sesoptn.asv +
+Copy State L>R: \Sesop_Basic_BP\sesoptn.m +
+Copy State L>R: \Sesop_Basic_BP\sesoptn_optionset.m +
+Copy State L>R: \Sesop_Basic_BP\StochasticCalcDiagAtA.m +
+Copy State L>R: \Sesop_Basic_BP\sum_fast_abs_smooth.m +
+Copy State L>R: \Sesop_NeuralNet +
+Copy State L>R: \Sesop_NeuralNet\misc +
+Copy State L>R: \Sesop_NeuralNet\misc\nnSignalDenoise_minFunc.asv +
+Copy State L>R: \Sesop_NeuralNet\misc\nnSignalDenoise_minFunc.m +
+Copy State L>R: \Sesop_NeuralNet\misc\sesoptn_optionset.m +
+Copy State L>R: \Sesop_NeuralNet\Contents.m +
+Copy State L>R: \Sesop_NeuralNet\ContentsNN.asv +
+Copy State L>R: \Sesop_NeuralNet\ContentsNN.m +
+Copy State L>R: \Sesop_NeuralNet\diag_quadr_penalty.m +
+Copy State L>R: \Sesop_NeuralNet\err_nnfg.m +
+Copy State L>R: \Sesop_NeuralNet\err_nnfgh_u.m +
+Copy State L>R: \Sesop_NeuralNet\fg.m +
+Copy State L>R: \Sesop_NeuralNet\muldm.m +
+Copy State L>R: \Sesop_NeuralNet\mulmd.m +
+Copy State L>R: \Sesop_NeuralNet\multUXt.m +
+Copy State L>R: \Sesop_NeuralNet\multWX.m +
+Copy State L>R: \Sesop_NeuralNet\nnet.m +
+Copy State L>R: \Sesop_NeuralNet\nnpredictSesop.m +
+Copy State L>R: \Sesop_NeuralNet\nnreport.m +
+Copy State L>R: \Sesop_NeuralNet\nnSignalDenoise.m +
+Copy State L>R: \Sesop_NeuralNet\sesoptn.m +
+Copy State L>R: \Sesop_NeuralNet\sesoptn_optionset.m +
+Copy State L>R: \Sesop_NeuralNet\sigmoid_mz.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit +
+Copy State L>R: \Sesop_PCD_BasisPursuit\abs_smoothed_eps.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\BasisPursuitSesop.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\BasisPursuitSesopPCD.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\BasisPursuitSesopPCDconcave.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\concave_lognorm.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\concave_lognorm_preset.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\Contents.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\ContentsPCD.asv +
+Copy State L>R: \Sesop_PCD_BasisPursuit\ContentsPCD.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\CoordinateLinesearch_abs_smoothed.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\copy_files_to_SesopTN_BP.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\cubic_roots.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\fast_abs_smooth_mz.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\hadamard_matrix.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\ls_fgh.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\muldm.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\mulmd.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\mult_diag_precond.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\mult_precond_pcd.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\multMatr.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\multMatrAdj.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\sesoptn.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\sesoptn_optionset.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\StochasticCalcDiagAtA.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\sum_abs_smooth.m +
+Copy State L>R: \Sesop_PCD_BasisPursuit\sum_fast_abs_smooth.m +
+Copy State L>R: \Sesop_SVM +
+Copy State L>R: \Sesop_SVM\misc +
+Copy State L>R: \Sesop_SVM\misc\fast_abs_smooth_mz.m +
+Copy State L>R: \Sesop_SVM\misc\mult_global_matrix.m +
+Copy State L>R: \Sesop_SVM\misc\mult_global_matrix_adj.m +
+Copy New 'G:\SesopTN\Sesop_SVM\misc\readme.txt' -> 'D:\mzib\disc_D\work-related\SESOP\SesopTN\Sesop_SVM\misc\readme.txt' +
+Copy State L>R: \Sesop_SVM\misc\sesoptn_optionset.asv +
+Copy State L>R: \Sesop_SVM\misc\sesoptn_optionset.m +
+Copy State L>R: \Sesop_SVM\misc\svm_diag_penalty_old.m +
+Copy State L>R: \Sesop_SVM\misc\svm_penalty_old.m +
+Copy New 'G:\SesopTN\Sesop_SVM\misc\svm_sesoptn_light.asv' -> 'D:\mzib\disc_D\work-related\SESOP\SesopTN\Sesop_SVM\misc\svm_sesoptn_light.asv' +
+Copy New 'G:\SesopTN\Sesop_SVM\misc\svm_sesoptn_light.m' -> 'D:\mzib\disc_D\work-related\SESOP\SesopTN\Sesop_SVM\misc\svm_sesoptn_light.m' +
+Copy State L>R: \Sesop_SVM\misc\svm_sesoptn_minFunc.m +
+Copy State L>R: \Sesop_SVM\misc\svm_sesoptn_subset_not_ready.m +
+Copy New 'G:\SesopTN\Sesop_SVM\misc\ttt.mat' -> 'D:\mzib\disc_D\work-related\SESOP\SesopTN\Sesop_SVM\misc\ttt.mat' +
+Copy State L>R: \Sesop_SVM\Contents.m +
+Copy State L>R: \Sesop_SVM\ContentsSVM.asv +
+Copy State L>R: \Sesop_SVM\ContentsSVM.m +
+Copy State L>R: \Sesop_SVM\fg.m +
+Copy State L>R: \Sesop_SVM\muldm.m +
+Copy State L>R: \Sesop_SVM\mulmd.m +
+Copy State L>R: \Sesop_SVM\multMatr.m +
+Copy State L>R: \Sesop_SVM\multMatrAdj.m +
+Copy State L>R: \Sesop_SVM\sesoptn.asv +
+Copy State L>R: \Sesop_SVM\sesoptn.m +
+Copy State L>R: \Sesop_SVM\sesoptn_optionset.m +
+Copy State L>R: \Sesop_SVM\svm_diag_penalty.m +
+Copy State L>R: \Sesop_SVM\svm_penalty.m +
+Copy State L>R: \Sesop_SVM\svm_sesoptn_main.m +
+Copy State L>R: \Sesop_SVM\svm_show_progress.m +
+Copy State L>R: \Contents.m +
+Copy State L>R: \ContentsGeneral.m +
+Copy State L>R: \sesoptn.html +
+Saving State File to G:\SesopTN\_gsdata_\_file_state._gs +
+Saving State File to D:\mzib\disc_D\work-related\SESOP\SesopTN\_gsdata_\_file_state._gs +
+Items Synced OK: 126, Errors: 0
+===== 8/26/2008 5:03:45 PM: Sync Completed. Time: 00:00:00, Speed:  =====
+

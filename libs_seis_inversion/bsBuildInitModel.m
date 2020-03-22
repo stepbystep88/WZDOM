@@ -1,4 +1,4 @@
-function [inIds, crossIds, GInvParam, dstFileNames, segyInfo] = bsBuildInitModel(GInvParam, timeLine, wellLogs, varargin)
+function [inIds, crossIds, GInvParam, dstFileNames, segyInfo, options] = bsBuildInitModel(GInvParam, timeLine, wellLogs, varargin)
 %% Build initial model and save the result as segy file
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
 % Programming dates: Dec 2019
