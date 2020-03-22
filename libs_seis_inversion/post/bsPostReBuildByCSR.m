@@ -19,7 +19,7 @@ function [outputData] = bsPostReBuildByCSR(GInvParam, GSparseInvParam, inputData
         % parallel computing
         parfor iTrace = 1 : traceNum
             outputData(:, iTrace) = bsHandleOneTrace(GSparseInvParam, inputData(:, iTrace), options, dt);
-            bsIncParforProgress(pbm, iTrace, 10);
+            bsIncParforProgress(pbm, iTrace, 10000);
         end
         
         bsDeleteParforProgress(pbm);
@@ -71,13 +71,13 @@ function newData = bsHandleOneTrace(GSparseInvParam, realData, options, dt)
                     GSparseInvParam.omp_G, ...
                     5);
 
-    gamms = zeros(nAtom, ncell);
-    warning('off');
-    for i = 1 : ncell
-        gammas(:, i) = lasso(GSparseInvParam.D1, patches(:, i), 'Lambda', 0.08, 'MaxIter', 100);
-%         gammas(:, i) = SolveDALM(GSparseInvParam.D1, patches(:, i), 'lambda', 0.99, 'maxiteration', 1000);
-    end
-    warning('on');
+%     gamms = zeros(nAtom, ncell);
+%     warning('off');
+%     for i = 1 : ncell
+%         gammas(:, i) = lasso(GSparseInvParam.D1, patches(:, i), 'Lambda', 0.08, 'MaxIter', 100);
+% %         gammas(:, i) = SolveDALM(GSparseInvParam.D1, patches(:, i), 'lambda', 0.99, 'maxiteration', 1000);
+%     end
+%     warning('on');
 %     gammas = gammas .* GSparseInvParam.C;
     
     new_patches = GSparseInvParam.D2 *  gammas;

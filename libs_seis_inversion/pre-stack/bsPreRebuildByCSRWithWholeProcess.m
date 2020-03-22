@@ -96,7 +96,7 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
             'stride', 1);
     
         options.rangeCoef = rangeCoef;
-        [testData] = bsPostReBuildByCSR(GInvParam, GInvWellSparse, wellInvResults{1}.data{iData}, options);
+%         [testData] = bsPostReBuildByCSR(GInvParam, GInvWellSparse, wellInvResults{1}.data{iData}, options);
     
 %         figure; plot(testData(:, 1), 'r', 'linewidth', 2); hold on; 
 %         plot(outLogs{1}.wellLog(:, 2), 'k', 'linewidth', 2); 
