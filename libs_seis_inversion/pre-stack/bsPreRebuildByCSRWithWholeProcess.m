@@ -89,13 +89,14 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
         
         [outLogs] = bsGetPairOfInvAndWell(GInvParam, timeLine, wellLogs, wellInvResults{1}.data{iData}, dataIndex, options);
         fprintf('训练联合字典中...\n');
-        [DIC, train_ids, rangeCoef] = bsTrainDics(GTrainDICParam, outLogs, train_ids, ...
+        [DIC, train_ids, rangeCoef, output] = bsTrainDics(GTrainDICParam, outLogs, train_ids, ...
             [ 1, 2], GTrainDICParam.isRebuild);
         GInvWellSparse = bsCreateGSparseInvParam(DIC, GTrainDICParam, ...
             'sparsity', options.sparsity, ...
             'stride', 1);
-    
-        options.rangeCoef = rangeCoef;
+        
+        GInvWellSparse.rangeCoef = rangeCoef;
+        GInvWellSparse.output = output;
 %         [testData] = bsPostReBuildByCSR(GInvParam, GInvWellSparse, wellInvResults{1}.data{iData}, options);
     
 %         figure; plot(testData(:, 1), 'r', 'linewidth', 2); hold on; 
@@ -107,7 +108,7 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
 
         % 联合字典稀疏重构
         fprintf('联合字典稀疏重构: 参考数据为反演结果...\n');
-        [outputData] = bsPostReBuildByCSR(GInvParam, GInvWellSparse, invResult.data{i}, options);
+        [outputData] = bsPostReBuildByCSR(GInvParam, GInvWellSparse, invResult.data{i}, invResult.inIds, invResult.crossIds, options);
 
         outResult.data{i} = outputData;
 

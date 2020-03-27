@@ -8,7 +8,7 @@ function [outputData] = bsPostReBuildByCSR(GInvParam, GSParam, inputData, inIds,
         % tackle the inverse task
     outputData = zeros(sampNum, traceNum);
     dt = GInvParam.dt;
-    GInvParam.isParallel = 0;
+%     GInvParam.isParallel = 1;
     
     if GInvParam.isParallel
 
