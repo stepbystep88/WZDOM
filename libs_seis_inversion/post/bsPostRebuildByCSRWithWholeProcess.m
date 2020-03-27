@@ -12,6 +12,7 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
     
 
     addParameter(p, 'mode', 'low_high');
+    addParameter(p, 'nNeibor', '2');
     addParameter(p, 'lowCut', 0.1);
     addParameter(p, 'highCut', 1);
     addParameter(p, 'sparsity', 5);
@@ -38,6 +39,16 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
             options.gamma = 1;
             GTrainDICParam.title = sprintf('%s_lowCut_%.2f_highCut_%.2f', ...
                 GTrainDICParam.title, options.lowCut, options.highCut);
+        case 'seismic_high'
+            GTrainDICParam.normailzationMode = 'whole_data_max_min';
+            options.gamma = 1;
+            GTrainDICParam.title = sprintf('%s_seismic_lowCut_%.2f_highCut_%.2f', ...
+                GTrainDICParam.title, options.lowCut, options.highCut);
+        case 'residual'
+            GTrainDICParam.normailzationMode = 'whole_data_max_min';
+            options.gamma = 1;
+            GTrainDICParam.title = sprintf('%s_residual_lowCut_%.2f', ...
+                GTrainDICParam.title, options.lowCut);
     end
     
     wells = cell2mat(wellLogs);
@@ -68,14 +79,17 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
     %% 训练字典
     fprintf('训练联合字典中...\n');
     
-    [DIC, train_ids, rangeCoef] = bsTrainDics(GTrainDICParam, outLogs, train_ids, ...
+    [DIC, train_ids, rangeCoef, output] = bsTrainDics(GTrainDICParam, outLogs, train_ids, ...
         [ 1, 2], GTrainDICParam.isRebuild);
 
+    
     GInvWellSparse = bsCreateGSparseInvParam(DIC, GTrainDICParam, ...
         'sparsity', options.sparsity, ...
+        'nNeibor', options.nNeibor, ...
         'stride', 1);
-    
-    options.rangeCoef = rangeCoef;
+    GInvWellSparse.rangeCoef = rangeCoef;
+    GInvWellSparse.output = output;
+%     options.rangeCoef = rangeCoef;
 %     [testData] = bsPostReBuildByCSR(GInvParam, GInvWellSparse, wellInvResults{1}.data, options);
     
 %     figure; plot(testData(:, 1), 'r', 'linewidth', 2); hold on; 
@@ -87,7 +101,17 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
     
     %% 联合字典稀疏重构
     fprintf('联合字典稀疏重构: 参考数据为反演结果...\n');
-    [outputData] = bsPostReBuildByCSR(GInvParam, GInvWellSparse, invResult.data, options);
+    
+    switch options.mode
+        case {'full_freq', 'low_high', 'residual'}
+            inputData = invResult.data;
+        case 'seismic_high'
+            startTime = invResult.horizon - GInvParam.upNum * GInvParam.dt;
+            sampNum = GInvParam.upNum + GInvParam.downNum;
+            inputData = bsGetPostSeisData(GInvParam, invResult.inIds, invResult.crossIds, startTime, sampNum);
+    end
+        
+    [outputData] = bsPostReBuildByCSR(GInvParam, GInvWellSparse, inputData, invResult.inIds, invResult.crossIds, options);
     
     
     

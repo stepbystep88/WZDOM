@@ -30,10 +30,13 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
     
     % create folder to save the intermediate results
     try
+        warning('off');
         mkdir([GPreInvParam.modelSavePath,'/models/']);
         mkdir([GPreInvParam.modelSavePath,'/mat_results/']);
         mkdir([GPreInvParam.modelSavePath,'/sgy_results/']);
+        warning('on');
     catch
+        
     end
     
     invResults = cell(1, nMethod);

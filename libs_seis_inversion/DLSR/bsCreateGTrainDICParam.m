@@ -39,6 +39,10 @@ function options = bsCreateGTrainDICParam(flag, varargin)
     % indicate the name of the trained dictionary
     addParameter(p, 'title', []);
     
+    addParameter(p, 'isAddLocInfo', 0);
+    
+    addParameter(p, 'isAddTimeInfo', 0);
+    
     switch lower(flag)
         case 'one'
             % for flag = 'one': train only one dictionary. It mostly used
@@ -56,9 +60,13 @@ function options = bsCreateGTrainDICParam(flag, varargin)
             % different elastic parameters
             addParameter(p, 'dicSavePath', './TrainedDictionaries/csr/'); 
             addParameter(p, 'normalizationMode', 'whole_data_max_min'); 
+            addParameter(p, 'feature_reduction', 0); 
             
+        case 'dual'
+            addParameter(p, 'dicSavePath', './TrainedDictionaries/dual/'); 
+            addParameter(p, 'normalizationMode', 'none'); 
         otherwise
-            validatestring(flag, {'ssr', 'csr', 'one'});
+            validatestring(flag, {'ssr', 'csr', 'one', 'dual'});
     end
     
     p.parse(varargin{:});  

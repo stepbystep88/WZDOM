@@ -85,6 +85,11 @@ function [x, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, U
 %         if isfield(GSparseInvParam, 'isChangeK') && GSparseInvParam.isChangeK && i >= 3
 %             GSparseInvParam.sparsity = 2;
 %         end
+        if i == 1
+            inputObjFcnPkgs{2, 3} = 0;
+        else
+            inputObjFcnPkgs{2, 3} = regParam.lambda;
+        end
         
         if isfield(GSparseInvParam, 'isScale') && GSparseInvParam.isScale
             Gx = mainData.A * xInit;
@@ -110,6 +115,7 @@ function [x, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, U
         end
         
         gammas = omp(GSparseInvParam.DIC'*vps, GSparseInvParam.omp_G, GSparseInvParam.sparsity);
+%         [gammas, oldGammas] = bsOMP(GSparseInvParam.DIC, vps, GSparseInvParam.omp_G, GSparseInvParam.sparsity, GSparseInvParam.neiborIndecies);
         new_ips = GSparseInvParam.DIC *  gammas;
         
         %% reconstruct model by equations
@@ -153,7 +159,7 @@ function [x, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, U
     output.midResults.x = midX;
     output.midResults.f = midF;
     output.regParam = regParam;
-    output.parampkgs = parampkgs;
+    output.parampkgs = GSparseInvParam;
     
 end
 
@@ -189,4 +195,5 @@ function GSparseInvParam = bsInitDLSRPkgs(GSparseInvParam, lambda, gamma, sampNu
 %     GSparseInvParam.invG = inv(G' * G + gamma * tmp + lambda * eye(sampNum));
     GSparseInvParam.omp_G = GSparseInvParam.DIC' * GSparseInvParam.DIC;
     
+%     GSparseInvParam.neiborIndecies = bsGetNeiborIndecies(GSparseInvParam.DIC, GSparseInvParam.nNeibor);
 end

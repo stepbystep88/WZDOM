@@ -1,4 +1,4 @@
-function [DIC, rangeCoef] = bsTrain1DSparseJointDIC(datas, GTrainDICParam)
+function [DIC, rangeCoef, output] = bsTrain1DSparseJointDIC(datas, GTrainDICParam, xs, ys)
 %% To train a joint dictionary by using K-SVD algorithm
 %
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
@@ -9,11 +9,8 @@ function [DIC, rangeCoef] = bsTrain1DSparseJointDIC(datas, GTrainDICParam)
     allPatchs = [];
     
     nAtt = size(datas{1}, 2);
-    rangeCoef = zeros(nAtt, 2);
-    rangeCoef(:, 1) = inf;
-    rangeCoef(:, 2) = -inf;
     
-    % get the maximum and minimum value of different attributes
+    % 预处理
     for j = 1 : nWell
         data = datas{j};
         
@@ -21,42 +18,111 @@ function [DIC, rangeCoef] = bsTrain1DSparseJointDIC(datas, GTrainDICParam)
             if( GTrainDICParam.filtCoef < 1)
                 data(:, i) = bsButtLowPassFilter(data(:, i), GTrainDICParam.filtCoef);
             end
-            rangeCoef(i, 1) = min(rangeCoef(i, 1), min(data(:, i)));
-            rangeCoef(i, 2) = max(rangeCoef(i, 2), max(data(:, i)));
         end
         
         datas{j} = data;
     end
     
-    validatestring(string(GTrainDICParam.normalizationMode), {'whole_data_max_min', 'patch_max_min', 'off'});
+    validatestring(string(GTrainDICParam.normalizationMode), {'whole_data_max_min', 'feat_max_min', 'off'});
+    
+    % 小块拼接
+    AP = cell(1, nAtt);
+    nPatch = 0;
+    for j = 1 : nWell
+        nPatch = nPatch + length(1 : GTrainDICParam.stride : size(datas{j}, 1) - GTrainDICParam.sizeAtom + 1);
+    end
     
     for i = 1 : nAtt
-        patchs = [];
-
+        n = GTrainDICParam.sizeAtom;
+        
+        if i == 1 
+            n = n + GTrainDICParam.isAddLocInfo*2 + GTrainDICParam.isAddTimeInfo;
+        end
+        
+        AP{i} = zeros(n, nPatch);
+        counter = 1;
+        
         for j = 1 : nWell
             data = datas{j};
             num = size(data, 1);
             index = 1 : GTrainDICParam.stride : num - GTrainDICParam.sizeAtom + 1;
          
             for k = index
-                subData = data(k : k+GTrainDICParam.sizeAtom-1, i);
+                patch = data(k : k+GTrainDICParam.sizeAtom-1, i);
                 
-                switch GTrainDICParam.normalizationMode
-                    case 'whole_data_max_min'
-                        subData = (subData - rangeCoef(i, 1)) / (rangeCoef(i, 2) - rangeCoef(i, 1));
-                    case 'patch_max_min'
-                        subData = (subData - min(subData)) / (max(subData) - min(subData));
-                    case 'off'
-%                         subData = subData;
-                        % do not need to do normalization
+                if i == 1
+                    if GTrainDICParam.isAddLocInfo && GTrainDICParam.isAddTimeInfo
+                        subData = [patch; xs(j); ys(j); k];
+                    elseif GTrainDICParam.isAddLocInfo
+                        subData = [patch; xs(j); ys(j)];
+                    elseif GTrainDICParam.isAddTimeInfo
+                        subData = [patch; k];
+                    else
+                        subData = patch;
+                    end
+                else
+                    subData = patch;
                 end
                 
-                patchs = [patchs, subData];
+                
+                AP{i}(:, counter) = subData;
+                counter = counter + 1;
             end
         end
-        
-        allPatchs = [allPatchs; patchs];
-        
+    end
+    
+    % 归一化处理
+    switch GTrainDICParam.normalizationMode
+        case 'whole_data_max_min'
+            rangeCoef = zeros(nAtt, 2);
+            for i = 1 : nAtt
+                rangeCoef(i, 1) = min(AP{i}(:));
+                rangeCoef(i, 2) = max(AP{i}(:));
+
+                AP{i} = (AP{i} - rangeCoef(i, 1)) / (rangeCoef(i, 2) - rangeCoef(i, 1));
+            end
+        case 'feat_max_min'
+            rangeCoef = cell(1, nAtt);
+            for i = 1 : nAtt
+                rangeCoef{i} = zeros(size(AP{i}, 1), 2);
+                
+                rangeCoef{i}(:, 1) = min(AP{i}, [], 2);
+                rangeCoef{i}(:, 2) = max(AP{i}, [], 2);
+                
+                nPatch = size(AP{i}, 2);
+                
+                min_val = repmat(rangeCoef{i}(:, 1), 1, nPatch);
+                max_val = repmat(rangeCoef{i}(:, 2), 1, nPatch);
+                
+                AP{i} = (AP{i} - min_val) ./ (max_val - min_val);
+            end
+            
+        case 'off'
+            rangeCoef = [];
+            
+    end
+    
+   
+    if GTrainDICParam.feature_reduction
+        R = AP{1}*AP{1}'; 
+        [B, SS] = eig(R); 
+        Permute = fliplr(eye(size(R, 1))); 
+        SS = Permute * SS * Permute; % so that the eigenvalues are sorted descending
+        B = B * Permute; 
+        energy = cumsum(diag(SS))/sum(diag(SS)); 
+        % figure(1); clf; plot(energy)
+        pos=find(energy>0.999, 1);
+        B = B(:, 1:pos);
+        AP{1} = B' * AP{1};
+        output.B = B;
+    else
+        output = [];
+    end
+    
+    %整合所有的patches到一起
+    allPatchs = [];
+    for i = 1 : nAtt
+        allPatchs = [allPatchs; AP{i}];
     end
     
     params.data = allPatchs;

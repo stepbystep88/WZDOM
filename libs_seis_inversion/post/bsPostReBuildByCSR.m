@@ -1,13 +1,15 @@
-function [outputData] = bsPostReBuildByCSR(GInvParam, GSparseInvParam, inputData, options)
+function [outputData] = bsPostReBuildByCSR(GInvParam, GSParam, inputData, inIds, crossIds, options)
 
     [sampNum, traceNum] = size(inputData);
 
 
-    GSparseInvParam = bsInitDLSRPkgs(GSparseInvParam, options.gamma, sampNum);
+    GSParam = bsInitDLSRPkgs(GSParam, options.gamma, sampNum);
 
         % tackle the inverse task
     outputData = zeros(sampNum, traceNum);
     dt = GInvParam.dt;
+    GInvParam.isParallel = 0;
+    
     if GInvParam.isParallel
 
         pbm = bsInitParforProgress(GInvParam.numWorkers, ...
@@ -18,7 +20,7 @@ function [outputData] = bsPostReBuildByCSR(GInvParam, GSparseInvParam, inputData
 
         % parallel computing
         parfor iTrace = 1 : traceNum
-            outputData(:, iTrace) = bsHandleOneTrace(GSparseInvParam, inputData(:, iTrace), options, dt);
+            outputData(:, iTrace) = bsHandleOneTrace(GSParam, inputData(:, iTrace), inIds(iTrace), crossIds(iTrace), options, dt);
             bsIncParforProgress(pbm, iTrace, 10000);
         end
         
@@ -28,35 +30,42 @@ function [outputData] = bsPostReBuildByCSR(GInvParam, GSparseInvParam, inputData
         % non-parallel computing 
         for iTrace = 1 : traceNum
 %             fprintf('Reconstructing the %d-th trace...\n', iTrace);
-            outputData(:, iTrace) = bsHandleOneTrace(GSparseInvParam, inputData(:, iTrace), options, dt);
+            outputData(:, iTrace) = bsHandleOneTrace(GSParam, inputData(:, iTrace), inIds(iTrace), crossIds(iTrace), options, dt);
         end
     end
     
 end
 
-function newData = bsHandleOneTrace(GSparseInvParam, realData, options, dt)
+function newData = bsHandleOneTrace(GSParam, realData, x, y, options, dt)
 
     sampNum = size(realData, 1);
-    ncell = GSparseInvParam.ncell;
-    sizeAtom = GSparseInvParam.sizeAtom;
+    ncell = GSParam.ncell;
+    sizeAtom = GSParam.sizeAtom;
     patches = zeros(sizeAtom, ncell);
-    rangeCoef = options.rangeCoef;
-    nAtom = GSparseInvParam.nAtom;
+    rangeCoef = GSParam.rangeCoef;
+    nAtom = GSParam.nAtom;
+    
+    trainDICParam = GSParam.trainDICParam;
     
     for j = 1 : ncell
-        js = GSparseInvParam.index(j);
+        js = GSParam.index(j);
         patches(:, j) = realData(js : js+sizeAtom-1);
     end
     
+    if trainDICParam.isAddLocInfo && trainDICParam.isAddTimeInfo
+        patches = [patches; ones(1, ncell) * x; ones(1, ncell) * y; 1 : ncell];
+    elseif trainDICParam.isAddLocInfo
+        patches = [patches; ones(1, ncell) * x; ones(1, ncell) * y;];
+    elseif trainDICParam.isAddTimeInfo
+        patches = [patches; 1 : ncell];
+    end
     
-    if strcmp(options.mode, 'low_high')
-        switch GSparseInvParam.trainDICParam.normalizationMode
-            case 'patch_max_min'
-                max_values = max(patches, [], 1);
-                min_values = min(patches, [], 1);
-                max_values = repmat(max_values, sizeAtom, 1);
-                min_values = repmat(min_values, sizeAtom, 1);
-                patches = (patches - min_values) ./ (max_values - min_values);
+    switch options.mode
+    case {'low_high', 'seismic_high', 'residual'}
+    
+        switch trainDICParam.normalizationMode
+            case 'feat_max_min'
+                patches = (patches - GSParam.low_min_values) ./ (GSParam.low_max_values - GSParam.low_min_values);
             case 'whole_data_max_min'
                 patches = (patches - rangeCoef(1, 1)) / (rangeCoef(1, 2) - rangeCoef(1, 1));
 %             case 'patch_mean_norm'
@@ -67,94 +76,119 @@ function newData = bsHandleOneTrace(GSparseInvParam, realData, options, dt)
         
     end
         
-    gammas = omp(GSparseInvParam.D1'*patches, ...
-                    GSparseInvParam.omp_G, ...
-                    5);
-
+    if trainDICParam.feature_reduction
+        patches = GSParam.output.B' * patches;
+    end
+    
+    gammas = omp(GSParam.D1'*patches, ...
+                    GSParam.omp_G, ...
+                    GSParam.sparsity);
+    
+%     [gammas, oldGammas] = bsOMP(GSParam.D1, patches, GSParam.omp_G, ...
+%         GSParam.sparsity, GSParam.neiborIndecies);
 %     gamms = zeros(nAtom, ncell);
 %     warning('off');
 %     for i = 1 : ncell
-%         gammas(:, i) = lasso(GSparseInvParam.D1, patches(:, i), 'Lambda', 0.08, 'MaxIter', 100);
-% %         gammas(:, i) = SolveDALM(GSparseInvParam.D1, patches(:, i), 'lambda', 0.99, 'maxiteration', 1000);
+%         gammas(:, i) = lasso(GSParam.D1, patches(:, i), 'Lambda', 0.08, 'MaxIter', 100);
+% %         gammas(:, i) = SolveDALM(GSParam.D1, patches(:, i), 'lambda', 0.99, 'maxiteration', 1000);
 %     end
 %     warning('on');
-%     gammas = gammas .* GSparseInvParam.C;
+%     gammas = gammas .* GSParam.C;
     
-    new_patches = GSparseInvParam.D2 *  gammas;
-    if strcmp(options.mode, 'low_high')
-        switch GSparseInvParam.trainDICParam.normalizationMode
-            case 'patch_max_min'
-                new_patches = new_patches .* (max_values - min_values) + min_values; 
+    new_patches = GSParam.D2 *  gammas;
+    switch options.mode
+    case {'low_high', 'seismic_high', 'residual'}
+        
+        switch trainDICParam.normalizationMode
+            case 'feat_max_min'
+                new_patches = new_patches .* (GSParam.high_max_values - GSParam.high_min_values) + GSParam.high_min_values; 
             case 'whole_data_max_min'
                 new_patches = new_patches .* (rangeCoef(2, 2) - rangeCoef(2, 1)) + rangeCoef(2, 1); 
         end
         
     end
 
-    switch GSparseInvParam.reconstructType
+    switch GSParam.reconstructType
         case 'equation'
             avgLog = options.gamma * realData;
             % get reconstructed results by equation
             for j = 1 : ncell
 
-                avgLog = avgLog + GSparseInvParam.R{j}' * new_patches(:, j);
+                avgLog = avgLog + GSParam.R{j}' * new_patches(:, j);
             end
 
-            tmpData = GSparseInvParam.invR * avgLog;
+            tmpData = GSParam.invR * avgLog;
         case 'simpleAvg'
             % get reconstructed results by averaging patches
-            avgLog = bsAvgPatches(new_patches, GSparseInvParam.index, sampNum);
+            avgLog = bsAvgPatches(new_patches, GSParam.index, sampNum);
             tmpData = avgLog * options.gamma + realData * (1 - options.gamma);
     end
     
     % 合并低频和中低频
-    if strcmp(options.mode, 'low_high')
-        ft = 1/dt*1000/2;
-        newData = bsMixTwoSignal(realData, tmpData, options.lowCut*ft, options.lowCut*ft, dt/1000);
+    switch options.mode
+        case {'low_high', 'seismic_high'}
+
+            ft = 1/dt*1000/2;
+            newData = bsMixTwoSignal(realData, tmpData, options.lowCut*ft, options.lowCut*ft, dt/1000);
 %         bsShowFFTResultsComparison(1, [realData, tmpData, newData], {'反演结果', '高频', '合并'});
-    else
-        newData = tmpData;
+        case {'full_freq'}
+            newData = tmpData;
+        case 'residual'
+            newData = tmpData + realData;
     end
     
 end
 
-function GSparseInvParam = bsInitDLSRPkgs(GSparseInvParam, gamma, sampNum)
+function GSParam = bsInitDLSRPkgs(GSParam, gamma, sampNum)
 
-    validatestring(string(GSparseInvParam.reconstructType), {'equation', 'simpleAvg'});
+    validatestring(string(GSParam.reconstructType), {'equation', 'simpleAvg'});
     
-    [sizeAtom, nAtom] = size(GSparseInvParam.DIC);
-    sizeAtom = sizeAtom / 2;
+    sizeAtom = GSParam.trainDICParam.sizeAtom;
+    nAtom = GSParam.trainDICParam.nAtom;
+
     
-    GSparseInvParam.sizeAtom = sizeAtom;
-    GSparseInvParam.nAtom = nAtom;
-    GSparseInvParam.nrepeat = sizeAtom - GSparseInvParam.stride;
+    GSParam.sizeAtom = sizeAtom;
+    GSParam.nAtom = nAtom;
+    GSParam.nrepeat = sizeAtom - GSParam.stride;
     
-    index = 1 : GSparseInvParam.stride : sampNum - sizeAtom + 1;
+    index = 1 : GSParam.stride : sampNum - sizeAtom + 1;
     if(index(end) ~= sampNum - sizeAtom + 1)
         index = [index, sampNum - sizeAtom + 1];
     end
     
-    GSparseInvParam.index = index;
-    GSparseInvParam.ncell = length(index);
-    [GSparseInvParam.R] = bsCreateRMatrix(index, sizeAtom, sampNum);
+    GSParam.index = index;
+    GSParam.ncell = length(index);
+    [GSParam.R] = bsCreateRMatrix(index, sizeAtom, sampNum);
    
     tmp = zeros(sampNum, sampNum);
-    for iCell = 1 : GSparseInvParam.ncell
-        tmp = tmp + GSparseInvParam.R{iCell}' * GSparseInvParam.R{iCell};
+    for iCell = 1 : GSParam.ncell
+        tmp = tmp + GSParam.R{iCell}' * GSParam.R{iCell};
     end
-    GSparseInvParam.invTmp = tmp;
-    GSparseInvParam.invR = inv(gamma * eye(sampNum) + GSparseInvParam.invTmp);
+    GSParam.invTmp = tmp;
+    GSParam.invR = inv(gamma * eye(sampNum) + GSParam.invTmp);
     
-    D1 = GSparseInvParam.DIC(1:sizeAtom, :);
-    D2 = GSparseInvParam.DIC(sizeAtom+1:end, :);
+    % 低分辨率patch可能有时间和地址信息
+    n1 = size(GSParam.DIC, 1) - sizeAtom;
+    
+    D1 = GSParam.DIC(1:n1, :);
+    D2 = GSParam.DIC(n1+1:end, :);
     
     [D1, D2, C] = bsNormalDIC(D1, D2);
     
-    GSparseInvParam.D1 = D1;
+    GSParam.D1 = D1;
     
-    GSparseInvParam.omp_G = D1' * D1;
-    GSparseInvParam.D2 = D2;
-    GSparseInvParam.C = C;
+    GSParam.omp_G = D1' * D1;
+    GSParam.D2 = D2;
+    GSParam.C = C;
+    
+%     GSParam.neiborIndecies = bsGetNeiborIndecies(D1, GSParam.nNeibor);
+    rangeCoef = GSParam.rangeCoef;
+    
+    GSParam.low_min_values = repmat(rangeCoef{1}(:, 1), 1, GSParam.ncell);
+    GSParam.low_max_values = repmat(rangeCoef{1}(:, 2), 1, GSParam.ncell);
+                
+    GSParam.high_min_values = repmat(rangeCoef{2}(:, 1), 1, GSParam.ncell);
+    GSParam.high_max_values = repmat(rangeCoef{2}(:, 2), 1, GSParam.ncell);
 end
 
 function [D1, D2, C] = bsNormalDIC(D1, D2)

@@ -98,11 +98,17 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByCSR(d, G, xInit, Lb, Ub,
         if length(regParam.lambda) == 2
             lambda  = lambda * regParam.lambda(2);
             inputObjFcnPkgs{2, 3} = lambda;
+        else
+            inputObjFcnPkgs{2, 3} = regParam.lambda;
         end
         
         if length(options.initRegParam) == 2
             initLambda = initLambda * options.initRegParam(2);
             inputObjFcnPkgs{3, 3} = initLambda;
+        end
+        
+        if iter == 1
+            inputObjFcnPkgs{2, 3} = 0;
         end
 
         [xOut, fval, exitFlag, output_] = bsGBSolveByOptions(inputObjFcnPkgs, xInit, Lb, Ub, GBOptions);
