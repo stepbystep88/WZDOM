@@ -54,6 +54,8 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
 %     );
 
     fprintf('反演所有测井中...\n');
+    method.isSaveMat = 1;
+    method.load.mode = 'mat';
     wellInvResults = bsPreInvTrueMultiTraces(GInvParam, wellInIds, wellCrossIds, timeLine, {method});
     [wellInvResults, ~, ~] = bsPreGetOtherAttributesByInvResults(wellInvResults, GInvParam, wellLogs);
     
@@ -114,6 +116,10 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
 
     end
     
-    bsWriteInvResultsIntoSegyFiles(GInvParam, {outResult}, options.title, 0);
-
+    try
+        bsWriteInvResultsIntoSegyFiles(GInvParam, {outResult}, options.title, 0);
+    catch
+        fprintf('写入字典失败...\n');
+    end
+    
 end
