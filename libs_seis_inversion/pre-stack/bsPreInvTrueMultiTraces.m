@@ -127,7 +127,7 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
                             iSegyInfo = loadInfo.segyInfo;
                         else
                             % use different segy info for different files
-                            iSegyInfo = loadInfo.segyInfo(iFile);
+                            iSegyInfo = loadInfo.segyInfo{iFile};
                         end
                         
                         if isfield(loadInfo, 'prestack') && loadInfo.prestack == 1

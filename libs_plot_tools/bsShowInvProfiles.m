@@ -165,10 +165,13 @@ function [nRow, nCol, loc, colorbar_pos] = setShareFigureSize(nProfile)
             colorbar_pos = [0.87 0.06 0.01 0.88];
         case 2
             bsSetPosition(0.3, 0.42);
-            nRow = 2;
-            nCol = 1;
-            loc = [0.79, 0.94, 0.01, 0.07, 0.09, 0.02];
-            colorbar_pos = [0.87 0.06 0.01 0.9];
+            nRow = 1;
+            nCol = 2;
+%             loc = [0.79, 0.94, 0.01, 0.07, 0.09, 0.02];
+            loc = [0.88, 0.88, 0.02, 0.07, 0.05, 0.02];
+            colorbar_pos = [0.93 0.05 0.01 0.9];
+%             loc = [0.84, 0.91, 0.01, 0.07, 0.06, 0.02];
+%             colorbar_pos = [0.89 0.05 0.01 0.92];
         case 3
             bsSetPosition(0.3, 0.65);
             nRow = 3;

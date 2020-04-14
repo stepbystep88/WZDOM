@@ -111,7 +111,8 @@ function [DIC, rangeCoef, output] = bsTrain1DSparseJointDIC(datas, GTrainDICPara
         B = B * Permute; 
         energy = cumsum(diag(SS))/sum(diag(SS)); 
         % figure(1); clf; plot(energy)
-        pos=find(energy>0.999, 1);
+%         pos=find(energy>0.999, 1);
+        pos = 15;
         B = B(:, 1:pos);
         AP{1} = B' * AP{1};
         output.B = B;
@@ -133,4 +134,16 @@ function [DIC, rangeCoef, output] = bsTrain1DSparseJointDIC(datas, GTrainDICPara
 
     % using the third-party toolbox to train the dictionary
     DIC = ksvd(params, GTrainDICParam.isShowIterInfo);
+    
+    K = 20;
+    Idx =kmeans(DIC', K, 'Replicates', 5);
+    newDIC = zeros(size(DIC));
+    j = 1;
+    for i = 1 : K
+        index = find(Idx == i);
+        newDIC(:, j:j+length(index)-1) = DIC(:, index);
+        j = j + length(index);
+    end
+
+    DIC = newDIC;
 end

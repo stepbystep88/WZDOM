@@ -10,7 +10,8 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
         'nAtom', 4000, ...
         'filtCoef', 1);
     
-
+    
+    addParameter(p, 'ratio_to_reconstruction', '1');
     addParameter(p, 'mode', 'low_high');
     addParameter(p, 'nNeibor', '2');
     addParameter(p, 'lowCut', 0.1);
@@ -111,7 +112,7 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
             inputData = bsGetPostSeisData(GInvParam, invResult.inIds, invResult.crossIds, startTime, sampNum);
     end
         
-    [outputData] = bsPostReBuildByCSR(GInvParam, GInvWellSparse, inputData, invResult.inIds, invResult.crossIds, options);
+    [outputData] = bsPostReBuildPlusInterpolationCSR(GInvParam, GInvWellSparse, inputData, invResult.inIds, invResult.crossIds, options);
     
     
     

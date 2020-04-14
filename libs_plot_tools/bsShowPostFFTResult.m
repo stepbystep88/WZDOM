@@ -23,6 +23,9 @@ function bsShowPostFFTResult(GPostInvParam, GShowProfileParam, invVals, wellInfo
 
 
     cTbl = bsGetColormap('separate');
+    ncTbl = cTbl;
+    ncTbl([2,3,4]) = [];
+    
     legends = {};
     for iItem = 1 : nItems
 
@@ -35,21 +38,21 @@ function bsShowPostFFTResult(GPostInvParam, GShowProfileParam, invVals, wellInfo
 %             x = linspace(1, length(trueLog), length(nonzeroIp));
 %             newIp = interp1(x, nonzeroIp, 1:length(trueLog));
             [pInv, pf] = bsGetFrequencies(nonzeroIp, dt);
-            plot(pf, pInv, 'color', cTbl{iItem + 4}, 'linewidth', 2); hold on;
+            plot(pf, pInv, 'color', ncTbl{iItem}, 'linewidth', 2.5); hold on;
         else
             pInv = bsGetFrequencies(Ip, dt);
 %             pInv = pInv / norm(pInv) * norm(pTrue);
-            plot(f, pInv, 'color', cTbl{iItem + 4}, 'linewidth', 2); hold on;
+            plot(f, pInv, 'color', ncTbl{iItem}, 'linewidth', 2.5); hold on;
         end
 
         legends = [legends, invVal.name];
     end
 
-    plot(f, pInit, '--', 'color', cTbl{1}, 'linewidth', 2); 
-    plot(f, pTrue, '-.', 'color', cTbl{2}, 'linewidth', 2);
-%     plot(fd, pD, '--', 'color', cTbl{4}, 'linewidth', 2);
+    plot(f, pInit, '--', 'color', cTbl{2}, 'linewidth', 2.5); 
+    plot(f, pTrue, '-.', 'color', 'k', 'linewidth', 2.5);
+    plot(fd, pD, '--', 'color', cTbl{4}, 'linewidth', 2.5);
 
-    legends = [legends, '初始模型', '实际测井'];
+    legends = [legends, '初始模型', '实际测井', '地震数据'];
 
     lgd = legend(legends);
     set(lgd, ...
