@@ -11,6 +11,7 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
         'filtCoef', 1);
     
 
+    addParameter(p, 'ratio_to_reconstruction', 1);
     addParameter(p, 'mode', 'full_freq');
     addParameter(p, 'wellFiltCoef', 0.1);
     addParameter(p, 'lowCut', 0.1);
@@ -34,7 +35,7 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
             DICTitle = sprintf('%s_highCut_%.2f', ...
                 GTrainDICParam.title, options.highCut);
         case 'low_high'
-            GTrainDICParam.normailzationMode = 'whole_data_max_min';
+%             GTrainDICParam.normailzationMode = 'whole_data_max_min';
             options.gamma = 1;
             DICTitle = sprintf('%s_lowCut_%.2f_highCut_%.2f', ...
                 GTrainDICParam.title, options.lowCut, options.highCut);
@@ -54,8 +55,6 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
 %     );
 
     fprintf('反演所有测井中...\n');
-    method.isSaveMat = 1;
-    method.load.mode = 'mat';
     wellInvResults = bsPreInvTrueMultiTraces(GInvParam, wellInIds, wellCrossIds, timeLine, {method});
     [wellInvResults, ~, ~] = bsPreGetOtherAttributesByInvResults(wellInvResults, GInvParam, wellLogs);
     
@@ -64,7 +63,7 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
     train_ids = unique([train_ids, options.mustInclude]);
     outResult = bsSetFields(invResult, {'name', name});
     
-    %% 叠前有三种属性
+    %% 叠前有多种属性
     for i = 1 : length(invResult.type)
         switch lower(invResult.type{i})
             case 'vp'
@@ -91,8 +90,7 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
         
         [outLogs] = bsGetPairOfInvAndWell(GInvParam, timeLine, wellLogs, wellInvResults{1}.data{iData}, dataIndex, options);
         fprintf('训练联合字典中...\n');
-        [DIC, train_ids, rangeCoef, output] = bsTrainDics(GTrainDICParam, outLogs, train_ids, ...
-            [ 1, 2], GTrainDICParam.isRebuild);
+        [DIC, train_ids, rangeCoef, output] = bsTrainDics(GTrainDICParam, outLogs, train_ids, [ 1, 2]);
         GInvWellSparse = bsCreateGSparseInvParam(DIC, GTrainDICParam, ...
             'sparsity', options.sparsity, ...
             'stride', 1);
@@ -110,16 +108,19 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
 
         % 联合字典稀疏重构
         fprintf('联合字典稀疏重构: 参考数据为反演结果...\n');
-        [outputData] = bsPostReBuildByCSR(GInvParam, GInvWellSparse, invResult.data{i}, invResult.inIds, invResult.crossIds, options);
+        [outputData, highData, gamma_vals, gamma_locs] = bsPostReBuildPlusInterpolationCSR(GInvParam, GInvWellSparse, invResult.data{i}, invResult.inIds, invResult.crossIds, options);
 
         outResult.data{i} = outputData;
-
+        outResult.high_freq_data{i} = highData;
+        outResult.gamma_vals{i} = gamma_vals;
+        outResult.gamma_locs{i} = gamma_locs;
+        outResult.DIC{i} = DIC;
     end
     
     try
         bsWriteInvResultsIntoSegyFiles(GInvParam, {outResult}, options.title, 0);
     catch
-        fprintf('写入字典失败...\n');
+        fprintf('保存结果为segy文件失败...\n');
     end
     
 end

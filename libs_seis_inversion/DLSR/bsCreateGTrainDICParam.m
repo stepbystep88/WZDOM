@@ -43,6 +43,12 @@ function options = bsCreateGTrainDICParam(flag, varargin)
     
     addParameter(p, 'isAddTimeInfo', 0);
     
+    % for the task of high resolution, use 'high_resolution', for
+    % CSR inversion, use 'all'
+    addParameter(p, 'feature_reduction', 'off');
+    
+    addParameter(p, 'n_reduced_feature', []);
+    
     switch lower(flag)
         case 'one'
             % for flag = 'one': train only one dictionary. It mostly used
@@ -59,8 +65,9 @@ function options = bsCreateGTrainDICParam(flag, varargin)
             % for flag='csr': train a joint dictionary which contains the coherence of
             % different elastic parameters
             addParameter(p, 'dicSavePath', './TrainedDictionaries/csr/'); 
-            addParameter(p, 'normalizationMode', 'whole_data_max_min'); 
-            addParameter(p, 'feature_reduction', 0); 
+            addParameter(p, 'normalizationMode', 'feat_max_min'); 
+            
+            
             
         case 'dual'
             addParameter(p, 'dicSavePath', './TrainedDictionaries/dual/'); 
@@ -73,6 +80,8 @@ function options = bsCreateGTrainDICParam(flag, varargin)
     options = p.Results;
     options.flag = flag;
     
-    
+    if isfield(options, 'feature_reduction')
+        validatestring(options.feature_reduction, {'high_resolution', 'all', 'off'});
+    end
 end
 

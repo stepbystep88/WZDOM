@@ -70,12 +70,14 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByCSR(d, G, xInit, Lb, Ub,
     GBOptions.maxIter = options.innerIter;
     
     % create packages for sparse inversion 
-    GSparseInvParam = bsInitDLSRPkgs(parampkgs, regParam.gamma, sampNum);
+    GSParam = bsInitDLSRPkgs(parampkgs, regParam.gamma, sampNum);
+    inline = options.inline;
+    crossline = options.crossline;
     
-    ncell = GSparseInvParam.ncell;
-    sizeAtom = GSparseInvParam.sizeAtom;
-    rangeCoef = GSparseInvParam.rangeCoef;
-    patches = zeros(sizeAtom*3, ncell);
+    ncell = GSParam.ncell;
+    sizeAtom = GSParam.sizeAtom;
+    
+    patches = zeros(sizeAtom*3+GSParam.nSpecialFeat, ncell);
     
     midX = [];
     midF = [];
@@ -121,73 +123,71 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByCSR(d, G, xInit, Lb, Ub,
         % sparse reconstruction
         [data(:, 2), data(:, 3), data(:, 4)] = bsPreRecoverElasticParam(xOut, mode, lsdCoef);
         
-        max_values = cell(1, 3);
-        min_values = cell(1, 3);
-        
-        
         for j = 1 : ncell
-            js = GSparseInvParam.index(j);
+            js = GSParam.index(j);
+            
             for i = 1 : 3
                 
-                sPos = sizeAtom*(i-1) + 1;
+                sPos = sizeAtom*(i-1) + 1 + GSParam.nSpecialFeat;
                 ePos = sPos + sizeAtom - 1;
 
                 iData = data(js : js+sizeAtom-1, i+1);
                 patches(sPos:ePos, j) = iData;
             end
         end
-
-        for i = 1 : 3
-            sPos = sizeAtom*(i-1) + 1;
-            ePos = sPos + sizeAtom - 1;
-            % normalization
-            switch GSparseInvParam.trainDICParam.normalizationMode
-                case 'patch_max_min'
-                    max_values{i} = max(patches(sPos:ePos, :), [], 1);
-                    min_values{i} = min(patches(sPos:ePos, :), [], 1);
-                    max_values{i} = repmat(max_values{i}, sizeAtom, 1);
-                    min_values{i} = repmat(min_values{i}, sizeAtom, 1);
-                    patches(sPos:ePos, :) = (patches(sPos:ePos, :) - min_values{i}) ./ (max_values{i} - min_values{i});
-                case 'whole_data_max_min'
-                    patches(sPos:ePos, :) = (patches(sPos:ePos, :) - rangeCoef(i, 1))/(rangeCoef(i, 2) - rangeCoef(i, 1));
-            end
+        
+        % add location or/and time information
+        if GSParam.trainDICParam.isAddLocInfo && GSParam.trainDICParam.isAddTimeInfo
+            patches(1:GSParam.nSpecialFeat, :) = [ones(1, ncell) * inline; ones(1, ncell) * crossline; 1 : ncell];
+        elseif GSParam.trainDICParam.isAddLocInfo
+            patches(1:GSParam.nSpecialFeat, :) = [ones(1, ncell) * inline; ones(1, ncell) * crossline;];
+        elseif GSParam.trainDICParam.isAddTimeInfo
+            patches(1:GSParam.nSpecialFeat, :) = 1 : ncell;
+        end
+            
+        % normalization
+        normal_patches = (patches - GSParam.min_values) ./ (GSParam.max_values - GSParam.min_values);
+        
+        if strcmp(GSParam.trainDICParam.feature_reduction, 'all')
+            normal_patches = GSParam.output.B' * normal_patches;
+        end
+    
+        if GSParam.isModifiedDIC
+            normal_patches = GSParam.M  * normal_patches;
         end
         
-                
-        if GSparseInvParam.isModifiedDIC
-            patches = GSparseInvParam.M  * patches;
+        gammas = omp(GSParam.DIC'*normal_patches, ...
+                    GSParam.omp_G, ...
+                    GSParam.sparsity);
+        new_patches = GSParam.DIC *  gammas;
+        
+        if strcmp(GSParam.trainDICParam.feature_reduction, 'all')
+            new_patches = GSParam.output.B * new_patches;
         end
         
-        gammas = omp(GSparseInvParam.DIC'*patches, ...
-                    GSparseInvParam.omp_G, ...
-                    GSparseInvParam.sparsity);
-        new_patches = GSparseInvParam.DIC *  gammas;
+        new_patches = new_patches .* (GSParam.max_values - GSParam.min_values) + GSParam.min_values;
+        
+        
         
         %% reconstruct model by equations
         for i = 1 : 3
-            sPos = sizeAtom*(i-1) + 1;
+            sPos = sizeAtom*(i-1) + 1 +  + GSParam.nSpecialFeat;
             ePos = sPos + sizeAtom - 1;
             
-            switch GSparseInvParam.trainDICParam.normalizationMode
-                case 'patch_max_min'
-                    i_new_patches = new_patches(sPos:ePos, :) .* (max_values{i} - min_values{i}) + min_values{i}; 
-                case 'whole_data_max_min'
-                    i_new_patches = new_patches(sPos:ePos, :) * (rangeCoef(i, 2) - rangeCoef(i, 1)) + rangeCoef(i, 1);
-            end
-            
-            switch GSparseInvParam.reconstructType
+            i_new_patches = new_patches(sPos:ePos, :);
+            switch GSParam.reconstructType
                 case 'equation'
                     avgLog = gamma * data(:, i+1);
                     % get reconstructed results by equation
                     for j = 1 : ncell
                         
-                        avgLog = avgLog + GSparseInvParam.R{j}' * i_new_patches(:, j);
+                        avgLog = avgLog + GSParam.R{j}' * i_new_patches(:, j);
                     end
 
-                    newData(:, i+1) = GSparseInvParam.invR * avgLog;
+                    newData(:, i+1) = GSParam.invR * avgLog;
                 case 'simpleAvg'
                     % get reconstructed results by averaging patches
-                    avgLog = bsAvgPatches(i_new_patches, GSparseInvParam.index, sampNum);
+                    avgLog = bsAvgPatches(i_new_patches, GSParam.index, sampNum);
                     newData(:, i+1) = avgLog * gamma + data(:, i+1) * (1 - gamma);
             end
         end
@@ -198,75 +198,84 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByCSR(d, G, xInit, Lb, Ub,
         
     end
     
-    switch GSparseInvParam.isSparseRebuild
+    switch GSParam.isSparseRebuild
         case 1
             x = xInit;
         case 0 
             x = xOut;
         otherwise
-            error('GSparseInvParam.isSparseRebuild must either 1 or 0. \n');
+            error('GSParam.isSparseRebuild must either 1 or 0. \n');
     end
     
     output.midResults.x = midX;
     output.midResults.f = midF;
     output.regParam = regParam;
-    output.parampkgs = GSparseInvParam;
+    output.parampkgs = GSParam;
     
+    output.gammas = gammas;
 end
 
-function GSparseInvParam = bsInitDLSRPkgs(GSparseInvParam, gamma, sampNum)
+function GSParam = bsInitDLSRPkgs(GSParam, gamma, sampNum)
     
-    if isfield(GSparseInvParam, 'omp_G')
+    if isfield(GSParam, 'omp_G')
         return;
     end
 
-    validatestring(string(GSparseInvParam.reconstructType), {'equation', 'simpleAvg'});
+    validatestring(string(GSParam.reconstructType), {'equation', 'simpleAvg'});
     validateattributes(gamma, {'double'}, {'>=', 0, '<=', 1});
     
-    [sizeAtom, nAtom] = size(GSparseInvParam.DIC);
-    sizeAtom = sizeAtom / 3;
+    trainDICParam = GSParam.trainDICParam;
     
-    GSparseInvParam.sizeAtom = sizeAtom;
-    GSparseInvParam.nAtom = nAtom;
-    GSparseInvParam.nrepeat = sizeAtom - GSparseInvParam.stride;
+    sizeAtom = trainDICParam.sizeAtom;
+    nAtom= trainDICParam.nAtom;
+    GSParam.sizeAtom = sizeAtom;
+    GSParam.nAtom = nAtom;
+    GSParam.nrepeat = sizeAtom - GSParam.stride;
     
-    index = 1 : GSparseInvParam.stride : sampNum - sizeAtom + 1;
+    GSParam.nSpecialFeat = trainDICParam.isAddLocInfo * 2 + trainDICParam.isAddTimeInfo;
+    
+    index = 1 : GSParam.stride : sampNum - sizeAtom + 1;
     if(index(end) ~= sampNum - sizeAtom + 1)
         index = [index, sampNum - sizeAtom + 1];
     end
     
-    GSparseInvParam.index = index;
-    GSparseInvParam.ncell = length(index);
-    [GSparseInvParam.R] = bsCreateRMatrix(index, sizeAtom, sampNum);
+    GSParam.index = index;
+    GSParam.ncell = length(index);
+    [GSParam.R] = bsCreateRMatrix(index, sizeAtom, sampNum);
    
     tmp = zeros(sampNum, sampNum);
-    for iCell = 1 : GSparseInvParam.ncell
-        tmp = tmp + GSparseInvParam.R{iCell}' * GSparseInvParam.R{iCell};
+    for iCell = 1 : GSParam.ncell
+        tmp = tmp + GSParam.R{iCell}' * GSParam.R{iCell};
     end
-    GSparseInvParam.invTmp = tmp;
-    GSparseInvParam.invR = inv(gamma(1) * eye(sampNum) + GSparseInvParam.invTmp);
+    GSParam.invTmp = tmp;
+    GSParam.invR = inv(gamma(1) * eye(sampNum) + GSParam.invTmp);
     
-    if GSparseInvParam.isModifiedDIC
+    if GSParam.isModifiedDIC
         I = eye(sizeAtom * 3);
         oneSa = ones(sizeAtom, sizeAtom);
         Z = zeros(sizeAtom, sizeAtom);
         cOne = {oneSa Z Z;
               Z oneSa Z;
               Z Z oneSa};
-        GSparseInvParam.M = I + GSparseInvParam.a / sizeAtom * cell2mat(cOne);
+        GSParam.M = I + GSParam.a / sizeAtom * cell2mat(cOne);
 
-        MDIC = GSparseInvParam.M * GSparseInvParam.DIC;
+        MDIC = GSParam.M * GSParam.DIC;
         % normalize the modified dictionary
         for j = 1 : size(MDIC, 2)
             MDIC(:, j) = MDIC(:, j) / norm(MDIC(:, j));
         end
         
-        GSparseInvParam.DIC = MDIC;
-        GSparseInvParam.omp_G = GSparseInvParam.MDIC' * GSparseInvParam.MDIC;
+        GSParam.DIC = MDIC;
+        GSParam.omp_G = GSParam.MDIC' * GSParam.MDIC;
     else
-        GSparseInvParam.omp_G = GSparseInvParam.DIC' * GSparseInvParam.DIC;
+        GSParam.omp_G = GSParam.DIC' * GSParam.DIC;
     end
         
+    rangeCoef = GSParam.rangeCoef;
+    
+    GSParam.min_values = repmat(rangeCoef(:, 1), 1, GSParam.ncell);
+	GSParam.max_values = repmat(rangeCoef(:, 2), 1, GSParam.ncell);
+    
 end
 
 

@@ -15,9 +15,9 @@ function bsShowPreFFTResult(GInvParam, GShowProfileParam, invVals, wellInfo)
     attNames = {'纵波速度', '横波速度', '密度'};
     hf = figure;
 	set(gcf, 'position', [18         391        1857         604]);
-    for itt = 2 : 4
+    for itt = 2 : 3
         
-        subplot(1, 3, itt-1);
+        subplot(1, 2, itt-1);
         [pTrue, f] = bsGetFrequencies(trueLog(:, itt), dt);
         pInit = bsGetFrequencies(initLog(:, itt), dt);
         d = model.d;
@@ -30,16 +30,8 @@ function bsShowPreFFTResult(GInvParam, GShowProfileParam, invVals, wellInfo)
         for iItem = 1 : nItems
 
             invVal = invVals{iItem};
-            
-            switch itt
-                case 2
-                    data = invVal.vp;
-                case 3
-                    data = invVal.vs;
-                case 4
-                    data = invVal.rho;
-            end
-            
+            data = invVal.data{itt - 1};
+
             index = find(data > 0);
             nonzero = data(min(index) : max(index));
 
@@ -50,7 +42,7 @@ function bsShowPreFFTResult(GInvParam, GShowProfileParam, invVals, wellInfo)
                 plot(pf, pInv, 'color', cTbl{iItem + 4}, 'linewidth', 2); hold on;
             else
                 pInv = bsGetFrequencies(data, dt);
-    %             pInv = pInv / norm(pInv) * norm(pTrue);
+                pInv = pInv / norm(pInv) * norm(pTrue);
                 plot(f, pInv, 'color', cTbl{iItem + 4}, 'linewidth', 2); hold on;
             end
 

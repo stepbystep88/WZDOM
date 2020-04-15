@@ -38,5 +38,9 @@ function [waveletGain] = bsComputeGain(post, syn)
     synPeaTroValue = sort(synPeaTroValue(synPeaTroValue >0), 'descend');
     postPeaTroValue = sort(postPeaTroValue(postPeaTroValue >0), 'descend');
 
-    waveletGain  = mean(postPeaTroValue(1:4)) / mean(synPeaTroValue(1:4));
+    if length(postPeaTroValue) > 4
+        waveletGain  = mean(postPeaTroValue(1:4)) / mean(synPeaTroValue(1:4));
+    else
+        waveletGain  = mean(postPeaTroValue) / mean(synPeaTroValue);
+    end
 end

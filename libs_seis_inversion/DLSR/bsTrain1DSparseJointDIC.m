@@ -52,11 +52,11 @@ function [DIC, rangeCoef, output] = bsTrain1DSparseJointDIC(datas, GTrainDICPara
                 
                 if i == 1
                     if GTrainDICParam.isAddLocInfo && GTrainDICParam.isAddTimeInfo
-                        subData = [patch; xs(j); ys(j); k];
+                        subData = [xs(j); ys(j); k; patch];
                     elseif GTrainDICParam.isAddLocInfo
-                        subData = [patch; xs(j); ys(j)];
+                        subData = [xs(j); ys(j); patch];
                     elseif GTrainDICParam.isAddTimeInfo
-                        subData = [patch; k];
+                        subData = [k; patch];
                     else
                         subData = patch;
                     end
@@ -71,60 +71,68 @@ function [DIC, rangeCoef, output] = bsTrain1DSparseJointDIC(datas, GTrainDICPara
         end
     end
     
-    % 归一化处理
     switch GTrainDICParam.normalizationMode
-        case 'whole_data_max_min'
-            rangeCoef = zeros(nAtt, 2);
-            for i = 1 : nAtt
-                rangeCoef(i, 1) = min(AP{i}(:));
-                rangeCoef(i, 2) = max(AP{i}(:));
-
-                AP{i} = (AP{i} - rangeCoef(i, 1)) / (rangeCoef(i, 2) - rangeCoef(i, 1));
-            end
-        case 'feat_max_min'
-            rangeCoef = cell(1, nAtt);
-            for i = 1 : nAtt
-                rangeCoef{i} = zeros(size(AP{i}, 1), 2);
-                
-                rangeCoef{i}(:, 1) = min(AP{i}, [], 2);
-                rangeCoef{i}(:, 2) = max(AP{i}, [], 2);
-                
-                nPatch = size(AP{i}, 2);
-                
-                min_val = repmat(rangeCoef{i}(:, 1), 1, nPatch);
-                max_val = repmat(rangeCoef{i}(:, 2), 1, nPatch);
-                
-                AP{i} = (AP{i} - min_val) ./ (max_val - min_val);
-            end
-            
         case 'off'
             rangeCoef = [];
+        case 'feat_max_min'
+            rangeCoef = [];
             
+            for i = 1 : length(AP)
+                min_value = min(AP{i}, [], 2);
+                max_value = max(AP{i}, [], 2);
+                
+                rangeCoef = [rangeCoef; [min_value, max_value]];
+                
+                min_value = repmat(min_value, 1, size(AP{i}, 2));
+                max_value = repmat(max_value, 1, size(AP{i}, 2));
+                
+                AP{i} = (AP{i} - min_value) ./ (max_value - min_value);
+            end
+            
+        case 'whole_data_max_min'
+            rangeCoef = [];
+            
+            for i = 1 : length(AP)
+                nFeat = size(AP{i}, 1);
+                min_value = min(AP{i}(:));
+                max_value = max(AP{i}(:));
+                
+                rangeCoef = [rangeCoef; [repmat(min_value, nFeat, 1), repmat(max_value, nFeat, 1)]];
+                
+                AP{i} = (AP{i} - min_value) ./ (max_value - min_value);
+                
+            end
     end
     
-   
-    if GTrainDICParam.feature_reduction
-        R = AP{1}*AP{1}'; 
-        [B, SS] = eig(R); 
-        Permute = fliplr(eye(size(R, 1))); 
-        SS = Permute * SS * Permute; % so that the eigenvalues are sorted descending
-        B = B * Permute; 
-        energy = cumsum(diag(SS))/sum(diag(SS)); 
-        % figure(1); clf; plot(energy)
-%         pos=find(energy>0.999, 1);
-        pos = 15;
-        B = B(:, 1:pos);
-        AP{1} = B' * AP{1};
-        output.B = B;
-    else
-        output = [];
+    
+    switch GTrainDICParam.feature_reduction
+        case 'high_resolution'
+            [AP{1}, output.B] = bsReduction(AP{1}, GTrainDICParam.n_reduced_feature);
+            %整合所有的patches到一起
+            allPatchs = [];
+            for i = 1 : nAtt
+                allPatchs = [allPatchs; AP{i}];
+            end
+    
+        case 'all'
+            %整合所有的patches到一起
+            allPatchs = [];
+            for i = 1 : nAtt
+                allPatchs = [allPatchs; AP{i}];
+            end
+
+            [allPatchs, output.B] = bsReduction(allPatchs, GTrainDICParam.n_reduced_feature);
+        
+        case 'off'
+            %整合所有的patches到一起
+            allPatchs = [];
+            for i = 1 : nAtt
+                allPatchs = [allPatchs; AP{i}];
+            end
+            output = [];
     end
     
-    %整合所有的patches到一起
-    allPatchs = [];
-    for i = 1 : nAtt
-        allPatchs = [allPatchs; AP{i}];
-    end
+    
     
     params.data = allPatchs;
     params.Tdata = GTrainDICParam.sparsity;
@@ -135,15 +143,29 @@ function [DIC, rangeCoef, output] = bsTrain1DSparseJointDIC(datas, GTrainDICPara
     % using the third-party toolbox to train the dictionary
     DIC = ksvd(params, GTrainDICParam.isShowIterInfo);
     
-    K = 20;
-    Idx =kmeans(DIC', K, 'Replicates', 5);
-    newDIC = zeros(size(DIC));
-    j = 1;
-    for i = 1 : K
-        index = find(Idx == i);
-        newDIC(:, j:j+length(index)-1) = DIC(:, index);
-        j = j + length(index);
-    end
-
-    DIC = newDIC;
+   
+    [DIC, Idx] = bsClusterDIC(DIC, 5);
+%     DIC = newDIC;
 end
+
+
+
+function [data, B] = bsReduction(data, pos)
+
+    R = data * data'; 
+    [B, SS] = eig(R); 
+    Permute = fliplr(eye(size(R, 1))); 
+    SS = Permute * SS * Permute; % so that the eigenvalues are sorted descending
+    B = B * Permute; 
+    energy = cumsum(diag(SS))/sum(diag(SS)); 
+    % figure(1); clf; plot(energy)
+    
+    if nargin == 2 && isempty(pos)
+        pos=find(energy>0.999, 1);
+    end
+%     pos = 15;
+    B = B(:, 1:pos);
+    data = B' * data;
+        
+end
+        

@@ -26,8 +26,8 @@ function [c1, c2, c3] = bsAkiSyn(angleData, vp, vs)
     end
     
     % meanTheta
-    meanTheta = size(sampNum, angleTrNum);
-    Theta2 = size(sampNum, angleTrNum);
+    meanTheta = zeros(sampNum, angleTrNum);
+    Theta2 = zeros(sampNum, angleTrNum);
     for i = 1 : sampNum
         for j = 1 : angleTrNum
             [Theta2(i,j), ~, ~] = snell(angleData(j), vs(i), vp(i), vs(i+1), vp(i+1));

@@ -22,6 +22,8 @@ function options = bsCreateGSparseInvParam(DIC, GTrainDICParam, varargin)
     
     addParameter(p, 'DIC', DIC);
     
+    addParameter(p, 'output', []);
+    
     addParameter(p, 'nNeibor', 2);
     
     % whether to rebuild the inversion results by using dictionary

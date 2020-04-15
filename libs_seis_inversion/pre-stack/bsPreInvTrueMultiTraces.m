@@ -287,6 +287,8 @@ function [vp, vs, rho, model, output] = bsPreInvOneTrace(GPreInvParam, horizonTi
 
         method.mode = GPreInvParam.mode;
         method.lsdCoef = model.lsdCoef;
+        method.options.inline = inId;
+        method.options.crossline = crossId;
         [xOut, ~, ~, output] = bsPreInv1DTrace(model.d, model.G, model.initX, model.Lb, model.Ub, method);                       
 
         [vp, vs, rho] = bsPreRecoverElasticParam(xOut, GPreInvParam.mode, model.lsdCoef);

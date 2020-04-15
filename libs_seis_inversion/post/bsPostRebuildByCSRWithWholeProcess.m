@@ -80,8 +80,7 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
     %% ÑµÁ·×Öµä
     fprintf('ÑµÁ·ÁªºÏ×ÖµäÖÐ...\n');
     
-    [DIC, train_ids, rangeCoef, output] = bsTrainDics(GTrainDICParam, outLogs, train_ids, ...
-        [ 1, 2], GTrainDICParam.isRebuild);
+    [DIC, train_ids, rangeCoef, output] = bsTrainDics(GTrainDICParam, outLogs, train_ids, [ 1, 2]);
 
     
     GInvWellSparse = bsCreateGSparseInvParam(DIC, GTrainDICParam, ...

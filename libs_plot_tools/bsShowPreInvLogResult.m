@@ -1,5 +1,5 @@
-function bsShowPreInvLogResult(GPreInvParam, GShowProfileParam, ...
-    invVals, trueLogFiltcoef, isShowSynSeisComparasion)
+function bsShowPreInvLogResult(GInvParam, GShowProfileParam, ...
+    invVals, trueLogFiltcoef, isShowSynSeisComparasion, timeLine)
 
     if ~exist('isShowSynSeisComparasion', 'var')
         isShowSynSeisComparasion = 1;
@@ -12,15 +12,30 @@ function bsShowPreInvLogResult(GPreInvParam, GShowProfileParam, ...
     trueLog = model.trueLog;
     
     sampNum = size(model.trueLog, 1);
-    t = (model.t0 : GPreInvParam.dt : model.t0 + (sampNum-1)*GPreInvParam.dt) / 1000;
+    t = (model.t0 : GInvParam.dt : model.t0 + (sampNum-1)*GInvParam.dt) / 1000;
     
+    type = invVals{1}.type;
+    ntype = length(type);
     
+    % »æÖÆ²ãÎ»Ïß
+    is_plot_timeline = false;
+    
+    if exist('timeLine', 'var')
+        is_plot_timeline = true;
+        times = zeros(1, length(timeLine));
+        
+        for iLine = 1 : length(timeLine)
+            times(iLine) = bsGetHorizonTime(timeLine{iLine}, invVals{1}.inIds, invVals{1}.crossIds, 0) / 1000;
+        end
+    end
+        
     bsShowInvLog();
     
     if isShowSynSeisComparasion
         bsShowSyntheticSeisData();
     end
-    
+   
+  
     function bsShowInvLog()
         hf = figure;
         bsSetPreFigureSize(nItems);
@@ -34,40 +49,76 @@ function bsShowPreInvLogResult(GPreInvParam, GShowProfileParam, ...
             if trueLogFiltcoef>0 && trueLogFiltcoef<1
                 trueLog = bsFiltWelllog(trueLog, trueLogFiltcoef);
             end
-
-            bsShowPostSubInvLogResult(GPlotParam, ...
-                invVal.vp/1000, trueLog(:, 2)/1000, model.initLog(:, 2)/1000, ...
-                t, invVal.name, 'V_P (km/s)', GShowProfileParam.range.vp/1000, ...
-                nItems, iItem, 1);
             
-            bsShowPostSubInvLogResult(GPlotParam, ...
-                invVal.vs/1000, trueLog(:, 3)/1000, model.initLog(:, 3)/1000, ...
-                t, invVal.name, 'V_S (km/s)', GShowProfileParam.range.vs/1000, ...
-                nItems, iItem, 2);
+            for k = 1 : ntype
+                switch lower(type{k})
+                    case 'vp'
+                        
+                        index = GInvParam.indexInWellData.vp;
+                        range = GShowProfileParam.range.vp/1000;
+                        
+                        bsShowPostSubInvLogResult(GPlotParam, ...
+                        invVal.data{k}/1000, trueLog(:, index)/1000, model.initLog(:, index)/1000, ...
+                        t, invVal.name, 'V_P (km/s)', range, ...
+                        nItems, iItem, k, ntype);
+                    case 'vs'
+                        index = GInvParam.indexInWellData.vs;
+                        range = GShowProfileParam.range.vs/1000;
+                        
+                        bsShowPostSubInvLogResult(GPlotParam, ...
+                        invVal.data{k}/1000, trueLog(:, index)/1000, model.initLog(:, index)/1000, ...
+                        t, invVal.name, 'V_S (km/s)', range, ...
+                        nItems, iItem, k, ntype);
             
-            bsShowPostSubInvLogResult(GPlotParam, ...
-                invVal.rho, trueLog(:, 4), model.initLog(:, 4), ...
-                t, invVal.name, '\rho (g/cm^3)', GShowProfileParam.range.rho, ...
-                nItems, iItem, 3);
-
+                    case 'rho'
+                        index = GInvParam.indexInWellData.rho;
+                        range = GShowProfileParam.range.rho;
+                        
+                        bsShowPostSubInvLogResult(GPlotParam, ...
+                            invVal.data{k}, trueLog(:, index), model.initLog(:, index), ...
+                            t, invVal.name, '\rho (g/cm^3)', range, ...
+                            nItems, iItem, k, ntype);
+                    case {'vp_vs', 'vsvs_ratio', 'vp_vs_ratio'}
+                        vpvs_trueLog = bsGetVp_Vs(trueLog(:, GInvParam.indexInWellData.vp), trueLog(:, GInvParam.indexInWellData.vs));
+                        vpvs_initLog = bsGetVp_Vs(model.initLog(:, GInvParam.indexInWellData.vp), model.initLog(:, GInvParam.indexInWellData.vs));
+                        range = GShowProfileParam.range.vpvs_ratio;
+                        
+                        bsShowPostSubInvLogResult(GPlotParam, ...
+                            invVal.data{k}, vpvs_trueLog, vpvs_initLog, ...
+                            t, invVal.name, 'VpVs Ratio', range, ...
+                            nItems, iItem, k, ntype);
+                end
+                
+                if is_plot_timeline
+                    colors = {'c--', 'k--', 'y--'};
+                    
+                    for ii = 1 : length(timeLine)
+                        plot(range, [times(ii), times(ii)], colors{ii}, 'linewidth', 2);
+                    end
+                end
+        
+            end
+            
         end
 
         legends = {'Initial model', 'Real model', 'Inversion result'};
         bsSetLegend(GPlotParam, {'g', 'b-.', 'r'}, legends);
        
+        
+        
     end
 
     function bsShowSyntheticSeisData()
         hf = figure;
-        bsSetPreFigureSize(ceil((nItems+2)/3));
+        bsSetPreFigureSize(ceil((nItems+2)/2));
         angleData = model.angleData;
         if max(angleData < 5)
             angleData = angleData / pi * 180;
         end
         angleData = round(angleData);
         
-        synFromTrue = reshape(model.G * model.trueX, sampNum-1, GPreInvParam.angleTrNum);
-        seisData = reshape(model.original_d, sampNum-1, GPreInvParam.angleTrNum);
+        synFromTrue = reshape(model.G * model.trueX, sampNum-1, GInvParam.angleTrNum);
+        seisData = reshape(model.original_d, sampNum-1, GInvParam.angleTrNum);
         
         bsShowPreSubSynSeisData(GPlotParam, 'real', seisData, t, angleData, nItems, 1);
         bsShowPreSubSynSeisData(GPlotParam, 'synthetic from welllog', synFromTrue, t, angleData, nItems, 2);
@@ -79,10 +130,10 @@ function bsShowPreInvLogResult(GPreInvParam, GShowProfileParam, ...
 
             invVal = invVals{iItem};
             
-            invLog = [bsGetDepth(invVal.vp, GPreInvParam.dt), invVal.vp, invVal.vs, invVal.rho];
-            x1 = bsPreBuildModelParam(invLog, GPreInvParam.mode, model.lsdCoef);
+            invLog = [bsGetDepth(invVal.data{1}, GInvParam.dt), invVal.data{1}, invVal.data{2}, invVal.data{3}];
+            x1 = bsPreBuildModelParam(invLog, GInvParam.mode, model.lsdCoef);
             
-            synFromInv = reshape(model.G * x1, sampNum-1, GPreInvParam.angleTrNum);
+            synFromInv = reshape(model.G * x1, sampNum-1, GInvParam.angleTrNum);
             
             
             
@@ -123,19 +174,6 @@ function bsSetLegend(GPlotParam, colors, legends, attrName)
     end
 end
 
-function bsSetFigureSize(nPlot)
-    switch nPlot
-        case 1
-            bsSetPosition(0.13, 0.45);
-        case 2
-            bsSetPosition(0.56, 0.45);
-        case 3
-            bsSetPosition(0.56, 0.45);
-        otherwise
-            bsSetPosition(0.34, 0.45);
-    end
-end
-
 function bsSetSubPlotSize(nItems, iItem)
     switch nItems
         case {1, 2, 3}
@@ -150,7 +188,8 @@ function bsSetPreFigureSize(nPlot)
         case 1
             bsSetPosition(0.44, 0.27);
         case 2
-            bsSetPosition(0.44, 0.48);
+%             bsSetPosition(0.44, 0.48);
+            set(gcf, 'position', [308          54        1231         710]);
         case 3
             bsSetPosition(0.44, 0.68);
         otherwise
@@ -158,31 +197,39 @@ function bsSetPreFigureSize(nPlot)
     end
 end
 
-function bsSetPreSubPlotSize(nItems, iItem, k)
+function bsSetPreSubPlotSize(nItems, iItem, k, ntype)
+    if nargin < 4
+        ntype = 3;
+    end
     
-    index = 3 * (iItem - 1) + k;
+    index = ntype * (iItem - 1) + k;
     switch nItems
         case 1
-            bsSubPlotFit(nItems, 3, index, 0.93, 0.75, 0.02, 0.00, 0.06, -0.05);
+            bsSubPlotFit(nItems, ntype, index, 0.93, 0.75, 0.02, 0.00, 0.06, -0.05);
         case 2
-            bsSubPlotFit(nItems, 3, index, 0.93, 0.88, 0.02, 0.05, 0.06, 0.01);
+            bsSubPlotFit(nItems, ntype, index, 0.93, 0.88, 0.02, 0.05, 0.06, 0.01);
         case 3
-            bsSubPlotFit(nItems, 3, index, 0.93, 0.91, 0.02, 0.04, 0.06, 0.01);
+            bsSubPlotFit(nItems, ntype, index, 0.93, 0.91, 0.02, 0.04, 0.06, 0.01);
         case 4
-            bsSubPlotFit(nItems, 3, index, 0.93, 0.92, 0.02, 0.03, 0.06, 0.00);
+            bsSubPlotFit(nItems, ntype, index, 0.93, 0.92, 0.02, 0.03, 0.06, 0.00);
     end
 end
 
 %% show comparasions of welllog inversion results
 function bsShowPostSubInvLogResult(GPlotParam, ...
     invVal, trueVal, initVal, ...
-    t, tmethod, attName, range, nItems, iItem, k)
-
-    bsSetPreSubPlotSize(nItems, iItem, k);
+    t, tmethod, attName, range, nItems, iItem, k, ntype)
+    
+    
+    bsSetPreSubPlotSize(nItems, iItem, k, ntype);
     plot(initVal, t, 'g', 'linewidth', GPlotParam.linewidth); hold on;
     plot(trueVal, t, 'b-.', 'LineWidth', GPlotParam.linewidth);   hold on;
     plot(invVal, t, 'r','LineWidth', GPlotParam.linewidth);    hold on;
         
+    if exist('timeLine', 'var')
+        
+    end
+    
     if k == 1
         ylabel('Time (s)');
     else
@@ -238,9 +285,9 @@ end
 function bsShowPreSubSynSeisData(GPlotParam, tmethod, data, t, angleData, nItems, iItem)
 
 %     bsSetPreSubPlotSize(nItems, iItem, k);
-    nRow = ceil((nItems+2)/3);
+    nRow = ceil((nItems+2)/2);
 %     subplot(nRow, 3, iItem);
-    bsSubPlotFit(nRow, 3, iItem, 0.93, 0.92, 0.02, 0.11, 0.06, -0.02);
+    bsSubPlotFit(nRow, 2, iItem, 0.90, 0.93, 0.02, 0.11, 0.07, -0.0);
     
     wiggles = {'k', 'b', 'r'};
     peaks = {'k', 'b', 'r'};
@@ -251,7 +298,7 @@ function bsShowPreSubSynSeisData(GPlotParam, tmethod, data, t, angleData, nItems
 %         {'peak_fill', peaks{k}});
     
     
-    if mod(iItem, 3) == 1
+    if mod(iItem, 2) == 1
         ylabel('Time (s)');
     else
         set(gca, 'ytick', [], 'yticklabel', []);

@@ -9,7 +9,7 @@ function postSeisData = bsGetPostSeisData(GInvParam, inIds, crossIds, startTime,
             startTime, ...
             sampNum, ...
             GInvParam.dt);
-    else
+    elseif ~strcmpi(GInvParam.preSeisData.mode, 'angle_separate_files')
         postSeisData = bsStackPreSeisData(...
             GInvParam.preSeisData.fileName, ...
             GInvParam.preSeisData.segyInfo, ...
@@ -18,6 +18,19 @@ function postSeisData = bsGetPostSeisData(GInvParam, inIds, crossIds, startTime,
             startTime, ...
             sampNum, ...
             GInvParam.dt);
+    else
+        separates = GInvParam.preSeisData.separates;
+        traceNum = length(inIds);
+        
+        postSeisData = zeros(sampNum, traceNum);
+        
+        for i = 1 : traceNum
+            angleSeisData = bsReadMultiSegyFiles(separates, inIds(i), crossIds(i), ...
+                startTime(i), sampNum, GInvParam.dt);
+            
+            postSeisData(:, i) = sum(angleSeisData, 2) / length(separates);
+        end
+        
     end
     
 end

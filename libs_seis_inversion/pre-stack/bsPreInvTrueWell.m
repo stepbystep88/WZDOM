@@ -55,24 +55,27 @@ function [invVals, model, outputs] = bsPreInvTrueWell(GPreInvParam, wellInfo, ti
         
         method.mode = GPreInvParam.mode;
         method.lsdCoef = model.lsdCoef;
+        method.options.inline = wellInfo.inline;
+        method.options.crossline = wellInfo.crossline;
         
         tic;
         [xOut, fval, exitFlag, output] = bsPreInv1DTrace(...
             model.d, model.G, model.initX, model.Lb, model.Ub, method);       
  
-        [res.vp, res.vs, res.rho] = bsPreRecoverElasticParam(xOut, GPreInvParam.mode, model.lsdCoef);
+        [res.data{1}, res.data{2}, res.data{3}] = bsPreRecoverElasticParam(xOut, GPreInvParam.mode, model.lsdCoef);
         res.t0 = model.t0;
         res.name = method.name;
         res.model = model;
-        res.inline = wellInfo.inline;
-        res.crossline = wellInfo.crossline;
+        res.inIds = wellInfo.inline;
+        res.crossIds = wellInfo.crossline;
+        res.type = {'vp', 'vs', 'rho'};
         
         invVals{i} = res;
         
         output.timeCost = toc;
-        output.RMSEVp = sqrt(mse(res.vp - trueLog(:, 2)));
-        output.RMSEVs = sqrt(mse(res.vs - trueLog(:, 3)));
-        output.RMSERho = sqrt(mse(res.rho - trueLog(:, 4)));
+        output.RMSEVp = sqrt(mse(res.data{1} - trueLog(:, 2)));
+        output.RMSEVs = sqrt(mse(res.data{2} - trueLog(:, 3)));
+        output.RMSERho = sqrt(mse(res.data{3} - trueLog(:, 4)));
         outputs{i} = output;
         
         fprintf('[RMSEVp=%.2e, RMSEVs=%.2e, RMSERho=%.2e, fval=%.3e, timeCost=%.2f, exitFlag=%d]\n', ...
