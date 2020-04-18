@@ -36,7 +36,7 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
             GTrainDICParam.title = sprintf('%s_highCut_%.2f', ...
                 GTrainDICParam.title, options.highCut);
         case 'low_high'
-            GTrainDICParam.normailzationMode = 'whole_data_max_min';
+%             GTrainDICParam.normailzationMode = 'whole_data_max_min';
             options.gamma = 1;
             GTrainDICParam.title = sprintf('%s_lowCut_%.2f_highCut_%.2f', ...
                 GTrainDICParam.title, options.lowCut, options.highCut);

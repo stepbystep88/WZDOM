@@ -38,7 +38,7 @@ function [outputData, highData, gamma_vals, gamma_locs] = ...
     end
     
     % parallel computing
-    parfor iTrace = 1 : traceNum
+    for iTrace = 1 : traceNum
         outputData(:, iTrace) = bsHandleOneTrace(inputData(:, iTrace), highData(:, iTrace), options, dt);
         bsIncParforProgress(pbm, iTrace, 10000);
     end
@@ -120,7 +120,7 @@ function newData = bsHandleOneTrace(realData, avgData, options, dt)
 
             ft = 1/dt*1000/2;
             newData = bsMixTwoSignal(realData, avgData, options.lowCut*ft, options.lowCut*ft, dt/1000);
-%         bsShowFFTResultsComparison(1, [realData, tmpData, newData], {'反演结果', '高频', '合并'});
+%         bsShowFFTResultsComparison(1, [realData, avgData, newData], {'反演结果', '高频', '合并'});
         case {'full_freq'}
             newData = avgData;
         case 'residual'
