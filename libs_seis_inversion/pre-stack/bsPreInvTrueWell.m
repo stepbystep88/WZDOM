@@ -68,6 +68,8 @@ function [invVals, model, outputs] = bsPreInvTrueWell(GPreInvParam, wellInfo, ti
         res.model = model;
         res.inIds = wellInfo.inline;
         res.crossIds = wellInfo.crossline;
+        res.xOut = xOut;
+        
         res.type = {'vp', 'vs', 'rho'};
         
         invVals{i} = res;

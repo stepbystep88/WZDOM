@@ -9,7 +9,12 @@ function [G] = bsPreBuildGMatrix(mode, vp, vs, angleData, wavelet, extraInfo)
     angleTrNum = length(angleData);
     
     [c1, c2, c3] = bsAkiSyn(angleData, vp, vs); 
-    G = bsGenGByMode(mode, c1, c2, c3, sampNum, angleTrNum, wavelet, extraInfo);
+    
+    if(length(wavelet) == 1)
+        G = bsGenGByMode(mode, c1, c2, c3, sampNum, angleTrNum, wavelet, extraInfo);
+    else
+        G = bsGenGByMode_MulWavelet(mode, c1, c2, c3, sampNum, angleTrNum, wavelet, extraInfo);
+    end
     
 end
 
@@ -103,3 +108,59 @@ function G = bsGenGByMode(mode, c1, c2, c3, sampNum, angleTrNum, wavelet, extraI
     G = sparse( cell2mat(cellG) );
 end
 
+function G = bsGenGByMode_MulWavelet(mode, c1, c2, c3, sampNum, angleTrNum, wavelet, extraInfo)
+    
+    W = cell(1, angleTrNum);
+    for i = 1 : angleTrNum
+        W{i} = bsWaveletMatrix(sampNum-1, wavelet{i});
+    end
+    
+    cellG = cell(angleTrNum, 3);
+
+    switch lower(mode)
+        case 'lpsd_fit'
+            D = bsGen1DDiffOperator(sampNum, 1, 1);
+            k = extraInfo.lsCoef(1);
+            m = extraInfo.ldCoef(1);
+            new_c1 = 0.5*c1 + 0.5*k*c2 + 0.5*m*c3;
+            new_c2 = 0.5*c2;
+            for i = 1 : angleTrNum
+                newC1 = diag( new_c1(1:sampNum-1, i) );
+                newC2 = diag( new_c2(1:sampNum-1, i) );
+                newC3 = diag( c3(1:sampNum-1, i) );
+
+                cellG{i, 1} = W{i} * newC1 * D;
+                cellG{i, 2} = W{i} * newC2 * D;
+                cellG{i, 3} = W{i} * newC3 * D;
+            end
+        case 'lpsd'
+            D = bsGen1DDiffOperator(sampNum, 1, 1);
+            for i = 1 : angleTrNum
+                newC1 = diag( 0.5*c1(1:sampNum-1, i) );
+                newC2 = diag( 0.5*c2(1:sampNum-1, i) );
+                newC3 = diag( 0.5*c3(1:sampNum-1, i) );
+
+                cellG{i, 1} = W{i} * newC1 * D;
+                cellG{i, 2} = W{i} * newC2 * D;
+                cellG{i, 3} = W{i} * newC3 * D;
+
+
+            end
+
+        case 'reflectivity'
+            for i = 1 : angleTrNum
+                newC1 = diag( 0.5*c1(1:sampNum-1, i) );
+                newC2 = diag( 0.5*c2(1:sampNum-1, i) );
+                newC3 = diag( 0.5*c3(1:sampNum-1, i) );
+
+                cellG{i, 1} = W{i} * newC1;
+                cellG{i, 2} = W{i} * newC2;
+                cellG{i, 3} = W{i} * newC3;
+            end
+
+        otherwise
+            
+    end
+        
+    G = sparse( cell2mat(cellG) );
+end

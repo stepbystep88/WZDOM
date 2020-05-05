@@ -61,7 +61,7 @@ function [DIC, trainIndex, rangeCoef, output] = bsTrainDics(GTrainDICParam, true
                 end
              
                 % learn dictionary 
-                [DIC{k}] = bsTrain1DSparseDIC(trainLogs, GTrainDICParam, xs, ys);
+                [DIC{k}, rangeCoef, output] = bsTrain1DSparseDIC(trainLogs, GTrainDICParam, xs, ys);
             end
             
             if strcmpi(GTrainDICParam.flag, 'one')

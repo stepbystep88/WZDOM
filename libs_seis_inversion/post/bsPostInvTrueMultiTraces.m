@@ -234,6 +234,8 @@ function [idata, model, output] = bsPostInvOneTrace(GPostInvParam, horizonTime, 
             end
         end
 
+        method.options.inline = inId;
+        method.options.crossline = crossId;
         [xOut, ~, ~, output] = bsPostInv1DTrace(model.d, model.G, model.initX, model.Lb, model.Ub, method);                       
 
         idata = exp(xOut);

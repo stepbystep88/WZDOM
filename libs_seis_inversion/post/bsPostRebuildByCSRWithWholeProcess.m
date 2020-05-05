@@ -14,6 +14,10 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
     addParameter(p, 'ratio_to_reconstruction', '1');
     addParameter(p, 'mode', 'low_high');
     addParameter(p, 'nNeibor', '2');
+    
+    % 相邻多个块同时稀疏表示的个数
+    addParameter(p, 'nMultipleTrace', '1');
+    
     addParameter(p, 'lowCut', 0.1);
     addParameter(p, 'highCut', 1);
     addParameter(p, 'sparsity', 5);
@@ -66,6 +70,7 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
     );
 
     fprintf('反演所有测井中...\n');
+    methods{1}.load.mode = 'segy';
     wellInvResults = bsPostInvTrueMultiTraces(GInvParamWell, wellInIds, wellCrossIds, timeLine, methods);
     
     set_diff = setdiff(1:length(wellInIds), options.exception);
@@ -111,8 +116,11 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
             inputData = bsGetPostSeisData(GInvParam, invResult.inIds, invResult.crossIds, startTime, sampNum);
     end
         
-    [outputData] = bsPostReBuildPlusInterpolationCSR(GInvParam, GInvWellSparse, inputData, invResult.inIds, invResult.crossIds, options);
-    
+    if options.nMultipleTrace <= 1
+        [outputData] = bsPostReBuildPlusInterpolationCSR(GInvParam, GInvWellSparse, inputData, invResult.inIds, invResult.crossIds, options);
+    else
+        [outputData] = bsPostReBuildMulTraceCSR(GInvParam, GInvWellSparse, inputData, invResult.inIds, invResult.crossIds, options);
+    end
     
     
     outResult = bsSetFields(invResult, {'data', outputData; 'name', name});

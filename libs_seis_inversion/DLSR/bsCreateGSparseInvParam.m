@@ -22,6 +22,10 @@ function options = bsCreateGSparseInvParam(DIC, GTrainDICParam, varargin)
     
     addParameter(p, 'DIC', DIC);
     
+	 % the coeficient of normalization, for training CSR dictionary
+	addParameter(p, 'rangeCoef', []); 
+    
+    
     addParameter(p, 'output', []);
     
     addParameter(p, 'nNeibor', 2);
@@ -39,9 +43,7 @@ function options = bsCreateGSparseInvParam(DIC, GTrainDICParam, varargin)
 %     validatestring(lower(flag), {'ssr', 'csr', 'one'});
     
     if strcmpi(GTrainDICParam.flag, 'csr')
-        % the coeficient of normalization, for training CSR dictionary
-        addParameter(p, 'rangeCoef', []); 
-    
+
         % whether to modify the joint dictionary and sparse representation
         % see Eq. 9 Sparse Representation for Color Image Restoration for details
         addParameter(p, 'isModifiedDIC', 0); 

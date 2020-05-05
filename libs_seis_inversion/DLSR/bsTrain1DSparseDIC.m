@@ -1,4 +1,4 @@
-function DIC = bsTrain1DSparseDIC(datas, GTrainDICParam, xs, ys)
+function [DIC, rangeCoef, output] = bsTrain1DSparseDIC(datas, GTrainDICParam, xs, ys)
 %% To train a dictionary by using K-SVD algorithm
 %
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
@@ -25,7 +25,9 @@ function DIC = bsTrain1DSparseDIC(datas, GTrainDICParam, xs, ys)
     % patches with the same length which are used to train the spare
     % dictionary
     patches = [];
-
+    rangeCoef = [];
+    output = [];
+    
     % generate patches
     for i = 1 : nCols
         data = datas{i};
@@ -42,14 +44,51 @@ function DIC = bsTrain1DSparseDIC(datas, GTrainDICParam, xs, ys)
             data = filtfilt(b, a, data);
         end
         
+        
+    
         % gather patches toghter
         for j = 1 : GTrainDICParam.stride : num - GTrainDICParam.sizeAtom + 1
-            patches = [patches, data(j : j+GTrainDICParam.sizeAtom-1)];
+            
+            patch = data(j:j+GTrainDICParam.sizeAtom-1);
+        
+            if GTrainDICParam.isAddLocInfo && GTrainDICParam.isAddTimeInfo
+                subData = [xs(i); ys(i); j; patch];
+            elseif GTrainDICParam.isAddLocInfo
+                subData = [xs(i); ys(i); patch];
+            elseif GTrainDICParam.isAddTimeInfo
+                subData = [j; patch];
+            else
+                subData = patch;
+            end
+        
+            patches = [patches, subData];
         end
     end
    
+    switch GTrainDICParam.normalizationMode
+        case 'off'
+            rangeCoef = [];
+            
+        case 'feat_max_min'
+            min_value = min(patches, [], 2);
+            max_value = max(patches, [], 2);
+
+            rangeCoef = [min_value, max_value];
+
+            min_value = repmat(min_value, 1, size(patches, 2));
+            max_value = repmat(max_value, 1, size(patches, 2));
+
+            patches = (patches - min_value) ./ (max_value - min_value);
+    end
     
-    params.data = patches;
+    if ~strcmp(GTrainDICParam.feature_reduction, 'off')
+        [new_patches, output.B] = bsReduction(patches, GTrainDICParam.n_reduced_feature);
+    else
+        new_patches = patches;
+    end
+    
+    
+    params.data = new_patches;
     params.Tdata = GTrainDICParam.sparsity;
     params.dictsize = GTrainDICParam.nAtom;
     params.iternum = GTrainDICParam.iterNum;

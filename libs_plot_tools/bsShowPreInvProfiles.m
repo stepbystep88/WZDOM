@@ -1,4 +1,8 @@
-function bsShowPreInvProfiles(GPreInvParam, GShowProfileParam, invResults, wellLogs, timeLine)
+function bsShowPreInvProfiles(GPreInvParam, GShowProfileParam, invResults, wellLogs, timeLine, position)
+    if nargin < 6
+        position = [243         107        1152         670];
+    end
+    
     nResults = length(invResults);
     
     profiles = invResults;
@@ -45,7 +49,7 @@ function bsShowPreInvProfiles(GPreInvParam, GShowProfileParam, invResults, wellL
 %                 set(gcf, 'position', [97         115        1690         612]);
 %                 set(gcf, 'position', [ 243         107        1677         440]);
 %                 set(gcf, 'position', [ 243         107        1677         553]);
-                set(gcf, 'position', [ 243         107        1152         670]);
+                set(gcf, 'position', position);
             end
         end
         

@@ -130,10 +130,10 @@ function bsShowPreInvLogResult(GInvParam, GShowProfileParam, ...
 
             invVal = invVals{iItem};
             
-            invLog = [bsGetDepth(invVal.data{1}, GInvParam.dt), invVal.data{1}, invVal.data{2}, invVal.data{3}];
-            x1 = bsPreBuildModelParam(invLog, GInvParam.mode, model.lsdCoef);
-            
-            synFromInv = reshape(model.G * x1, sampNum-1, GInvParam.angleTrNum);
+%             invLog = [bsGetDepth(invVal.data{1}, GInvParam.dt), invVal.data{1}, invVal.data{2}, invVal.data{3}];
+%             x1 = bsPreBuildModelParam(invLog, GInvParam.mode, model.lsdCoef);
+            d = invVal.model.G * invVal.xOut;
+            synFromInv = reshape(d, sampNum-1, GInvParam.angleTrNum);
             
             
             

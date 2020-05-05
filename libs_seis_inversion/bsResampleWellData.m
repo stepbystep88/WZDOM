@@ -1,4 +1,4 @@
-function wellData = bsResampleWellData(data, dataIndex, vpIndex, depthIndex, timeIndex, dt)
+function wellData = bsResampleWellData(data, dataIndex, timeIndex, dt)
     
     ct = 0;
     sampNum = size(data, 1);
@@ -9,10 +9,7 @@ function wellData = bsResampleWellData(data, dataIndex, vpIndex, depthIndex, tim
     num = 1;
     
     for i = 2 : sampNum
-        depth = data(i, depthIndex);
-        
-        
-        dz = depth - data(i-1, depthIndex);
+       
 %         it = dz * 2 / data(i, vpIndex) * 1000;
         it = data(i, timeIndex) - data(i-1, timeIndex);
         ct = ct + it;
@@ -21,7 +18,7 @@ function wellData = bsResampleWellData(data, dataIndex, vpIndex, depthIndex, tim
         num = num + 1;
         if ct > dt
             if isempty(timeIndex) || timeIndex<0
-                wellData = [wellData; [depth, sumData/num]];
+                wellData = [wellData; sumData/num];
             else
                 
 %                 if isempty(wellData)
@@ -35,9 +32,9 @@ function wellData = bsResampleWellData(data, dataIndex, vpIndex, depthIndex, tim
                 
                 if isempty(wellData)
                     time = data(i, timeIndex);
-                    wellData = [wellData; [depth, sumData(1:end-1)/num, round(sumData(end)/num)]];
+                    wellData = [wellData; [sumData(1:end-1)/num, round(sumData(end)/num)]];
                 else
-                    wellData = [wellData; [depth, sumData(1:end-1)/num, wellData(end, end) + dt]];
+                    wellData = [wellData; [sumData(1:end-1)/num, wellData(end, end) + dt]];
                 end
                 
             end
