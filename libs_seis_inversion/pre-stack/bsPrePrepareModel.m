@@ -20,6 +20,12 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
             initLog = bsReadMultiSegyFiles(...
                 [initModel.vp, initModel.vs, initModel.rho], ...
                 inline, crossline, startTime, sampNum, GPreInvParam.dt);
+            
+            if isfield(initModel, 'format') && strcmp(initModel.format, 'ipis')
+                initLog(:, 1) = initLog(:, 1) ./  initLog(:, 3);
+                initLog(:, 2) = initLog(:, 2) ./  initLog(:, 3);
+            end
+            
             depth = bsGetDepth(initLog(:, 1), GPreInvParam.dt);
             initLog = [depth, initLog];
             initLog = bsFiltWelllog(initLog, initModel.filtCoef);
