@@ -73,12 +73,12 @@ function [pkgs, updateFcn, initialFcn] = bsPicewiseSmoothReg(xInit, Lb, Ub, main
     pkgs.params = params;
     
     
-    funcs.lambda1 = lambda1 / alpha;
+    funcs.lambda1 = lambda1 / (1 - alpha);
     % for piecewise smooth algorithm, the bigger lambda2 (smooth part), the
     % result will be more blocky, to enhence the blockiness, I use a huge
     % lambda2 when alpha is close to 1
 %     funcs.lambda2 = lambda2 * 5 ^ (10 * alpha);
-    funcs.lambda2 = lambda2 / (1 - alpha);
+    funcs.lambda2 = lambda2 / alpha;
     
 
     funcs.eta = input.eta;

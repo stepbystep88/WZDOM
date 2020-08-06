@@ -208,7 +208,7 @@ function [invResults] = bsPostInvTrueMultiTracesPlusLateralContinuty(GInvParam, 
         models{1} = preModel;
         xs(:, 1) = models{1}.initX;
         
-        for iTrace = 2 : traceNum
+        parfor iTrace = 2 : traceNum
             models{iTrace} = bsPostPrepareModel(GInvParam, inIds(iTrace), crossIds(iTrace), horizonTimes(iTrace), [], preModel);
             xs(:, iTrace) = models{iTrace}.initX;
             bsIncParforProgress(pbm, iTrace, 100);
@@ -229,10 +229,41 @@ function [invResults] = bsPostInvTrueMultiTracesPlusLateralContinuty(GInvParam, 
             Ips = exp(xs);
             
             fprintf("第%d次迭代：稀疏重构\n", iter);
+%             all_patches = cell(1, traceNum);
+%             
+%             index = GSParam.index;
+%             ncell = GSParam.ncell;
+%             sizeAtom = GSParam.sizeAtom;
+%             data = cell(1, traceNum);
+%             tic
+%             for iTrace = 1 : traceNum
+%                 data{iTrace} = Ips(:, neiboors{iTrace});
+%             end
+%             toc 
+%             tic
             for iTrace = 1 : traceNum
-                
+%             spmd
+%                 nBlock = length(neiboors{iTrace});
+%                 all_patches{iTrace} = getAllPatches(data{iTrace}, nBlock, sizeAtom, ncell, index);
                 avg_xs(:, iTrace) = sparseRebuildOneTrace(GSParam, Ips(:, neiboors{iTrace}));
+                bsIncParforProgress(pbm, iTrace, 100);
             end
+            
+%             gammas = omp(GSParam.ODIC'*cell2mat(all_patches), GSParam.omp_G, GSParam.sparsity);
+%             new_patches = GSParam.DIC *  gammas;
+            
+%             new_patches_cell = cell(1, traceNum);
+%             for iTrace = 1 : traceNum
+%                 spos = (iTrace - 1) * ncell + 1;
+%                 epos = spos + ncell - 1;
+%                 
+%                 new_patches_cell{iTrace} = new_patches(:, spos:epos);
+%             end
+            
+%             parfor iTrace = 1 : traceNum
+%                 avg_xs(:, iTrace) = bsAvgPatches(new_patches_cell{iTrace}, index, size(data{iTrace}, 1));
+%             end
+%             toc
             
             fprintf("第%d次迭代：反演结果合并\n", iter);
             parfor iTrace = 1 : traceNum
@@ -259,6 +290,25 @@ function xOut = invNormalOneTrace(xInit, model, mainFunc, lambda, initRegParam, 
     [xOut, ~, ~, ~] = bsGBSolveByOptions(inputObjFcnPkgs, xInit, [], [], GBOptions);
 end
 
+function all_patches = getAllPatches(input, nBlock, sizeAtom, ncell, index)
+    all_patches = zeros(sizeAtom*nBlock, ncell);
+    patches = zeros(sizeAtom, ncell);
+    
+    for k = 1 : nBlock
+        sPos = (k-1)*sizeAtom + 1;
+        ePos = sPos + sizeAtom - 1;
+        
+        for j = 1 : ncell
+            js = index(j);
+            patches(:, j) = input(js : js+sizeAtom-1, k);
+        end
+        
+        all_patches(sPos:ePos, :) = patches;
+        
+    end
+end
+
+% function 
 function avgLog = sparseRebuildOneTrace(GSParam, input)
     % sparse reconstruction
 

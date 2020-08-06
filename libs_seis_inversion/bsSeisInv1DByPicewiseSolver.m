@@ -120,9 +120,10 @@ function [xOut, fval, exitFlag, output] = bsSeisInv1DByPicewiseSolver(d, G, xIni
     GBOptions.display = 'off';
     GBOptions.plotFcn = [];
     GBOptions.isSaveMiddleRes = false;
-    parampkgs.x1 = bsGBSolveByOptions(parampkgs.inputObjFcnPkgs1, xInit, [], [], GBOptions); 
-    parampkgs.x2 = bsGBSolveByOptions(parampkgs.inputObjFcnPkgs2, xInit, [], [], GBOptions); 
-    
+%     parampkgs.x1 = bsGBSolveByOptions(parampkgs.inputObjFcnPkgs1, xInit, [], [], GBOptions); 
+%     parampkgs.x2 = bsGBSolveByOptions(parampkgs.inputObjFcnPkgs2, xInit, [], [], GBOptions); 
+    parampkgs.x1 = xInit;
+    parampkgs.x2 = xInit;
     % call regFunc to create packages and function handles to excute in
     % bsMultiParamSolver
     [pkgs, fcnUpdateParams, fcnGetInitialValue] = regFunc(xInit, Lb, Ub, mainFcnpkgs, parampkgs);

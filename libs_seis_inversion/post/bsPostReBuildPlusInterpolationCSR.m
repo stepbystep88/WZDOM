@@ -1,5 +1,5 @@
 function [outputData, highData, gamma_vals, gamma_locs] = ...
-    bsPostReBuildPlusInterpolationCSR(GInvParam, GSParam, inputData, inIds, crossIds, options)
+    bsPostReBuildPlusInterpolationCSR(GInvParam, GSParam, invData, inputData, inIds, crossIds, options)
 
     [sampNum, traceNum] = size(inputData);
 
@@ -14,11 +14,11 @@ function [outputData, highData, gamma_vals, gamma_locs] = ...
     
     dt = GInvParam.dt;
 
-    pbm = bsInitParforProgress(GInvParam.numWorkers, ...
-        traceNum, ...
-        'Rebuid data progress information', ...
-        GInvParam.modelSavePath, ...
-        GInvParam.isPrintBySavingFile);
+%     pbm = bsInitParforProgress(GInvParam.numWorkers, ...
+%         traceNum, ...
+%         'Rebuid data progress information', ...
+%         GInvParam.modelSavePath, ...
+%         GInvParam.isPrintBySavingFile);
 
     n = traceNum * options.ratio_to_reconstruction;
     seqs = round(linspace(1, traceNum, n));
@@ -26,7 +26,7 @@ function [outputData, highData, gamma_vals, gamma_locs] = ...
     for iTrace = seqs
         [highData(:, iTrace), gamma_vals(:, iTrace), gamma_locs(:, iTrace)] ...
             = bsCalcHighFreqOfOneTrace(GSParam, inputData(:, iTrace), inIds(iTrace), crossIds(iTrace), options);
-        bsIncParforProgress(pbm, iTrace, 10000);
+%         bsIncParforProgress(pbm, iTrace, 10000);
     end
 
     % 给未高分辨率的道插值
@@ -39,11 +39,11 @@ function [outputData, highData, gamma_vals, gamma_locs] = ...
     
     % parallel computing
     for iTrace = 1 : traceNum
-        outputData(:, iTrace) = bsHandleOneTrace(inputData(:, iTrace), highData(:, iTrace), options, dt);
-        bsIncParforProgress(pbm, iTrace, 10000);
+        outputData(:, iTrace) = bsHandleOneTrace(invData(:, iTrace), highData(:, iTrace), options, dt);
+%         bsIncParforProgress(pbm, iTrace, 10000);
     end
 
-    bsDeleteParforProgress(pbm);
+%     bsDeleteParforProgress(pbm);
         
 end
 

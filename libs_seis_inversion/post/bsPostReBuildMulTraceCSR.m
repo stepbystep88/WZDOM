@@ -1,5 +1,5 @@
 function [outputData, highData, gamma_vals, gamma_locs] = ...
-    bsPostReBuildMulTraceCSR(GInvParam, GSParam, inputData, inIds, crossIds, options)
+    bsPostReBuildMulTraceCSR(GInvParam, GSParam, invData, inputData, inIds, crossIds, options)
 
     [sampNum, traceNum] = size(inputData);
     
@@ -55,7 +55,7 @@ function [outputData, highData, gamma_vals, gamma_locs] = ...
     
     % parallel computing
     for iTrace = 1 : traceNum
-        outputData(:, iTrace) = bsHandleOneTrace(inputData(:, iTrace), highData(:, iTrace), options, dt);
+        outputData(:, iTrace) = bsHandleOneTrace(invData(:, iTrace), highData(:, iTrace), options, dt);
         bsIncParforProgress(pbm, iTrace, 10000);
     end
 
@@ -109,6 +109,8 @@ function [avgLog, gamma_vals, gamma_locs] = bsCalcHighFreqOfOneTrace(GSParam, re
         switch trainDICParam.normalizationMode
             case 'feat_max_min'
                 all_patches = (all_patches - GSParam.low_min_values) ./ (GSParam.low_max_values - GSParam.low_min_values);
+            case 'feat_mean_sigma'
+                all_patches = (all_patches - GSParam.low_mean_values) ./ GSParam.low_sigma_values;
             case 'whole_data_max_min'
                 all_patches = (all_patches - rangeCoef(1, 1)) / (rangeCoef(1, 2) - rangeCoef(1, 1));
         end
@@ -132,6 +134,9 @@ function [avgLog, gamma_vals, gamma_locs] = bsCalcHighFreqOfOneTrace(GSParam, re
         switch trainDICParam.normalizationMode
             case 'feat_max_min'
                 new_patches = new_patches .* (GSParam.high_max_values - GSParam.high_min_values) + GSParam.high_min_values; 
+            case 'feat_mean_sigma'
+                new_patches = new_patches .* GSParam.high_sigma_values + GSParam.high_mean_values;
+                
             case 'whole_data_max_min'
                 new_patches = new_patches .* (rangeCoef(2, 2) - rangeCoef(2, 1)) + rangeCoef(2, 1); 
         end
@@ -213,11 +218,26 @@ function GSParam = bsInitDLSRPkgs(GSParam, gamma, sampNum, options)
     rangeCoef = GSParam.rangeCoef;
     n1 = size(rangeCoef, 1) - sizeAtom;
     
-    GSParam.low_min_values = repmat(rangeCoef(1:n1, 1), nBlock, GSParam.ncell);
-    GSParam.low_max_values = repmat(rangeCoef(1:n1, 2), nBlock, GSParam.ncell);
+    switch GSParam.trainDICParam.normalizationMode
+    case 'feat_max_min'
+        GSParam.low_min_values = repmat(rangeCoef(1:n1, 1), nBlock, GSParam.ncell);
+        GSParam.low_max_values = repmat(rangeCoef(1:n1, 2), nBlock, GSParam.ncell);
+        
+        GSParam.high_min_values = repmat(rangeCoef(n1+1:end, 1), 1, GSParam.ncell);
+        GSParam.high_max_values = repmat(rangeCoef(n1+1:end, 2), 1, GSParam.ncell);
+    
+    case 'feat_mean_sigma'
+        GSParam.low_mean_values = repmat(rangeCoef(1:n1, 1), nBlock, GSParam.ncell);
+        GSParam.low_sigma_values = repmat(rangeCoef(1:n1, 2), nBlock, GSParam.ncell);
+        
+        GSParam.high_mean_values = repmat(rangeCoef(n1+1:end, 1), 1, GSParam.ncell);
+        GSParam.high_sigma_values = repmat(rangeCoef(n1+1:end, 2), 1, GSParam.ncell);
                 
-    GSParam.high_min_values = repmat(rangeCoef(n1+1:end, 1), 1, GSParam.ncell);
-    GSParam.high_max_values = repmat(rangeCoef(n1+1:end, 2), 1, GSParam.ncell);
+    end
+        
+   
+                
+    
 end
 
 function [D1, D2, C] = bsNormalDIC(D1, D2)

@@ -13,8 +13,6 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
     end
     
     
-    [basicInfo] = bsInitBasicInfoForShowingProfile(GShowProfileParam, GInvParam, wellLogs, timeLine, profiles{1});
-    
     
     figure;
     % set the screen size
@@ -26,6 +24,7 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
     
     % show profiles
     for iProfile = 1 : nProfile
+        [basicInfo] = bsInitBasicInfoForShowingProfile(GShowProfileParam, GInvParam, wellLogs, timeLine, profiles{iProfile});
         
         profile = profiles{iProfile};
         
@@ -167,9 +166,10 @@ function [nRow, nCol, loc, colorbar_pos] = setShareFigureSize(nProfile)
             bsSetPosition(0.3, 0.42);
             nRow = 1;
             nCol = 2;
-%             loc = [0.79, 0.94, 0.01, 0.07, 0.09, 0.02];
             loc = [0.88, 0.88, 0.02, 0.07, 0.05, 0.02];
             colorbar_pos = [0.93 0.05 0.01 0.9];
+%             loc = [0.79, 0.94, 0.01, 0.07, 0.09, 0.02];
+            
 %             loc = [0.84, 0.91, 0.01, 0.07, 0.06, 0.02];
 %             colorbar_pos = [0.89 0.05 0.01 0.92];
         case 3
@@ -178,8 +178,8 @@ function [nRow, nCol, loc, colorbar_pos] = setShareFigureSize(nProfile)
             nCol = 1;
 %             loc = [0.79, 0.95, 0.01, 0.04, 0.09, 0.01];
 %             colorbar_pos = [0.87 0.05 0.01 0.92];
-            loc = [0.86, 0.95, 0.01, 0.04, 0.06, 0.01];
-            colorbar_pos = [0.91 0.05 0.01 0.92];
+            loc = [0.84, 0.95, 0.02, 0.04, 0.07, 0.01];
+            colorbar_pos = [0.89 0.05 0.01 0.92];
         case 4
             bsSetPosition(0.6, 0.42);
             nRow = 2;
@@ -192,11 +192,24 @@ function [nRow, nCol, loc, colorbar_pos] = setShareFigureSize(nProfile)
             nCol = 2;
             loc = [0.89, 0.95, 0.02, 0.06, 0.05, 0.01];
             colorbar_pos = [0.93 0.05 0.01 0.92];
-        case {7, 8, 9}
+        case {7, 8}
+            bsSetPosition(0.6, 0.7);
+            nRow = 4;
+            nCol = 2;
+            loc = [0.89, 0.95, 0.025, 0.05, 0.05, 0.01];
+            colorbar_pos = [0.92 0.05 0.01 0.92];
+            
+        case {9}
             bsSetPosition(0.8, 0.65);
             nRow = 3;
             nCol = 3;
-            loc = [0.9, 0.95, 0.01, 0.04, 0.04, 0.01];
+            loc = [0.9, 0.92, 0.01, 0.045, 0.04, -0.01];
+            colorbar_pos = [0.94 0.05 0.01 0.92];
+        otherwise
+            bsSetPosition(0.9, 0.7);
+            nRow = 3;
+            nCol = 4;
+            loc = [0.9, 0.92, 0.015, 0.045, 0.04, -0.01];
             colorbar_pos = [0.94 0.05 0.01 0.92];
     end
 end
@@ -210,9 +223,12 @@ function [nRow, nCol, loc] = setFigureSize(nProfile)
             loc = [0.87, 0.82, 0.01, 0.08, 0.09, 0.00];
         case 2
             bsSetPosition(0.3, 0.42);
-            nRow = 2;
-            nCol = 1;
-            loc = [0.87, 0.91, 0.01, 0.07, 0.09, 0.02];
+%             nRow = 2;
+%             nCol = 1;
+%             loc = [0.87, 0.91, 0.01, 0.07, 0.09, 0.02];
+            nRow = 1;
+            nCol = 2;
+            loc = [0.93, 0.82, 0.02, 0.08, 0.05, 0.00];
         case 3
             bsSetPosition(0.3, 0.65);
             nRow = 3;

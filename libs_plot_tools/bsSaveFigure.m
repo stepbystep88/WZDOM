@@ -44,6 +44,9 @@ function bsSaveFigure(path, name)
 %     
     fileName = sprintf('%s/png/%s.png', path, name);
     print('-dpng', '-r600', fileName);
+    
+    fileName = sprintf('%s/jpg/%s.jpg', path, name);
+    print('-djpeg', '-r600', fileName);
 %     
     fileName = sprintf('%s/eps/%s.eps', path, name);
     print('-depsc', fileName);

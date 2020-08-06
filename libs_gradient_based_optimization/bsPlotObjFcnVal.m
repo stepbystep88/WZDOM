@@ -26,7 +26,7 @@ function [frame] = bsPlotObjFcnVal(fid, iter, fval)
     if iter == 1
         xlabel('Iteration number');
         ylabel('Objective function value');
-        bsPlotSetDefault(bsGetDefaultPlotSet());
+        bsSetDefaultPlotSet(bsGetDefaultPlotSet());
     end
     
     frame = getframe(gcf);

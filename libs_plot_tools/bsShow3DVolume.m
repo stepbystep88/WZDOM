@@ -89,11 +89,16 @@ function [houts, horizonSlices] = bsShow3DVolume(data, dt, clim, xslices, yslice
     addParameter(p, 'showsize', 1, @(x) (isscalar(x)&&(x>0)));
     addParameter(p, 'isShading', 1, @(x) (islogical(x)));
     
+    addParameter(p, 'isSmooth', 0);
+    addParameter(p, 'smoothFiltCoef', 0.3);
+    
+    addParameter(p, 'scaleFactor', 1);
+    
     p.parse(dt, clim, varargin{:});  
     params = p.Results;
     
     if params.isShading
-        params.colormap = [1 1 1; params.colormap];
+        params.colormap = [params.colormap];
     end
 
     %% calculate the wells which will be shown
@@ -133,29 +138,57 @@ function [houts, horizonSlices] = bsShow3DVolume(data, dt, clim, xslices, yslice
         end
     end
     
-    
-    %% prepare basical information
-    if isscalar(params.startTime)
-        minTime = params.startTime;
-        newSampNum = sampNum;
-        maxTime = minTime + sampNum * dt;
-        V = data;
-    else
-%         minTime = min(min(startTime));
-        % create horizons
-        [V, minTime, maxTime, newSampNum] = bsHorizontalData(data, params.startTime, dt);
+    % smooth the slice
+    if params.isSmooth
+        for i = xslices
+            profileData = reshape(data(:, i, :), sampNum, []);
+            data(:, i, :) = bsFilterProfileData(profileData, params.smoothFiltCoef, 1);
+        end    
+        for i = yslices
+            profileData = reshape(data(:, :, i), sampNum, []);
+            data(:, :, i) = bsFilterProfileData(profileData, params.smoothFiltCoef, 1);
+        end
     end
-   
-    % time information
-    t = minTime : dt : minTime + (newSampNum-1)*dt;
-    t = t / 1000;
     
     firstInline = params.firstInlineId;
     firstCrossline = params.firstCrosslineId;
     endInline = firstInline + nInline - 1;
     endCrossline = firstCrossline + nCrossline - 1;
     
-    [x, y, z] = meshgrid(firstInline : endInline, firstCrossline : endCrossline, t);
+    
+    %% prepare basical information
+    if isscalar(params.startTime)
+        minTime = params.startTime;
+        maxTime = minTime + (sampNum-1) * dt;
+        
+        t = minTime + (0:sampNum-1)*dt;
+        t = t / 1000;
+        [x3, y3, z3] = meshgrid(firstInline : endInline, firstCrossline : endCrossline, t);
+        
+        V = data;
+        
+    else
+%         minTime = min(min(startTime));
+        % create horizons
+        interval = 1 / params.scaleFactor;
+        newDt = dt * interval;
+        
+        [x3, y3, z3] = meshgrid(firstInline : interval : endInline, 1 : interval : sampNum, firstCrossline : interval : endCrossline);
+        [xx,yy,zz] = meshgrid(firstInline : endInline, 1 : sampNum, firstCrossline : endCrossline);
+        newData = interp3(xx,yy,zz,data,x3,y3,z3);
+        
+        [xx,yy] = meshgrid(firstInline : endInline, firstCrossline : endCrossline);
+        [x2,y2] = meshgrid(firstInline : interval : endInline, firstCrossline : interval : endCrossline);
+        newStartTime = interp2(xx,yy,params.startTime',x2,y2);
+        
+        [V, minTime, maxTime, newSampNum] = bsHorizontalData(newData, newStartTime', newDt);
+        
+        
+        t = minTime + (0:newSampNum-1)*newDt;
+        t = t / 1000;
+        [x3, y3, z3] = meshgrid(firstInline : interval : endInline, firstCrossline : interval : endCrossline, t);
+    end
+    
     
     %% calculate the horizons
     nHorizon = length(horizons);
@@ -179,13 +212,19 @@ function [houts, horizonSlices] = bsShow3DVolume(data, dt, clim, xslices, yslice
     
     %% start to plot the data
     p_V = permute(V, [3 2 1]);
-
-    houts = slice(x, y, z, p_V, xslices, yslices, zslices/1000, 'cubic'); hold on;
+    
+%     newp_V = interp3(xx,yy,zz,p_V,x3,y3,z3);
+    houts = slice(x3, y3, z3, p_V, xslices, yslices, zslices/1000, 'cubic'); hold on;
     horizonSlices = cell(1, nHorizon);
     
     for iHorizon = 1 : nHorizon
-        horizonSlices{iHorizon} = slice(x, y, z, p_V, zHorizons{iHorizon}.xd, zHorizons{iHorizon}.yd, zHorizons{iHorizon}.zd, 'cubic');
+        xd = interp2(xx,yy,zHorizons{iHorizon}.xd,x2,y2);
+        yd = interp2(xx,yy,zHorizons{iHorizon}.yd,x2,y2);
+        zd = interp2(xx,yy,zHorizons{iHorizon}.zd,x2,y2);
+        
+        horizonSlices{iHorizon} = slice(x3, y3, z3, p_V, xd, yd, zd, 'cubic');
     end
+    
     %% show the titles of all crossed well
     for i = 1 : size(wellPos, 1)
         ix = wellPos(i, 1);
@@ -222,13 +261,13 @@ function [houts, horizonSlices] = bsShow3DVolume(data, dt, clim, xslices, yslice
         shading flat;
     end
     
-    for i = 1 : length(houts)
-        bsChangeColorData(houts(i), params.isShading, clim, params.colormap);
-    end
-    
-    for iHorizon = 1 : nHorizon
-        bsChangeColorData(horizonSlices{iHorizon}, params.isShading, clim, params.colormap);
-    end
+%     for i = 1 : length(houts)
+%         bsChangeColorData(houts(i), params.isShading, clim, params.colormap);
+%     end
+%     
+%     for iHorizon = 1 : nHorizon
+%         bsChangeColorData(horizonSlices{iHorizon}, params.isShading, clim, params.colormap);
+%     end
     
 %     shading interp;
     

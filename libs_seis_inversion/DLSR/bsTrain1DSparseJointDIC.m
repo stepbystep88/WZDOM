@@ -23,7 +23,7 @@ function [DIC, rangeCoef, output] = bsTrain1DSparseJointDIC(datas, GTrainDICPara
         datas{j} = data;
     end
     
-    validatestring(string(GTrainDICParam.normalizationMode), {'whole_data_max_min', 'feat_max_min', 'off'});
+    validatestring(string(GTrainDICParam.normalizationMode), {'whole_data_max_min', 'feat_max_min', 'feat_mean_sigma', 'off'});
     
     % Ð¡¿éÆ´½Ó
     AP = cell(1, nAtt);
@@ -87,6 +87,20 @@ function [DIC, rangeCoef, output] = bsTrain1DSparseJointDIC(datas, GTrainDICPara
                 max_value = repmat(max_value, 1, size(AP{i}, 2));
                 
                 AP{i} = (AP{i} - min_value) ./ (max_value - min_value);
+            end
+        case 'feat_mean_sigma'
+            rangeCoef = [];
+            
+            for i = 1 : length(AP)
+                mean_value = mean(AP{i}, 2);
+                sigma_value = var(AP{i}, 0, 2);
+                
+                rangeCoef = [rangeCoef; [mean_value, sigma_value]];
+                
+                mean_value = repmat(mean_value, 1, size(AP{i}, 2));
+                sigma_value = repmat(sigma_value, 1, size(AP{i}, 2));
+                
+                AP{i} = (AP{i} - mean_value) ./ sigma_value;
             end
             
         case 'whole_data_max_min'

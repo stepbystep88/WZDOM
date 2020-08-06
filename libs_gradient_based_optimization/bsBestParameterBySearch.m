@@ -82,13 +82,13 @@ function [bestLambda, curveData] = bsBestParameterBySearch(lambdas, trueModel, i
         plot(curveData(:, 2), curveData(:, 1), 'k-*', 'linewidth', plotSet.linewidth);
         ylabel('Residual term');
         xlabel('Regularization term');
-        bsPlotSetDefault(bsGetDefaultPlotSet());
+        bsSetDefaultPlotSet(bsGetDefaultPlotSet());
         
         figure;
         plot(log(lambdas), mseModel, 'k-*', 'linewidth', plotSet.linewidth);
         xlabel('\lambda (log scale)');
         ylabel('MSE of model');
-        bsPlotSetDefault(bsGetDefaultPlotSet());
+        bsSetDefaultPlotSet(bsGetDefaultPlotSet());
         
     end
     

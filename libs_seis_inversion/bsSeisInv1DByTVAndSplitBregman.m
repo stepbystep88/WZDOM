@@ -71,6 +71,7 @@ function [xOut, fval, exitFlag, output] = bsSeisInv1DByTVAndSplitBregman(d, G, x
     % change the number of iteration for inner iteration
 %             options.GBOptions.maxIter = options.innerIter;
 
+    
     % TV solved by split-bregman
     % create function pakages for regularization term
     regFcnPkgs = bsCreateFuncPkgs(xInit, {@bs1DTVFunc, parampkgs});

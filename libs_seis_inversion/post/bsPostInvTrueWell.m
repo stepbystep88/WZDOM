@@ -47,6 +47,8 @@ function [invVals, outputs, model] = bsPostInvTrueWell(GPostInvParam, wellInfo, 
     for i = 1 : nMethod
         
         method = methods{i};
+        method.options.inline = wellInfo.inline;
+        method.options.crossline = wellInfo.crossline;
         
         fprintf('Solving the trace of inline=%d and crossline=%d by using method %s...\n', ...
             wellInfo.inline, wellInfo.crossline, ...

@@ -130,9 +130,11 @@ function [xOut, fval, exitFlag, output] = bsPostInv1DTrace(d, G, xInit, Lb, Ub, 
     flag = method.flag;
     
     if ~strcmp(options.GBOptions.display, 'off')
-        fprintf('Runing 1D seismic inversion method %s\n', regFlag);
+        fprintf('Runing 1D seismic inversion method %s\n', flag);
     end
     
+    options.GBOptions.bounds.lower = Lb;
+    options.GBOptions.bounds.upper = Ub;
     
     switch flag
         case 'TV-SB'
@@ -153,7 +155,7 @@ function [xOut, fval, exitFlag, output] = bsPostInv1DTrace(d, G, xInit, Lb, Ub, 
             
         case 'PL'
             % picewise linear
-            [xOut, fval, exitFlag, output] = bsSeisInv1DByPicewiseSolver(d, G, xInit, Lb, Ub, regParam, parampkgs, options, @bsPicewiseLinearReg2);
+            [xOut, fval, exitFlag, output] = bsSeisInv1DByPicewiseSolver(d, G, xInit, Lb, Ub, regParam, parampkgs, options, @bsPicewiseLinearReg);
             
         case 'MGS'
             % minimum gradient suppport algorithm

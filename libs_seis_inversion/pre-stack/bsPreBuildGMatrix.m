@@ -10,10 +10,11 @@ function [G] = bsPreBuildGMatrix(mode, vp, vs, angleData, wavelet, extraInfo)
     
     [c1, c2, c3] = bsAkiSyn(angleData, vp, vs); 
     
-    if(length(wavelet) == 1)
-        G = bsGenGByMode(mode, c1, c2, c3, sampNum, angleTrNum, wavelet, extraInfo);
-    else
+    if(iscell(wavelet) && length(wavelet) == 1)
         G = bsGenGByMode_MulWavelet(mode, c1, c2, c3, sampNum, angleTrNum, wavelet, extraInfo);
+        
+    else
+        G = bsGenGByMode(mode, c1, c2, c3, sampNum, angleTrNum, wavelet, extraInfo);
     end
     
 end

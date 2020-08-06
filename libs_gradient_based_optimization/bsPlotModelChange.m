@@ -43,9 +43,9 @@ function [frame, plotIds] = bsPlotModelChange(fid, plotIds, iter, x, xInit, Lb, 
         
         legend(plotIds, legendStrs, 'location', 'best');
         xlabel('Sample number');
-        ylabel('Varible value');
+        ylabel('Variable value');
         title(sprintf('Iteration number: %d', iter));
-        bsPlotSetDefault(bsGetDefaultPlotSet());
+        bsSetDefaultPlotSet(bsGetDefaultPlotSet());
     else
         set(plotIds(2), 'YData', x);
         title(sprintf('Iteration number: %d', iter));

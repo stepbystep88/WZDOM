@@ -21,33 +21,39 @@ function [outLogs] = bsGetPairOfInvAndWell(GInvParam, timeLine, wellLogs, invRes
         wellInfo = wellLogs{i};
         
 
-        wellData = bsExtractWellDataByHorizon(...
+        subData = bsExtractWellDataByHorizon(...
                 wellInfo.wellLog, ...
                 wellHorizonTimes(i), ...
-                dataIndex, ...
+                [dataIndex, indexInWellData.time], ...
                 indexInWellData.time, ...
                 GInvParam.upNum, ...
                 GInvParam.downNum, ...
                 1);
        
-            
+        wellData = subData(:, 1);
+        timeData = subData(:, 2);
+        trueData = wellData;
+        
         switch options.mode
             case 'full_freq'
                 wellData = bsButtLowPassFilter(wellData, options.highCut);
                 wellInfo.wellLog = [invResults(:, i), wellData];
             case 'low_high'
                 % ´øÍ¨ÂË²¨
-                wellData = bsButtBandPassFilter(wellData, options.lowCut, options.highCut);
+                if options.highCut < 1 && options.lowCut > 0
+                    wellData = bsButtBandPassFilter(wellData, options.lowCut, options.highCut);
+                end
                 wellInfo.wellLog = [invResults(:, i), wellData];
                 % µÍÍ¨ÂË²¨
 %                 invResults(:, i) = bsButtLowPassFilter(invResults(:, i), options.lowCut);
             case 'seismic_high'
+                wellData = bsButtBandPassFilter(wellData, options.lowCut, options.highCut);
                 wellInfo.wellLog = [postSeisData(:, i), wellData];
             case 'residual'
                 wellInfo.wellLog = [invResults(:, i), wellData - invResults(:, i)];
         end
         
-        
+        wellInfo.wellLog= [wellInfo.wellLog, trueData, timeData];
         outLogs{i} = wellInfo;
         
     end

@@ -91,14 +91,14 @@ function [bestLambda, curveData] = bsBestParameterByGCV(lambdas, inputObjFcnPkgs
         plot(log(lambdas), curveData(:, 1), 'k-*', 'linewidth', plotSet.linewidth);
         xlabel('\lambda (log scale)');
         ylabel('Objective function');
-        bsPlotSetDefault(bsGetDefaultPlotSet());
+        bsSetDefaultPlotSet(bsGetDefaultPlotSet());
         
         figure;
         plot(log(lambdas), curveData(:, 3), 'k-*', 'linewidth', plotSet.linewidth);
         xlabel('\lambda (log scale)');
         ylabel('GCV(\lambda)');
         
-        bsPlotSetDefault(bsGetDefaultPlotSet());
+        bsSetDefaultPlotSet(bsGetDefaultPlotSet());
         
     end
     

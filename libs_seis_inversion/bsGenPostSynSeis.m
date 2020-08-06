@@ -55,7 +55,7 @@ function [poststackFreeNoise, poststackNoise, poststackBandPassNoise, G] = bsGen
         poststackFreeNoise = G * logModel;
         
         poststackNoise = params.addNoiseFcn(poststackFreeNoise, SNR);
-        poststackBandPassNoise = bsButtBandPassFilter(poststackNoise, dt, params.freqLowPass, params.freqHighPass);
+        poststackBandPassNoise = bsButtBandPassFilter(poststackNoise, params.freqLowPass, params.freqHighPass, dt);
 
         
         if ~isempty(modelSavePath)
