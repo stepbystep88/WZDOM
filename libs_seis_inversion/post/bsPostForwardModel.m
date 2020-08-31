@@ -1,11 +1,11 @@
-function [GInvParam, poststackFreeNoise, poststackNoise, wavelet, options] ...
+function [GInvParam, poststackFreeNoise, poststackNoise, G, options] ...
     = bsPostForwardModel(GInvParam, trueModel, varargin)
 
      p = inputParser;
     
     addParameter(p, 'title', '');
     addParameter(p, 'dstPath', sprintf('%s/', GInvParam.modelSavePath));
-    addParameter(p, 'noistFlag', 1);
+    addParameter(p, 'noiseFlag', 1);
     addParameter(p, 'SNR', 10);
     addParameter(p, 'isRebuild', 0);
     
@@ -23,16 +23,21 @@ function [GInvParam, poststackFreeNoise, poststackNoise, wavelet, options] ...
     
     fileName = bsGetFileName();
     
+    sampNum = size(trueModel, 1);
+    
+    
     if( exist(fileName, 'file') && ~options.isRebuild)
         matFile = load( fileName, ...
-            'wavelet', 'poststackFreeNoise', 'poststackNoise');
+            'wavelet', 'poststackFreeNoise', 'poststackNoise', 'G');
         wavelet = matFile.wavelet;
         GInvParam.wavelet = wavelet;
         
         poststackFreeNoise = matFile.poststackFreeNoise;
         poststackNoise = matFile.poststackNoise;
+        G = matFile.G;
+        
     else
-        sampNum = size(trueModel, 1);
+        
         logModel = log(trueModel);
         wavelet = bsGenWavelet(options.waveletType, ...
              GInvParam.waveletFreq, GInvParam.dt, []);
@@ -45,14 +50,19 @@ function [GInvParam, poststackFreeNoise, poststackNoise, wavelet, options] ...
             poststackNoise = poststackFreeNoise;
         else
             poststackNoise = bsAddNoise(poststackFreeNoise, ...
-                options.noistFlag, options.SNR, G, logModel, GInvParam.dt, options);
+                options.noiseFlag, options.SNR, G, logModel, GInvParam.dt, options);
         end
         
-        save(fileName, 'wavelet', 'poststackFreeNoise', 'poststackNoise');
+        save(fileName, 'wavelet', 'poststackFreeNoise', 'poststackNoise', 'G');
     end
     
     function fileName = bsGetFileName()
-        fileName = sprintf('%s/SynModel_MainFreq%.1f_dt_%d_nflag_%d_SNR_%.1f.mat', ...
-            options.dstPath, GInvParam.waveletFreq, GInvParam.dt, options.noistFlag, options.SNR);
+        
+        if ~exist(options.dstPath, 'dir')
+            mkdir(options.dstPath);
+        end
+        
+        fileName = sprintf('%s/SynPostModel_MainFreq%.1f_dt_%d_nflag_%d_SNR_%.1f.mat', ...
+            options.dstPath, GInvParam.waveletFreq, GInvParam.dt, options.noiseFlag, options.SNR);
     end
 end

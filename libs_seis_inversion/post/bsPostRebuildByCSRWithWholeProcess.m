@@ -1,4 +1,4 @@
-function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wellLogs, methods, invResult, name, varargin)
+function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wellLogs, method, invResult, name, varargin)
 
     p = inputParser;
     GTrainDICParam = bsCreateGTrainDICParam(...
@@ -62,17 +62,18 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
     wellCrossIds = [wells.crossline];
 
     % inverse a profile
-%     [~, ~, GInvParamWell] = bsBuildInitModel(GInvParam, timeLine, wellLogs, ...
-%         'title', 'all_wells', ...
-%         'inIds', wellInIds, ...
-%         'isRebuild', 1, ...
-%         'filtCoef', options.wellFiltCoef, ...
-%         'crossIds', wellCrossIds ...
-%     );
+    [~, ~, GInvParamWell] = bsBuildInitModel(GInvParam, timeLine, wellLogs, ...
+        'title', 'all_wells', ...
+        'inIds', wellInIds, ...
+        'isRebuild', 1, ...
+        'filtCoef', options.wellFiltCoef, ...
+        'crossIds', wellCrossIds ...
+    );
 
     fprintf('反演所有测井中...\n');
-    methods{1}.load.mode = 'segy';
-    wellInvResults = bsPostInvTrueMultiTraces(GInvParam, wellInIds, wellCrossIds, timeLine, methods);
+    method.load.mode = 'off';
+    method.parampkgs.nMultipleTrace = 1;
+    wellInvResults = bsPostInvTrueMultiTraces(GInvParamWell, wellInIds, wellCrossIds, timeLine, {method});
     
     train_ids = setdiff(1:length(wellInIds), options.exception);
     train_ids = setdiff(train_ids, options.mustInclude);
@@ -80,8 +81,8 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
     train_ids = unique([train_ids, options.mustInclude]);
     
     
-    [outLogs] = bsGetPairOfInvAndWell(GInvParam, timeLine, wellLogs, wellInvResults{1}.data, ...
-        GInvParam.indexInWellData.ip, options);
+    [outLogs] = bsGetPairOfInvAndWell(GInvParamWell, timeLine, wellLogs, wellInvResults{1}.data, ...
+        GInvParamWell.indexInWellData.ip, options);
     
 %     bsShowFFTResultsComparison(GInvParam.dt, outLogs{1}.wellLog, {'反演结果', '联合字典配对'});
 
@@ -93,6 +94,7 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
     %% 训练字典
     fprintf('训练联合字典中...\n');
     
+    
     if ~options.isInterpolation
         [DIC, train_ids, rangeCoef, output] = bsTrainDics(GTrainDICParam, outLogs, train_ids, [ 1, 2]);
         GInvWellSparse = bsCreateGSparseInvParam(DIC, GTrainDICParam, ...
@@ -101,7 +103,9 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
         'stride', 1);
         GInvWellSparse.rangeCoef = rangeCoef;
         GInvWellSparse.output = output;
-    
+    else
+        GTrainDICParam.isRebuild = 0;
+        [DIC, train_ids, rangeCoef, output] = bsTrainDics(GTrainDICParam, outLogs, train_ids, [ 1, 2]);
     end
     
     
@@ -127,7 +131,7 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
             inputData = bsGetPostSeisData(GInvParam, invResult.inIds, invResult.crossIds, startTime, sampNum);
     end
         
-    [wellPos, wellIndex, wellNames] = bsFindWellLocation(wellLogs, invResult.inIds, invResult.crossIds);
+%     [wellPos, wellIndex, wellNames] = bsFindWellLocation(wellLogs, invResult.inIds, invResult.crossIds);
     
     if ~options.isInterpolation
         if options.nMultipleTrace <= 1

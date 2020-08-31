@@ -23,7 +23,8 @@ function [DIC, rangeCoef, output] = bsTrain1DSparseJointDIC(datas, GTrainDICPara
         datas{j} = data;
     end
     
-    validatestring(string(GTrainDICParam.normalizationMode), {'whole_data_max_min', 'feat_max_min', 'feat_mean_sigma', 'off'});
+    validatestring(string(GTrainDICParam.normalizationMode), {'whole_data_max_min', 'whole_data_mean_sigma', 'self_sigma', ...
+        'feat_max_min', 'feat_mean_sigma', 'self_mean_sigma', 'off', 'none'});
     
     % Ð¡¿éÆ´½Ó
     AP = cell(1, nAtt);
@@ -72,7 +73,8 @@ function [DIC, rangeCoef, output] = bsTrain1DSparseJointDIC(datas, GTrainDICPara
     end
     
     switch GTrainDICParam.normalizationMode
-        case 'off'
+        case {'off', 'none'}
+            
             rangeCoef = [];
         case 'feat_max_min'
             rangeCoef = [];
@@ -102,18 +104,47 @@ function [DIC, rangeCoef, output] = bsTrain1DSparseJointDIC(datas, GTrainDICPara
                 
                 AP{i} = (AP{i} - mean_value) ./ sigma_value;
             end
+        case 'self_mean_sigma'
+            rangeCoef = [];
+            for i = 1 : length(AP)
+                mean_value = mean(AP{i}, 1);
+                sigma_value = var(AP{i}, 0, 1);
+                
+%                 rangeCoef = [rangeCoef; [mean_value, sigma_value]];
+                
+                mean_value = repmat(mean_value, size(AP{i}, 1), 1);
+                sigma_value = repmat(sigma_value, size(AP{i}, 1), 1);
+                
+                AP{i} = (AP{i} - mean_value) ./ sigma_value;
+            end
             
         case 'whole_data_max_min'
             rangeCoef = [];
             
             for i = 1 : length(AP)
                 nFeat = size(AP{i}, 1);
+
+
+%                 min_value = prctile(reshape(AP{i}(:),[], 1), 10);
+%                 max_value = prctile(reshape(AP{i}(:),[], 1), 90);
                 min_value = min(AP{i}(:));
                 max_value = max(AP{i}(:));
-                
                 rangeCoef = [rangeCoef; [repmat(min_value, nFeat, 1), repmat(max_value, nFeat, 1)]];
                 
                 AP{i} = (AP{i} - min_value) ./ (max_value - min_value);
+                
+            end
+        case 'whole_data_mean_sigma'
+            rangeCoef = [];
+            
+            for i = 1 : length(AP)
+                nFeat = size(AP{i}, 1);
+
+                mean_value = mean(AP{i}(:));
+                var_value = var(AP{i}(:));
+                rangeCoef = [rangeCoef; [repmat(mean_value, nFeat, 1), repmat(var_value, nFeat, 1)]];
+                
+                AP{i} = (AP{i} - mean_value) ./ var_value;
                 
             end
     end

@@ -89,9 +89,10 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
         
     % normalize
     if GPreInvParam.isNormal
-        model.maxAbsD = norm(model.d);
-        model.d = model.d / model.maxAbsD;
-        model.G = model.G / model.maxAbsD;    % we have to use the original G to normalize
+        model.scaleFactor = norm(model.d);
+        model.orginal_G = model.G;
+        model.d = model.d / model.scaleFactor;
+        model.G = model.G / model.scaleFactor;    % we have to use the original G to normalize
     end
 end
 

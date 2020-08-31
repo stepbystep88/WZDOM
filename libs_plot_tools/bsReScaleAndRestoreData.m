@@ -21,6 +21,11 @@ function [newProfileData] = bsReScaleAndRestoreData(basicInfo, profileData, isPa
     newProfileData = inf(length(newT), newTrNum);
     for i = 1 : newTrNum
         s = round((newTime0(i) - minTime) / newDt);
+        
+        if s == 0
+            s = s + 1;
+        end
+        
         newProfileData(s:s+newSampNum-1, i) = Z(:, i);
     end
     

@@ -58,7 +58,14 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
         
         if isempty(res.source)
             % obtain results by computing
-            [vp, vs, rho] = bsCallInvFcn();
+            if isfield(method.parampkgs, 'nMultipleTrace') && method.parampkgs.nMultipleTrace > 1
+                KTrace = method.parampkgs.nMultipleTrace;
+                [vp, vs, rho] = bsCallInvFcnMultiTraces(KTrace);
+            else
+                [vp, vs, rho] = bsCallInvFcnTraceByTrace();
+            end
+        
+            
             res.source = 'computation';
             res.type = {'vp', 'vs', 'rho'};
             res.data = {vp, vs, rho};
@@ -205,7 +212,7 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
         
     end
 
-    function [vp, vs, rho] = bsCallInvFcn()
+    function [vp, vs, rho] = bsCallInvFcnTraceByTrace()
         % tackle the inverse task
         vp = zeros(sampNum, traceNum);
         vs = zeros(sampNum, traceNum);
@@ -249,6 +256,70 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
         end
     end
     
+    function [vp, vs, rho] = bsCallInvFcnMultiTraces(KTrace)
+        % tackle the inverse task
+        xs = zeros(sampNum*3, traceNum);
+        ds = zeros( (sampNum-1)*GPreInvParam.angleTrNum, traceNum);
+        scaleFactors = zeros(1, traceNum);
+        Gs = cell(1, traceNum);
+        
+        neiboors = cell(1, traceNum);
+        
+        try
+            [rangeInline, rangeCrossline] = bsGetWorkAreaRangeByParam(GPreInvParam);
+            nRangeInline = rangeInline(2) - rangeInline(1) + 1;
+            nRangeCrossline = rangeCrossline(2) - rangeCrossline(1) + 1;
+
+            if nRangeInline > nRangeCrossline
+                nTracePerLine = nRangeInline;
+            else
+                nTracePerLine = nRangeCrossline;
+            end
+        catch
+            nTracePerLine = max(crossIds) - min(crossIds) + 1;
+        end
+    
+        pbm = bsInitParforProgress(GPreInvParam.numWorkers, ...
+            traceNum, ...
+            '', ...
+            GPreInvParam.modelSavePath, ...
+            GPreInvParam.isPrintBySavingFile);
+            
+            
+        % 第一步获取所需的模型
+        preModel = bsPrePrepareModel(GPreInvParam, inIds(1), crossIds(1), horizonTimes(1), [], []);
+            
+        xs(:, 1) = preModel.initX;
+        ds(:, 1) = preModel.d;
+        Gs{1} = preModel.G;
+        scaleFactors(1) = preModel.scaleFactor;
+        GPreInvParam.lsdCoef = preModel.lsdCoef;
+        
+        pbm.title = sprintf('Prepare model... %s', method.name);
+        
+        parfor iTrace = 2 : traceNum
+            model = bsPrePrepareModel(GPreInvParam, inIds(iTrace), crossIds(iTrace), horizonTimes(iTrace), [], preModel);
+%             xs(:, iTrace) = models{iTrace}.initX;
+            xs(:, iTrace) = model.initX;
+            ds(:, iTrace) = model.d;
+            Gs{iTrace} = model.G;
+            scaleFactors(iTrace) = model.scaleFactor;
+            
+            bsIncParforProgress(pbm, iTrace, 100);
+        end
+        
+        parfor iTrace = 1 : traceNum
+            % 找当前当的所有邻近道
+            neiboors{iTrace} = bsFindNearestKTrace(iTrace, inIds, crossIds, KTrace, nTracePerLine);
+        end
+        
+        switch method.flag
+            case 'CSR'
+                [vp, vs, rho] = bsPreInvMultiTracesByCSR(GPreInvParam, neiboors, ds, Gs, xs, scaleFactors, inIds, crossIds, method);
+%             case 'DLSR-EM'
+%                 [data, ys] = bsPostInvMultiTracesByDLSR_EM(GInvParam, neiboors, ds, preModel.orginal_G, xs, scaleFactors, inIds, crossIds, method);
+        end
+    end
 end
 
 

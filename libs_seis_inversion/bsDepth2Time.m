@@ -98,7 +98,10 @@ function [GInvParam, outputWelllogs, wavelet] ...
             end
         end
             
-        targetDep = wellData(bestIndex, indexInWell.depth, :);
+        
+        targetDep = wellData(bestIndex, indexInWell.depth);
+
+        % 长度不够填充方式， 注释后长度不够不填充
         wellData = wellData(expandNum+1:end-expandNum, :);
         bestIndex = bestIndex - expandNum;
         

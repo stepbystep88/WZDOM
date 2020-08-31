@@ -21,7 +21,7 @@ function bsShowIterationProcess(GShowProfileParam, invVals, outputs, wellLog)
     
     xlabel('Iteration');
     ylabel('RMSE of model');
-%     legend(names, 'fontweight', 'bold');
+    legend(names, 'fontweight', 'bold');
     title(wellLog.name, 'fontweight', 'bold');
     set(gca, 'xlim', [1, nIter]);
     
@@ -37,7 +37,7 @@ function bsShowIterationProcess(GShowProfileParam, invVals, outputs, wellLog)
     
     xlabel('Iteration');
     ylabel('Objective function value');
-%     legend(names, 'fontweight', 'bold');
+    legend(names, 'fontweight', 'bold');
     title(wellLog.name, 'fontweight', 'bold');
     set(gca, 'xlim', [1, nIter]);
     bsSetDefaultPlotSet(GShowProfileParam.plotParam);

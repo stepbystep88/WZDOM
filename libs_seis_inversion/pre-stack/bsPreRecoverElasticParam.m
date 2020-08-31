@@ -6,10 +6,10 @@ function [vp, vs, rho] = bsPreRecoverElasticParam(x, mode, extraInfo)
 % Programming dates: Nov 2019
 % -------------------------------------------------------------------------
 
-    sampNum = length(x) / 3;
-    nLp = x(1 : sampNum);
-    nLs = x( sampNum+1 : sampNum*2);
-    nLd = x( sampNum*2+1 : sampNum*3);
+    sampNum = size(x, 1) / 3;
+    nLp = x(1 : sampNum, :);
+    nLs = x( sampNum+1 : sampNum*2, :);
+    nLd = x( sampNum*2+1 : sampNum*3, :);
     
     estLp = nLp;
     

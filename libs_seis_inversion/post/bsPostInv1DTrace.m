@@ -169,6 +169,10 @@ function [xOut, fval, exitFlag, output] = bsPostInv1DTrace(d, G, xInit, Lb, Ub, 
             % dictionary learning and sparse representation
             [xOut, fval, exitFlag, output] = bsPostInv1DTraceByDLSR(d, G, xInit, Lb, Ub, regParam, parampkgs, options);
         
+        case 'DLSR-EM'
+            % dictionary learning and sparse representation
+            [xOut, fval, exitFlag, output] = bsPostInv1DTraceByDLSR_EM(d, G, xInit, Lb, Ub, regParam, parampkgs, options);
+        
         case 'LFC'
             % only low frequency component constraint
             options.addLowFreqConstraint = 0;

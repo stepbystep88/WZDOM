@@ -78,6 +78,12 @@ function [inIds, crossIds, GInvParam, dstFileNames, segyInfo, options] = bsBuild
     horizonTimes = bsGetHorizonTime(usedTimeLine, inIds, crossIds, ...
             GInvParam.isParallel, GInvParam.numWorkers);
         
+    
+%     [~, wellIndex, ~] = bsFindWellLocation(wellLogs, inIds, crossIds);
+%     subIndex = setdiff(1:length(wellLogs) , wellIndex);
+%     inIds = [inIds, wellInIds(subIndex)];
+%     crossIds = [crossIds, wellCrossIds(subIndex)];
+    
     % calculate the weight information
     [weights, indexies] = bsGetWeightByIDW(inIds, crossIds, ...
         wellInIds, wellCrossIds, options);
@@ -172,21 +178,4 @@ function dstFileName = bsGetDstFileName(type, options)
         options.rangeCrossline(1), options.rangeCrossline(2));
 end
 
-function data = bsInterpolate3DData(nTrace, wellData, weights, indexies)
 
-    sampNum = size(wellData, 1);
-    data = zeros(sampNum, nTrace);
-    
-    for i = 1 : nTrace
-        weight = weights(:, i);
-        usedWellData = wellData(:, indexies(i, :));
-        
-        V = usedWellData * weight;
-        
-        data(:, i) = V;
-        
-        if mod(i, 10000) == 0
-            fprintf('Interpolating the model of trace %d/%d...\n', i, nTrace);
-        end
-    end
-end

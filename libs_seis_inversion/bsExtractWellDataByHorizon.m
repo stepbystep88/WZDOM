@@ -14,7 +14,7 @@ function [subWellData, wellData] = bsExtractWellDataByHorizon(wellLog, horizon, 
     time = wellLog(:, timeIndex);
     dist = horizon - time;
     [~, index] = min(abs(dist));
-    iPos = index - upNum;
+    iPos = index - upNum - 1;
     sampNum = upNum + downNum;
     
     

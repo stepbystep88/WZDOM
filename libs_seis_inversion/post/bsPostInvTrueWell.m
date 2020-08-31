@@ -49,6 +49,7 @@ function [invVals, outputs, model] = bsPostInvTrueWell(GPostInvParam, wellInfo, 
         method = methods{i};
         method.options.inline = wellInfo.inline;
         method.options.crossline = wellInfo.crossline;
+        method.options.scaleFactor = model.scaleFactor;
         
         fprintf('Solving the trace of inline=%d and crossline=%d by using method %s...\n', ...
             wellInfo.inline, wellInfo.crossline, ...
@@ -56,7 +57,7 @@ function [invVals, outputs, model] = bsPostInvTrueWell(GPostInvParam, wellInfo, 
         
 %         method.options.optimalX = model.trueX;
         
-        if isfield(method, 'load')
+        if isfield(method, 'load') && ~strcmp(method.load.mode, 'off')
             loadInfo = method.load;
             switch loadInfo.mode
                 % load results directly

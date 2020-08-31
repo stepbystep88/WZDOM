@@ -98,10 +98,13 @@ function [invResults] = bsPostInvTrueMultiTracesPlusLateralContinuty(GInvParam, 
         
         if isempty(res.source)
             % obtain results by computing
-            data = bsCallInvFcn();
+            [data, estimatedError] = bsCallInvFcn();
             res.source = 'compution';
         end
         
+        if exist('estimatedError', 'var')
+            res.error = estimatedError;
+        end
         res.data = data;            % inverted results
         res.inIds = inIds;          % inverted inline ids 
         res.crossIds = crossIds;    % inverted crossline ids
@@ -141,9 +144,9 @@ function [invResults] = bsPostInvTrueMultiTracesPlusLateralContinuty(GInvParam, 
         if isfield(method, 'isSaveMat') && method.isSaveMat && ~strcmp(res.source, 'mat')
             fprintf('Writing mat file:%s...\n', matFileName);
             try
-                save(matFileName, 'data', 'horizonTimes', 'inIds', 'crossIds', 'GInvParam', 'method');
+                save(matFileName, 'data', 'res', 'horizonTimes', 'inIds', 'crossIds', 'method');
             catch
-                save(matFileName, 'data', 'horizonTimes', 'inIds', 'crossIds', 'GInvParam', 'method', '-v7.3');
+                save(matFileName, 'data', 'res', 'horizonTimes', 'inIds', 'crossIds', 'method', '-v7.3');
             end
             fprintf('Write mat file:%s successfully!\n', matFileName);
         end
@@ -161,42 +164,40 @@ function [invResults] = bsPostInvTrueMultiTracesPlusLateralContinuty(GInvParam, 
         
     end
 
-    function data = bsCallInvFcn()
+    function [data, ys] = bsCallInvFcn()
         % tackle the inverse task
 %         data = zeros(sampNum, traceNum);
-        GSParam = bsInitDLSRPkgs(method.parampkgs, sampNum);
-        options = method.options;
-        seisOption = GInvParam.seisInvOptions;
-        GBOptions = seisOption.GBOptions;
-        mainFunc = seisOption.mainFunc;
-        initRegParam = options.initRegParam;
-        models = cell(1, traceNum);
+        
+%         models = cell(1, traceNum);
         xs = zeros(sampNum, traceNum);
-        avg_xs = zeros(sampNum, traceNum);
-        gamma = method.regParam.gamma;
-        lambda = method.regParam.lambda;
-        GBOptions.maxIter = options.innerIter;
+        ds = zeros(sampNum-1, traceNum);
+        scaleFactors = zeros(1, traceNum);
+        
         neiboors = cell(1, traceNum);
         
-        if isfield(GSParam, 'nMultipleTrace')
-            KTrace = GSParam.nMultipleTrace;
+        if isfield(method.parampkgs, 'nMultipleTrace')
+            KTrace = method.parampkgs.nMultipleTrace;
         else
             KTrace = 1;
         end
         
-        [rangeInline, rangeCrossline] = bsGetWorkAreaRangeByParam(GInvParam);
-        nRangeInline = rangeInline(2) - rangeInline(1) + 1;
-        nRangeCrossline = rangeCrossline(2) - rangeCrossline(1) + 1;
+        try
+            [rangeInline, rangeCrossline] = bsGetWorkAreaRangeByParam(GInvParam);
+            nRangeInline = rangeInline(2) - rangeInline(1) + 1;
+            nRangeCrossline = rangeCrossline(2) - rangeCrossline(1) + 1;
 
-        if nRangeInline > nRangeCrossline
-            nTracePerLine = nRangeInline;
-        else
-            nTracePerLine = nRangeCrossline;
+            if nRangeInline > nRangeCrossline
+                nTracePerLine = nRangeInline;
+            else
+                nTracePerLine = nRangeCrossline;
+            end
+        catch
+            nTracePerLine = max(crossIds) - min(crossIds) + 1;
         end
     
         pbm = bsInitParforProgress(GInvParam.numWorkers, ...
             traceNum, ...
-            sprintf('Post inversion progress information by method %s', method.name), ...
+            '', ...
             GInvParam.modelSavePath, ...
             GInvParam.isPrintBySavingFile);
             
@@ -205,12 +206,20 @@ function [invResults] = bsPostInvTrueMultiTracesPlusLateralContinuty(GInvParam, 
         preModel = bsPostPrepareModel(GInvParam, inIds(1), crossIds(1), horizonTimes(1), [], []);
             
         
-        models{1} = preModel;
-        xs(:, 1) = models{1}.initX;
+%         models{1} = preModel;
+        xs(:, 1) = preModel.initX;
+        ds(:, 1) = preModel.d;
+        scaleFactors(1) = preModel.scaleFactor;
+        
+        pbm.title = sprintf('Prepare model... %s', method.name);
         
         parfor iTrace = 2 : traceNum
-            models{iTrace} = bsPostPrepareModel(GInvParam, inIds(iTrace), crossIds(iTrace), horizonTimes(iTrace), [], preModel);
-            xs(:, iTrace) = models{iTrace}.initX;
+            model = bsPostPrepareModel(GInvParam, inIds(iTrace), crossIds(iTrace), horizonTimes(iTrace), [], preModel);
+%             xs(:, iTrace) = models{iTrace}.initX;
+            xs(:, iTrace) = model.initX;
+            ds(:, iTrace) = model.d;
+            scaleFactors(iTrace) = model.scaleFactor;
+            
             bsIncParforProgress(pbm, iTrace, 100);
         end
         
@@ -219,167 +228,17 @@ function [invResults] = bsPostInvTrueMultiTracesPlusLateralContinuty(GInvParam, 
             neiboors{iTrace} = bsFindNearestKTrace(iTrace, inIds, crossIds, KTrace, nTracePerLine);
         end
         
-        % 第二步：大循环
-        for iter = 1 : options.maxIter
-            fprintf("第%d次迭代：常规反演\n", iter);
-            parfor iTrace = 1 : traceNum
-                xs(:, iTrace) = invNormalOneTrace(xs(:, iTrace), models{iTrace}, mainFunc, lambda, initRegParam, GBOptions);
-            end
-            
-            Ips = exp(xs);
-            
-            fprintf("第%d次迭代：稀疏重构\n", iter);
-%             all_patches = cell(1, traceNum);
-%             
-%             index = GSParam.index;
-%             ncell = GSParam.ncell;
-%             sizeAtom = GSParam.sizeAtom;
-%             data = cell(1, traceNum);
-%             tic
-%             for iTrace = 1 : traceNum
-%                 data{iTrace} = Ips(:, neiboors{iTrace});
-%             end
-%             toc 
-%             tic
-            for iTrace = 1 : traceNum
-%             spmd
-%                 nBlock = length(neiboors{iTrace});
-%                 all_patches{iTrace} = getAllPatches(data{iTrace}, nBlock, sizeAtom, ncell, index);
-                avg_xs(:, iTrace) = sparseRebuildOneTrace(GSParam, Ips(:, neiboors{iTrace}));
-                bsIncParforProgress(pbm, iTrace, 100);
-            end
-            
-%             gammas = omp(GSParam.ODIC'*cell2mat(all_patches), GSParam.omp_G, GSParam.sparsity);
-%             new_patches = GSParam.DIC *  gammas;
-            
-%             new_patches_cell = cell(1, traceNum);
-%             for iTrace = 1 : traceNum
-%                 spos = (iTrace - 1) * ncell + 1;
-%                 epos = spos + ncell - 1;
-%                 
-%                 new_patches_cell{iTrace} = new_patches(:, spos:epos);
-%             end
-            
-%             parfor iTrace = 1 : traceNum
-%                 avg_xs(:, iTrace) = bsAvgPatches(new_patches_cell{iTrace}, index, size(data{iTrace}, 1));
-%             end
-%             toc
-            
-            fprintf("第%d次迭代：反演结果合并\n", iter);
-            parfor iTrace = 1 : traceNum
-                xNew = Ips(:, iTrace) * (1 - gamma) + avg_xs(:, iTrace) * gamma;
-                xs(:, iTrace) = log(xNew);
-            end
-            
+        switch method.flag
+            case 'DLSR'
+                [data, ys] = bsPostInvMultiTracesByDLSR(GInvParam, neiboors, ds, preModel.orginal_G, xs, scaleFactors, inIds, crossIds, method);
+            case 'DLSR-EM'
+                [data, ys] = bsPostInvMultiTracesByDLSR_EM(GInvParam, neiboors, ds, preModel.orginal_G, xs, scaleFactors, inIds, crossIds, method);
         end
-        
-        bsDeleteParforProgress(pbm);
-        
-        data = exp(xs);
-
     end
     
 end
 
-function xOut = invNormalOneTrace(xInit, model, mainFunc, lambda, initRegParam, GBOptions)
-    inputObjFcnPkgs = {
-        mainFunc,    struct('A', model.G, 'B', model.d),   1; 
-        @bsReg1DTKInitModel,    struct('xInit', []), lambda;
-        @bsReg1DTKInitModel,    struct('xInit', model.initX), initRegParam;
-    };
-    [xOut, ~, ~, ~] = bsGBSolveByOptions(inputObjFcnPkgs, xInit, [], [], GBOptions);
-end
-
-function all_patches = getAllPatches(input, nBlock, sizeAtom, ncell, index)
-    all_patches = zeros(sizeAtom*nBlock, ncell);
-    patches = zeros(sizeAtom, ncell);
-    
-    for k = 1 : nBlock
-        sPos = (k-1)*sizeAtom + 1;
-        ePos = sPos + sizeAtom - 1;
-        
-        for j = 1 : ncell
-            js = index(j);
-            patches(:, j) = input(js : js+sizeAtom-1, k);
-        end
-        
-        all_patches(sPos:ePos, :) = patches;
-        
-    end
-end
-
-% function 
-function avgLog = sparseRebuildOneTrace(GSParam, input)
-    % sparse reconstruction
-
-    nBlock = size(input, 2);
-    sizeAtom = GSParam.sizeAtom;
-    ncell = GSParam.ncell;
-    
-    all_patches = zeros(sizeAtom*nBlock, ncell);
-    patches = zeros(sizeAtom, ncell);
-    
-    for k = 1 : nBlock
-        sPos = (k-1)*sizeAtom + 1;
-        ePos = sPos + sizeAtom - 1;
-        
-        for j = 1 : ncell
-            js = GSParam.index(j);
-            patches(:, j) = input(js : js+sizeAtom-1, k);
-        end
-        
-        all_patches(sPos:ePos, :) = patches;
-        
-    end
-   
-    gammas = omp(GSParam.ODIC'*all_patches, GSParam.omp_G, GSParam.sparsity);
-    new_patches = GSParam.DIC *  gammas;
-    
-    avgLog = bsAvgPatches(new_patches, GSParam.index, size(input, 1));
-    
-end
 
 
-function GSParam = bsInitDLSRPkgs(GSParam, sampNum)
-    
-    if isfield(GSParam, 'omp_G')
-        return;
-    end
 
-    validatestring(string(GSParam.reconstructType), {'equation', 'simpleAvg'});
-
-    
-    trainDICParam = GSParam.trainDICParam;
-    
-    sizeAtom = trainDICParam.sizeAtom;
-    nAtom= trainDICParam.nAtom;
-    GSParam.sizeAtom = sizeAtom;
-    GSParam.nAtom = nAtom;
-    GSParam.nrepeat = sizeAtom - GSParam.stride;
-    
-    index = 1 : GSParam.stride : sampNum - sizeAtom + 1;
-    if(index(end) ~= sampNum - sizeAtom + 1)
-        index = [index, sampNum - sizeAtom + 1];
-    end
-    
-    GSParam.index = index;
-    GSParam.ncell = length(index);
-    
-    if isfield(GSParam, 'nMultipleTrace')
-        nBlock = GSParam.nMultipleTrace;
-    else
-        nBlock = 1;
-    end
-    
-    GSParam.ODIC = repmat(GSParam.DIC, nBlock, 1);
-    
-    for i = 1 : size(GSParam.ODIC, 2)
-        tmp = norm(GSParam.ODIC(:, i));
-        GSParam.ODIC(:, i) = GSParam.ODIC(:, i) / tmp;
-        GSParam.DIC(:, i) = GSParam.DIC(:, i) / tmp;
-    end
-    
-    GSParam.omp_G = GSParam.ODIC' * GSParam.ODIC;
-
-end
 

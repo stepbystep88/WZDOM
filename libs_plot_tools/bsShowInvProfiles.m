@@ -178,7 +178,7 @@ function [nRow, nCol, loc, colorbar_pos] = setShareFigureSize(nProfile)
             nCol = 1;
 %             loc = [0.79, 0.95, 0.01, 0.04, 0.09, 0.01];
 %             colorbar_pos = [0.87 0.05 0.01 0.92];
-            loc = [0.84, 0.95, 0.02, 0.04, 0.07, 0.01];
+            loc = [0.84, 0.94, 0.02, 0.05, 0.07, 0.01];
             colorbar_pos = [0.89 0.05 0.01 0.92];
         case 4
             bsSetPosition(0.6, 0.42);
@@ -248,7 +248,7 @@ function [nRow, nCol, loc] = setFigureSize(nProfile)
             bsSetPosition(0.8, 0.65);
             nRow = 3;
             nCol = 3;
-            loc = [0.93, 0.95, 0.01, 0.04, 0.05, 0.01];
+            loc = [0.93, 0.93, 0.02, 0.05, 0.05, 0.00];
     end
 end
 
@@ -329,13 +329,12 @@ function profileData = bsReplaceWellLocationData(GShowProfileParam, basicInfo, p
     
     [newSampNum, trNum] = size(profileData);
     
-    offsetNum = GShowProfileParam.showWellOffset * GShowProfileParam.scaleFactor;
+    offsetNum = GShowProfileParam.showWellOffset * GShowProfileParam.scaleFactor + GShowProfileParam.emptyOffset;
     wellPos = basicInfo.wellPos;
     
     if ~isempty(wellData) && ~isempty(wellPos)
         % replace the data at well location by wellData
         for i = 1 : length(wellPos)
-            
             traceId = basicInfo.traceIds(wellPos(i));
             [~, index] = min(abs(traceId - basicInfo.newTraceIds));
             s = index - offsetNum;
@@ -348,18 +347,36 @@ function profileData = bsReplaceWellLocationData(GShowProfileParam, basicInfo, p
                 e = trNum;
             end
             
+%             profileData(:, s : s + GShowProfileParam.emptyOffset-1) = inf;
+%             profileData(:, e - GShowProfileParam.emptyOffset + 1 : e) = inf;
+            
             for k = s : e
-                z = zeros(newSampNum, 1);
+                z = profileData(:, k);
                 ctime = wellTime{i} - basicInfo.newHorizon(index) + basicInfo.newHorizon(k);
+                inf_set = 0;
+                
                 for j = 1 : newSampNum
                     tj = minTime + basicInfo.newDt * (j-1);
-
+                    
+                    tk = basicInfo.newHorizon(k) +  GShowProfileParam.scaleFactor * basicInfo.downNum * basicInfo.newDt;
+                    
                     if tj < ctime(1)
-                        z(j) = wellData{i}(1);
-                    elseif tj > ctime(end)
-                        z(j) = wellData{i}(end);
+%                         z(j) = wellData{i}(1);
+                        z(j) = inf;
+                    elseif tj > ctime(end) || tj > tk
+%                         z(j) = wellData{i}(end);
+                        inf_set = inf_set + 1;
+                        z(j) = inf;
+                        
+                        if inf_set > GShowProfileParam.emptyOffset*2
+                            break;
+                        end
                     else
-                        z(j) = bsCalVal(tj, ctime, wellData{i});
+                        if k < s + GShowProfileParam.emptyOffset || k > e - GShowProfileParam.emptyOffset
+                            z(j) = inf;
+                        else
+                            z(j) = bsCalVal(tj, ctime, wellData{i});
+                        end
                     end
                 end
                 
@@ -509,8 +526,12 @@ function bsShowHorizonedData(GShowProfileParam, basicInfo, profileData, minTime,
         for i = 1 : nWell
             x = mod(i, 2);
             
-            ipos = GShowProfileParam.scaleFactor * basicInfo.wellPos(i) - 0.01*traceNum;
-            text(ipos, 0.95*sampNum - 0.07*sampNum*x, basicInfo.wellNames{i}, ...
+          
+            ipos = GShowProfileParam.scaleFactor * basicInfo.wellPos(i);
+            x = ipos - 5*GShowProfileParam.scaleFactor;
+            y = round((basicInfo.newHorizon(ipos) - minTime) / basicInfo.newDt) +  GShowProfileParam.scaleFactor * (basicInfo.downNum + 5);
+            
+            text(x, y, basicInfo.wellNames{i}, ...
                 'fontsize', GShowProfileParam.plotParam.fontsize,...
                 'fontweight', 'bold', ...
                 'fontname', GShowProfileParam.plotParam.fontname, ...

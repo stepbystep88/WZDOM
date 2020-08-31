@@ -3,6 +3,7 @@ function [wellLogs, dataIndex, type] = bsGetErrorOfWelllog(GInvParam, timeLine, 
     
     p = inputParser;
     addParameter(p, 'expandNum', 0);
+    addParameter(p, 'filtCoef', 1);
     
     p.parse(varargin{:});  
     options = p.Results;
@@ -24,7 +25,8 @@ function [wellLogs, dataIndex, type] = bsGetErrorOfWelllog(GInvParam, timeLine, 
             wellInfo.crossline, ...
             wellHorizonTimes(i), ...
             wellInfo, ...
-            options.expandNum);
+            options.expandNum, ...
+            options.filtCoef);
         
         wellLogs{i} = wellInfo;
     end
@@ -33,7 +35,7 @@ function [wellLogs, dataIndex, type] = bsGetErrorOfWelllog(GInvParam, timeLine, 
     type = {'error'};
 end
 
-function wellInfo = bsGetSynTrace(GInvParam, inline, crossline, horizonTime, wellInfo, expandNum)
+function wellInfo = bsGetSynTrace(GInvParam, inline, crossline, horizonTime, wellInfo, expandNum, filtCoef)
 %     GInvParam.isNormal = false;
     
     indexInWellData = GInvParam.indexInWellData;
@@ -47,7 +49,7 @@ function wellInfo = bsGetSynTrace(GInvParam, inline, crossline, horizonTime, wel
             GInvParam.indexInWellData.time, ...
             GInvParam.upNum, ...
             GInvParam.downNum, ...
-            1);
+            filtCoef);
         
     startTime = horizonTime - GInvParam.upNum * GInvParam.dt;
     
@@ -72,9 +74,16 @@ function wellInfo = bsGetSynTrace(GInvParam, inline, crossline, horizonTime, wel
         [d, G, m] = bsPostBuild_d_G_m(GInvParam, inline, crossline, startTime, trueLog, []);
         synData = G * m;
         realData = d;
+        
+%         maxAbsD = norm(d);
+%         realData = realData / maxAbsD;
+%         synData = synData / maxAbsD;
     end
     
     errorData = realData - synData;
+    
+%     tmp = [realData, synData, errorData];
+%     figure; plot(realData, 'k'); hold on; plot(errorData, 'r'); plot(synData, 'b');
     
     wellInfo.wellLog = [wellData(1:end-1, :), realData, synData, errorData];
 end

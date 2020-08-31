@@ -258,30 +258,6 @@ function bsShowPostSubInvLogResult(GPlotParam, ...
     set(gca , 'fontsize', GPlotParam.fontsize,'fontweight', GPlotParam.fontweight, 'fontname', GPlotParam.fontname);
 end
 
-%% show comparasions of synthetic seismic data and real seismic data
-function bsShowPostSubSynSeisData(GPlotParam, ...
-    synFromTrue, synFromInv, seisData, ...
-    t, tmethod, range, nItems, iItem)
-
-    bsSetSubPlotSize(nItems, iItem);
-    
-    plot(synFromTrue, t(1:end-1), 'b-.', 'linewidth', GPlotParam.linewidth); hold on;
-    plot(seisData, t(1:end-1), 'k','LineWidth', GPlotParam.linewidth);    hold on;
-    plot(synFromInv, t(1:end-1), 'r', 'LineWidth', GPlotParam.linewidth);   hold on;
-    
-    ylabel('Time (s)');
-    set(gca,'ydir','reverse');
-    
-    title(sprintf('(%s) %s', char( 'a' + (iItem-1) ), tmethod));
-    if ~isempty(range)
-        set(gca, 'xlim', range) ; 
-    end
-    set(gca, 'ylim', [t(1) t(end)]);
-%     bsTextSeqIdFit(ichar - 'a' + 1, 0, 0, 12);
-
-    set(gca , 'fontsize', GPlotParam.fontsize,'fontweight', GPlotParam.fontweight, 'fontname', GPlotParam.fontname);
-end
-
 function bsShowPreSubSynSeisData(GPlotParam, tmethod, data, t, angleData, nItems, iItem)
 
 %     bsSetPreSubPlotSize(nItems, iItem, k);

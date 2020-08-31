@@ -24,9 +24,10 @@ function options = bsCreateGSparseInvParam(DIC, GTrainDICParam, varargin)
     
 	 % the coeficient of normalization, for training CSR dictionary
 	addParameter(p, 'rangeCoef', []); 
-    
-    
+
     addParameter(p, 'output', []);
+    
+    addParameter(p, 'nMultipleTrace', 1);
     
     addParameter(p, 'nNeibor', 2);
     

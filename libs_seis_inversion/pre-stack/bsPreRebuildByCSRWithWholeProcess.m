@@ -24,6 +24,10 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
     addParameter(p, 'mustInclude', []);
     addParameter(p, 'GTrainDICParam', GTrainDICParam);
     
+    % 相邻多个块同时稀疏表示的个数
+    addParameter(p, 'nMultipleTrace', 1);
+    addParameter(p, 'isInterpolation', 0);
+    
     p.parse(varargin{:});  
     options = p.Results;
     GTrainDICParam = options.GTrainDICParam;
@@ -55,10 +59,11 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
     );
 
     fprintf('反演所有测井中...\n');
-    GInvParamWell.isSaveMat = 0;
-    GInvParamWell.isSaveSegy = 0;
-    load test_method.mat;
-    method = test_method;
+    method.isSaveMat = 0;
+    method.isSaveSegy = 0;
+    method.parampkgs.nMultipleTrace = 1;
+%     load test_method.mat;
+%     method = test_method;
     
     wellInvResults = bsPreInvTrueMultiTraces(GInvParamWell, wellInIds, wellCrossIds, timeLine, {method});
     [wellInvResults, ~, ~] = bsPreGetOtherAttributesByInvResults(wellInvResults, GInvParam, wellLogs);
@@ -113,7 +118,18 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
 
         % 联合字典稀疏重构
         fprintf('联合字典稀疏重构: 参考数据为反演结果...\n');
-        [outputData, highData, gamma_vals, gamma_locs] = bsPostReBuildPlusInterpolationCSR(GInvParam, GInvWellSparse, invResult.data{i}, invResult.inIds, invResult.crossIds, options);
+        if ~options.isInterpolation
+            if options.nMultipleTrace <= 1
+                [outputData, highData, gamma_vals, gamma_locs] = bsPostReBuildPlusInterpolationCSR(GInvParam, GInvWellSparse, invResult.data{i}, invResult.data{i},...
+                    invResult.inIds, invResult.crossIds, options);
+            else
+                [outputData, highData, gamma_vals, gamma_locs] = bsPostReBuildMulTraceCSR(GInvParam, GInvWellSparse, invResult.data{i}, invResult.data{i}, invResult.inIds, invResult.crossIds, options);
+            end
+        else
+            [outputData, highData] = bsPostReBuildInterpolation(GInvParam, outLogs(train_ids), invResult.data, invResult.inIds, invResult.crossIds, options);
+        end
+    
+        
 
         outResult.data{i} = outputData;
         outResult.high_freq_data{i} = highData;

@@ -46,7 +46,7 @@ function bsShowPostInvLogResult(GPostInvParam, GShowProfileParam, invVals, trueL
 
         end
 
-        legends = {'Initial model', 'Real model', 'Inversion result'};
+        legends = {'Initial model', 'True model', 'Inversion result'};
         bsSetLegend(GPlotParam, {'g', 'k', 'r'}, legends, 'I_{\it{P}} (g/cc*km/s)');
        
     end
@@ -76,7 +76,7 @@ function bsShowPostInvLogResult(GPostInvParam, GShowProfileParam, invVals, trueL
         end
 
         legends = {'Synthetic from true welllog', 'Real data', 'Synthetic from inversion result'};
-        bsSetLegend(GPlotParam, {'k', 'b', 'r'}, legends, 'Seismic');
+        bsSetLegend(GPlotParam, {'b-.', 'k', 'r'}, legends, '');
     end
 end
 
@@ -160,8 +160,8 @@ function bsShowPostSubSynSeisData(GPlotParam, ...
 
     bsSetSubPlotSize(nItems, iItem);
     
-    plot(synFromTrue/norm(synFromTrue), t(1:end-1), 'k', 'linewidth', GPlotParam.linewidth); hold on;
-    plot(seisData/norm(seisData), t(1:end-1), 'b','LineWidth', GPlotParam.linewidth);    hold on;
+    plot(synFromTrue/norm(synFromTrue), t(1:end-1), 'b-.', 'linewidth', GPlotParam.linewidth); hold on;
+    plot(seisData/norm(seisData), t(1:end-1), 'k','LineWidth', GPlotParam.linewidth);    hold on;
     plot(synFromInv/norm(synFromInv), t(1:end-1), 'r', 'LineWidth', GPlotParam.linewidth);   hold on;
     
     ylabel('Time (s)');

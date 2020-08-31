@@ -8,6 +8,8 @@ function [inIds, crossIds] = bsGetProfileCrossingWells(GInvParam, wellLogs, vara
     addParameter(p, 'method', 'PCHIP');
     addParameter(p, 'rangeInline', rangeInline);
     addParameter(p, 'rangeCrossline', rangeCrossline);
+    addParameter(p, 'leftTrNum', 5000);
+    addParameter(p, 'rightTrNum', 5000);
     
     p.parse(varargin{:});  
     options = p.Results;
@@ -43,6 +45,26 @@ function [inIds, crossIds] = bsGetProfileCrossingWells(GInvParam, wellLogs, vara
                 rangeCrossline, rangeInline, options.method);
         end
     end
+    
+    [wellPos, ~, ~] = bsFindWellLocation(wellLogs, inIds, crossIds);
+    
+    if isempty(wellPos)
+        return;
+    else
+        left = min(wellPos) - options.leftTrNum;
+        right = max(wellPos) + options.rightTrNum;
+
+        if left < 1
+            left = 1;
+        end
+
+        if right > length(inIds)
+            right = length(inIds);
+        end
+        
+        inIds = inIds(left:right);
+        crossIds = crossIds(left:right);
+    end
 end
 
 function [outInIds, outCrossIds] = bsInterpolateALine(inIds, crossIds, ...
@@ -53,9 +75,20 @@ function [outInIds, outCrossIds] = bsInterpolateALine(inIds, crossIds, ...
     inIds = ids(:, 1)';
     crossIds = ids(:, 2)';
     
-    setInIds = [inIds(1), inIds, inIds(length(inIds))];
-    setCrossIds = [rangeCrossline(1), crossIds, rangeCrossline(2)];
+%     setInIds = [inIds(1), inIds, inIds(length(inIds))];
     
+    setInIds = inIds;
+    setCrossIds = crossIds;
+    
+    if isempty(find(crossIds == rangeCrossline(1), 1))
+        setInIds = [inIds(1), setInIds];
+        setCrossIds = [rangeCrossline(1), setCrossIds];
+    end
+    
+    if isempty(find(crossIds == rangeCrossline(2), 1))
+        setInIds = [setInIds, inIds(length(inIds))];
+        setCrossIds = [setCrossIds, rangeCrossline(2)];
+    end
     
     outCrossIds = rangeCrossline(1) : 1 : rangeCrossline(2);
     outInIds = interp1(setCrossIds, setInIds, outCrossIds, interp_method);

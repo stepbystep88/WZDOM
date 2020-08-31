@@ -54,22 +54,22 @@ function model = bsPostPrepareModel(GPostInvParam, inline, crossline, horizonTim
         model.trueLog = trueLog;
         model.trueX = log(model.trueLog);
         
-        if GPostInvParam.errorModel.isUse
-            model.d = model.orginal_G * model.trueX;
-        end
+%         if GPostInvParam.errorModel.isUse
+%             model.d = model.orginal_G * model.trueX;
+%         end
     end
     
-    if GPostInvParam.errorModel.isUse && isempty(trueLog)
-        errorData = bsReadTracesByIds(...
-                GPostInvParam.errorModel.fileName, ...
-                GPostInvParam.errorModel.segyInfo, ...
-                inline, ...
-                crossline, ...
-                startTime, ...
-                sampNum-1, ...
-                GPostInvParam.dt);
-        model.d = model.d - errorData;
-    end
+%     if GPostInvParam.errorModel.isUse && isempty(trueLog)
+%         errorData = bsReadTracesByIds(...
+%                 GPostInvParam.errorModel.fileName, ...
+%                 GPostInvParam.errorModel.segyInfo, ...
+%                 inline, ...
+%                 crossline, ...
+%                 startTime, ...
+%                 sampNum-1, ...
+%                 GPostInvParam.dt);
+%         model.d = model.d - errorData;
+%     end
     
     % set boundary information
     switch lower(GPostInvParam.bound.mode)
@@ -93,9 +93,9 @@ function model = bsPostPrepareModel(GPostInvParam, inline, crossline, horizonTim
     
     % normalize
     if GPostInvParam.isNormal
-        model.maxAbsD = norm(model.d);
-        model.d = model.d / model.maxAbsD;
-        model.G = model.orginal_G / model.maxAbsD;    % we have to use the original G to normalize
+        model.scaleFactor = norm(model.d);
+        model.d = model.d / model.scaleFactor;
+        model.G = model.orginal_G / model.scaleFactor;    % we have to use the original G to normalize
     else
         model.G = model.orginal_G;
     end

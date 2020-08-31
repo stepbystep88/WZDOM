@@ -13,6 +13,7 @@ function options = bsCreateGShowProfileParam(varargin)
     % how many y label ticks are shown in profile
     addParameter(p, 'yLabelNum', 8); 
     
+    addParameter(p, 'emptyOffset', 2); 
     % 
 %     addParameter(p, 'isLegend', 1); 
     

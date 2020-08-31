@@ -76,7 +76,9 @@ function [inIds, crossIds, GInvParam, dstFileNames, segyInfo, type] = bsPostBuil
             sampNum,...
             GInvParam.dt);
     
-        GSparseInvParam = bsInitDLSRPkgs(GSparseInvParam, options.gamma, sampNum);
+%         GSparseInvParam = bsInitDLSRPkgs(GSparseInvParam, options.gamma, sampNum);
+        
+        [GSparseInvParam] = bsInitGSparseParam(GSparseInvParam, sampNum, 1, 1, []);
         
         errorData = bsHandleAllTraces();
         synData = postSeisData - errorData;
@@ -110,7 +112,10 @@ function [inIds, crossIds, GInvParam, dstFileNames, segyInfo, type] = bsPostBuil
             
             % parallel computing
             parfor iTrace = 1 : traceNum
-                data(:, iTrace) = bsHandleOneTrace(GInvParam, GSparseInvParam, postSeisData(:, iTrace), gamma);
+%                 data(:, iTrace) = bsHandleOneTrace(GInvParam, GSparseInvParam, postSeisData(:, iTrace), gamma);
+                
+                data(:, iTrace) = bsSparsePredictOneTrace(GSparseInvParam, {postSeisData(:, iTrace)}, [], []);
+                
                 bsIncParforProgress(pbm, iTrace, 10000);
             end
             
@@ -119,7 +124,8 @@ function [inIds, crossIds, GInvParam, dstFileNames, segyInfo, type] = bsPostBuil
             % non-parallel computing 
             for iTrace = 1 : traceNum
                 fprintf('Reconstructing the trace of inline=%d and crossline=%d...\n', inIds(iTrace), crossIds(iTrace));
-                data(:, iTrace) = bsHandleOneTrace(GInvParam, GSparseInvParam, postSeisData(:, iTrace), gamma);
+%                 data(:, iTrace) = bsHandleOneTrace(GInvParam, GSparseInvParam, postSeisData(:, iTrace), gamma);
+                data(:, iTrace) = bsSparsePredictOneTrace(GSparseInvParam, {postSeisData(:, iTrace)}, [], []);
             end
         end
     end
@@ -135,85 +141,85 @@ function dstFileName = bsGetDstFileName(GSparseInvParam, options, type)
 end
 
 
-function errorData = bsHandleOneTrace(GInvParam, GSparseInvParam, realData, gamma)
-
-    sampNum = GInvParam.upNum + GInvParam.downNum;
-    ncell = GSparseInvParam.ncell;
-    sizeAtom = GSparseInvParam.sizeAtom;
-    patches = zeros(sizeAtom, ncell);
-    
-    for j = 1 : ncell
-        js = GSparseInvParam.index(j);
-        patches(:, j) = realData(js : js+sizeAtom-1);
-    end
-    
-    gammas = omp(GSparseInvParam.D1'*patches, ...
-                    GSparseInvParam.omp_G, ...
-                    GSparseInvParam.sparsity);
-    new_patches = GSparseInvParam.D2 *  gammas;
-    
-
-    switch GSparseInvParam.reconstructType
-        case 'equation'
-            avgLog = gamma * realData;
-            % get reconstructed results by equation
-            for j = 1 : ncell
-
-                avgLog = avgLog + GSparseInvParam.R{j}' * new_patches(:, j);
-            end
-
-            errorData = GSparseInvParam.invR * avgLog;
-        case 'simpleAvg'
-            % get reconstructed results by averaging patches
-            avgLog = bsAvgPatches(new_patches, GSparseInvParam.index, sampNum);
-%             errorData = avgLog * gamma + realData * (1 - gamma);
-            errorData = avgLog * gamma;
-    end
-    
-end
-
-function GSparseInvParam = bsInitDLSRPkgs(GSparseInvParam, gamma, sampNum)
-
-    validatestring(string(GSparseInvParam.reconstructType), {'equation', 'simpleAvg'});
-    
-    [sizeAtom, nAtom] = size(GSparseInvParam.DIC);
-    sizeAtom = sizeAtom / 2;
-    
-    GSparseInvParam.sizeAtom = sizeAtom;
-    GSparseInvParam.nAtom = nAtom;
-    GSparseInvParam.nrepeat = sizeAtom - GSparseInvParam.stride;
-    
-    index = 1 : GSparseInvParam.stride : sampNum - sizeAtom + 1;
-    if(index(end) ~= sampNum - sizeAtom + 1)
-        index = [index, sampNum - sizeAtom + 1];
-    end
-    
-    GSparseInvParam.index = index;
-    GSparseInvParam.ncell = length(index);
-    [GSparseInvParam.R] = bsCreateRMatrix(index, sizeAtom, sampNum);
-   
-    tmp = zeros(sampNum, sampNum);
-    for iCell = 1 : GSparseInvParam.ncell
-        tmp = tmp + GSparseInvParam.R{iCell}' * GSparseInvParam.R{iCell};
-    end
-    GSparseInvParam.invTmp = tmp;
-    GSparseInvParam.invR = inv(gamma * eye(sampNum) + GSparseInvParam.invTmp);
-    
-    D1 = GSparseInvParam.DIC(1:sizeAtom, :);
-    D2 = GSparseInvParam.DIC(sizeAtom+1:end, :);
-    
-    [D1, D2] = bsNormalDIC(D1, D2);
-    
-    GSparseInvParam.D1 = D1;
-    
-    GSparseInvParam.omp_G = D1' * D1;
-    GSparseInvParam.D2 = D2;
-end
-
-function [D1, D2] = bsNormalDIC(D1, D2)
-    for i = 1 : size(D1, 2)
-        normCoef = norm(D1(:, i));
-        D1(:, i) = D1(:, i) / normCoef;
-        D2(:, i) = D2(:, i) / normCoef;
-    end
-end
+% function errorData = bsHandleOneTrace(GInvParam, GSparseInvParam, realData, gamma)
+% 
+%     sampNum = GInvParam.upNum + GInvParam.downNum;
+%     ncell = GSparseInvParam.ncell;
+%     sizeAtom = GSparseInvParam.sizeAtom;
+%     patches = zeros(sizeAtom, ncell);
+%     
+%     for j = 1 : ncell
+%         js = GSparseInvParam.index(j);
+%         patches(:, j) = realData(js : js+sizeAtom-1);
+%     end
+%     
+%     gammas = omp(GSparseInvParam.D1'*patches, ...
+%                     GSparseInvParam.omp_G, ...
+%                     GSparseInvParam.sparsity);
+%     new_patches = GSparseInvParam.D2 *  gammas;
+%     
+% 
+%     switch GSparseInvParam.reconstructType
+%         case 'equation'
+%             avgLog = gamma * realData;
+%             % get reconstructed results by equation
+%             for j = 1 : ncell
+% 
+%                 avgLog = avgLog + GSparseInvParam.R{j}' * new_patches(:, j);
+%             end
+% 
+%             errorData = GSparseInvParam.invR * avgLog;
+%         case 'simpleAvg'
+%             % get reconstructed results by averaging patches
+%             avgLog = bsAvgPatches(new_patches, GSparseInvParam.index, sampNum);
+% %             errorData = avgLog * gamma + realData * (1 - gamma);
+%             errorData = avgLog * gamma;
+%     end
+%     
+% end
+% 
+% function GSparseInvParam = bsInitDLSRPkgs(GSparseInvParam, gamma, sampNum)
+% 
+%     validatestring(string(GSparseInvParam.reconstructType), {'equation', 'simpleAvg'});
+%     
+%     [sizeAtom, nAtom] = size(GSparseInvParam.DIC);
+%     sizeAtom = sizeAtom / 2;
+%     
+%     GSparseInvParam.sizeAtom = sizeAtom;
+%     GSparseInvParam.nAtom = nAtom;
+%     GSparseInvParam.nrepeat = sizeAtom - GSparseInvParam.stride;
+%     
+%     index = 1 : GSparseInvParam.stride : sampNum - sizeAtom + 1;
+%     if(index(end) ~= sampNum - sizeAtom + 1)
+%         index = [index, sampNum - sizeAtom + 1];
+%     end
+%     
+%     GSparseInvParam.index = index;
+%     GSparseInvParam.ncell = length(index);
+%     [GSparseInvParam.R] = bsCreateRMatrix(index, sizeAtom, sampNum);
+%    
+%     tmp = zeros(sampNum, sampNum);
+%     for iCell = 1 : GSparseInvParam.ncell
+%         tmp = tmp + GSparseInvParam.R{iCell}' * GSparseInvParam.R{iCell};
+%     end
+%     GSparseInvParam.invTmp = tmp;
+%     GSparseInvParam.invR = inv(gamma * eye(sampNum) + GSparseInvParam.invTmp);
+%     
+%     D1 = GSparseInvParam.DIC(1:sizeAtom, :);
+%     D2 = GSparseInvParam.DIC(sizeAtom+1:end, :);
+%     
+%     [D1, D2] = bsNormalDIC(D1, D2);
+%     
+%     GSparseInvParam.D1 = D1;
+%     
+%     GSparseInvParam.omp_G = D1' * D1;
+%     GSparseInvParam.D2 = D2;
+% end
+% 
+% function [D1, D2] = bsNormalDIC(D1, D2)
+%     for i = 1 : size(D1, 2)
+%         normCoef = norm(D1(:, i));
+%         D1(:, i) = D1(:, i) / normCoef;
+%         D2(:, i) = D2(:, i) / normCoef;
+%     end
+% end

@@ -1,35 +1,9 @@
 function bsShowMultiDictionary(unionDic, Idx, colormap_K)
 
+    nColor = length(unique(Idx));
     figure;
     nAtom = size(unionDic, 2);
     sampNum = size(unionDic, 1) / 3;
-    
-%     if(nAtom >= 72)
-%         nAtom = 72;
-%     end
-    
-    D = bsGen1DDiffOperator(sampNum, 1, 1);
-    diff = D * unionDic(1:sampNum, :);
-    
-    data = zeros(nAtom, 2);
-    for i = 1 : nAtom
-%         data(i, 1) = norm(diff(:, i));
-        data(i, 1) = norm(diff(:, i), 1);
-%         data(i, 1) = norm(unionDic(:, i), 2);
-        data(i, 2) = i;
-    end
-    
-%     l1_diff = sum(abs(diff));
-%     data = [l1_diff; 1:nAtom];
-    data = sortrows(data, 1);
-    
-    unionDic = unionDic(:, data(:, 2));
-%     if(nAtom <= 25)
-% %         row = round( sqrt( GSparseInvParam.nAtom / 2 ) );
-%         row = 5;
-%     else
-%         row = 5;
-%     end
     
     row = 5;
     col = 12;

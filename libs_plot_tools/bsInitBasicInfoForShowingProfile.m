@@ -40,6 +40,8 @@ function [basicInfo] = bsInitBasicInfoForShowingProfile(GShowProfileParam, GInvP
     basicInfo.right = right;
     basicInfo.wellIndex = wellIndex;
     basicInfo.wellNames = wellNames;
+    basicInfo.upNum = GInvParam.upNum;
+    basicInfo.downNum = GInvParam.downNum;
     
     % scale the horiozon and get the time information
     scaleFactor = GShowProfileParam.scaleFactor;

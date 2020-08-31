@@ -14,7 +14,7 @@ function pN = bsAddNoise(pF, flag, SNR, G, xTrue, dt, options)
     for i = 1 : nTrace
         ndata = bsAdd1d(flag, pF(:, i), SNR, miu(i), sigma, xTrue(:, i), G);
         
-        if options.isBandPass()
+        if options.isBandPass
             ndata = bsButtBandPassFilter(ndata, dt, options.lowFreq, options.highFreq);
         end
         

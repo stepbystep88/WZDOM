@@ -4,8 +4,9 @@ function [outputData, highData, gamma_vals, gamma_locs] = ...
     [sampNum, traceNum] = size(inputData);
 
 
-    GSParam = bsInitDLSRPkgs(GSParam, options.gamma, sampNum);
-
+%     GSParam = bsInitDLSRPkgs(GSParam, options.gamma, sampNum);
+    [GSParam] = bsInitGSparseParam(GSParam, sampNum, 1, [], 2);
+    
         % tackle the inverse task
     outputData = zeros(sampNum, traceNum);
     highData = zeros(sampNum, traceNum);
@@ -24,9 +25,11 @@ function [outputData, highData, gamma_vals, gamma_locs] = ...
     seqs = round(linspace(1, traceNum, n));
     
     for iTrace = seqs
-        [highData(:, iTrace), gamma_vals(:, iTrace), gamma_locs(:, iTrace)] ...
-            = bsCalcHighFreqOfOneTrace(GSParam, inputData(:, iTrace), inIds(iTrace), crossIds(iTrace), options);
+%         [highData(:, iTrace), gamma_vals(:, iTrace), gamma_locs(:, iTrace)] ...
+%             = bsCalcHighFreqOfOneTrace(GSParam, inputData(:, iTrace), inIds(iTrace), crossIds(iTrace), options);
 %         bsIncParforProgress(pbm, iTrace, 10000);
+        [highData(:, iTrace), t_gammas] = bsSparsePredictOneTrace(GSParam, {inputData(:, iTrace)}, inIds(iTrace), crossIds(iTrace));
+        [gamma_vals, gamma_locs] = bsGetNonZeroElements(t_gammas, GSParam.sparsity);
     end
 
     % 给未高分辨率的道插值
@@ -131,68 +134,68 @@ end
 
 
 
-function GSParam = bsInitDLSRPkgs(GSParam, gamma, sampNum)
-
-    validatestring(string(GSParam.reconstructType), {'equation', 'simpleAvg'});
-    
-    sizeAtom = GSParam.trainDICParam.sizeAtom;
-    nAtom = GSParam.trainDICParam.nAtom;
-
-    
-    GSParam.sizeAtom = sizeAtom;
-    GSParam.nAtom = nAtom;
-    GSParam.nrepeat = sizeAtom - GSParam.stride;
-    
-    index = 1 : GSParam.stride : sampNum - sizeAtom + 1;
-    if(index(end) ~= sampNum - sizeAtom + 1)
-        index = [index, sampNum - sizeAtom + 1];
-    end
-    
-    GSParam.index = index;
-    GSParam.ncell = length(index);
-    [GSParam.R] = bsCreateRMatrix(index, sizeAtom, sampNum);
-   
-    tmp = zeros(sampNum, sampNum);
-    for iCell = 1 : GSParam.ncell
-        tmp = tmp + GSParam.R{iCell}' * GSParam.R{iCell};
-    end
-    GSParam.invTmp = tmp;
-    GSParam.invR = inv(gamma * eye(sampNum) + GSParam.invTmp);
-    
-    % 低分辨率patch可能有时间和地址信息
-    n1 = size(GSParam.DIC, 1) - sizeAtom;
-%     nSpecialFeat = trainDICParam.isAddLocInfo * 2 + trainDICParam.isAddTimeInfo;
-    
-    D1 = GSParam.DIC(1:n1, :);
-    D2 = GSParam.DIC(n1+1:end, :);
-    
-    [D1, D2, C] = bsNormalDIC(D1, D2);
-    
-    GSParam.D1 = D1;
-    
-    GSParam.omp_G = D1' * D1;
-    GSParam.D2 = D2;
-    GSParam.C = C;
-    
-%     GSParam.neiborIndecies = bsGetNeiborIndecies(D1, GSParam.nNeibor);
-    rangeCoef = GSParam.rangeCoef;
-    n1 = size(rangeCoef, 1) - sizeAtom;
-    
-    GSParam.low_min_values = repmat(rangeCoef(1:n1, 1), 1, GSParam.ncell);
-    GSParam.low_max_values = repmat(rangeCoef(1:n1, 2), 1, GSParam.ncell);
-                
-    GSParam.high_min_values = repmat(rangeCoef(n1+1:end, 1), 1, GSParam.ncell);
-    GSParam.high_max_values = repmat(rangeCoef(n1+1:end, 2), 1, GSParam.ncell);
-end
-
-function [D1, D2, C] = bsNormalDIC(D1, D2)
-    C = zeros(size(D1, 2), 1);
-    
-    for i = 1 : size(D1, 2)
-        normCoef = norm(D1(:, i));
-        D1(:, i) = D1(:, i) / normCoef;
-        D2(:, i) = D2(:, i) / normCoef;
-        C(i) = normCoef;
-    end
-end
+% function GSParam = bsInitDLSRPkgs(GSParam, gamma, sampNum)
+% 
+%     validatestring(string(GSParam.reconstructType), {'equation', 'simpleAvg'});
+%     
+%     sizeAtom = GSParam.trainDICParam.sizeAtom;
+%     nAtom = GSParam.trainDICParam.nAtom;
+% 
+%     
+%     GSParam.sizeAtom = sizeAtom;
+%     GSParam.nAtom = nAtom;
+%     GSParam.nrepeat = sizeAtom - GSParam.stride;
+%     
+%     index = 1 : GSParam.stride : sampNum - sizeAtom + 1;
+%     if(index(end) ~= sampNum - sizeAtom + 1)
+%         index = [index, sampNum - sizeAtom + 1];
+%     end
+%     
+%     GSParam.index = index;
+%     GSParam.ncell = length(index);
+%     [GSParam.R] = bsCreateRMatrix(index, sizeAtom, sampNum);
+%    
+%     tmp = zeros(sampNum, sampNum);
+%     for iCell = 1 : GSParam.ncell
+%         tmp = tmp + GSParam.R{iCell}' * GSParam.R{iCell};
+%     end
+%     GSParam.invTmp = tmp;
+%     GSParam.invR = inv(gamma * eye(sampNum) + GSParam.invTmp);
+%     
+%     % 低分辨率patch可能有时间和地址信息
+%     n1 = size(GSParam.DIC, 1) - sizeAtom;
+% %     nSpecialFeat = trainDICParam.isAddLocInfo * 2 + trainDICParam.isAddTimeInfo;
+%     
+%     D1 = GSParam.DIC(1:n1, :);
+%     D2 = GSParam.DIC(n1+1:end, :);
+%     
+%     [D1, D2, C] = bsNormalDIC(D1, D2);
+%     
+%     GSParam.D1 = D1;
+%     
+%     GSParam.omp_G = D1' * D1;
+%     GSParam.D2 = D2;
+%     GSParam.C = C;
+%     
+% %     GSParam.neiborIndecies = bsGetNeiborIndecies(D1, GSParam.nNeibor);
+%     rangeCoef = GSParam.rangeCoef;
+%     n1 = size(rangeCoef, 1) - sizeAtom;
+%     
+%     GSParam.low_min_values = repmat(rangeCoef(1:n1, 1), 1, GSParam.ncell);
+%     GSParam.low_max_values = repmat(rangeCoef(1:n1, 2), 1, GSParam.ncell);
+%                 
+%     GSParam.high_min_values = repmat(rangeCoef(n1+1:end, 1), 1, GSParam.ncell);
+%     GSParam.high_max_values = repmat(rangeCoef(n1+1:end, 2), 1, GSParam.ncell);
+% end
+% 
+% function [D1, D2, C] = bsNormalDIC(D1, D2)
+%     C = zeros(size(D1, 2), 1);
+%     
+%     for i = 1 : size(D1, 2)
+%         normCoef = norm(D1(:, i));
+%         D1(:, i) = D1(:, i) / normCoef;
+%         D2(:, i) = D2(:, i) / normCoef;
+%         C(i) = normCoef;
+%     end
+% end
   

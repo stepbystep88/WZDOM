@@ -32,7 +32,14 @@ function [d, G, initX, lsdCoef, angleData] = bsPreBuild_d_G_m(GPreInvParam, inli
             
             [angleSeisData, angleData, ~] = bsOffsetData2AngleData(GPreInvParam, preData, offsets, ...
                 initLog(:, 1), initLog(:, 2), initLog(:, 3), initLog(:, 4));
-   
+            
+        case 'function'
+            angleData = GPreInvParam.angleData;
+            angleSeisData = preDataInfo.fcn(inline, crossline, startTime);
+            if angleData(end) > 10
+                angleData = angleData / 180 * pi;
+            end
+            
         otherwise
             validatestring(GPreInvParam.preSeisData.mode, ...
                 'angle_separate_files', 'angle_one_file', 'offset_one_file');
