@@ -254,7 +254,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
         scaleFactors(1) = preModel.scaleFactor;
         
         pbm = bsResetParforProgress(pbm, sprintf('Finding neiboors... %s', method.name));
-        for iTrace = 1 : traceNum
+        parfor iTrace = 1 : traceNum
             % 找当前当的所有邻近道
             neiboors{iTrace} = bsFindNearestKTrace(iTrace, inIds, crossIds, KTrace, nTracePerLine);
             bsIncParforProgress(pbm, iTrace, 1000);
