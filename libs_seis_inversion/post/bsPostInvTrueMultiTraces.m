@@ -260,7 +260,6 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
             bsIncParforProgress(pbm, iTrace, 1000);
         end
         
-        tmp = cell2mat(neiboors);
         
         pbm = bsResetParforProgress(pbm, sprintf('Preparing model... %s', method.name));
         parfor iTrace = 2 : traceNum
