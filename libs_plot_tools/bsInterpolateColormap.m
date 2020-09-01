@@ -1,4 +1,4 @@
-function [res] = bsInterpolateColormap(name, nColor, colormap)
+function [res] = bsInterpolateColormap(name, nColor, colormap, position)
 
     if ~exist('nColor', 'var')
         nColor = 256;
@@ -8,10 +8,13 @@ function [res] = bsInterpolateColormap(name, nColor, colormap)
         colormap = get(gcf,'Colormap');
     end
     
+    if ~exist('position', 'var')
+        x1 = round(linspace(1, nColor, size(colormap, 1)));
+    else
+        x1 = position;
+    end
     
     x = 1 : nColor;
-    x1 = round(linspace(1, nColor, size(colormap, 1)));
-%     x1 = [1, x1];
     
     newColor = zeros(nColor, 3);
     

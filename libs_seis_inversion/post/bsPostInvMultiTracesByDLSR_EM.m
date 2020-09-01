@@ -37,7 +37,13 @@ function [data, ys] = bsPostInvMultiTracesByDLSR_EM(GInvParam, neiboors, ds, G, 
     
     [X, Y] = meshgrid(seqs, 1:sampNum-1);
 	[Xq,Yq] = meshgrid(1:traceNum, 1:sampNum-1);
-                    
+    
+    pbm = bsInitParforProgress(GInvParam.numWorkers, ...
+            traceNum, ...
+            '', ...
+            GInvParam.modelSavePath, ...
+            GInvParam.isPrintBySavingFile);
+        
     switch flag
         case 2
             GModel = GSParam.model;
@@ -58,7 +64,7 @@ function [data, ys] = bsPostInvMultiTracesByDLSR_EM(GInvParam, neiboors, ds, G, 
             ds = ds_org - ys * beta;
             
             for iter = 1 : options.maxIter
-                fprintf("第%d次迭代：常规反演\n", iter);
+                pbm = bsResetParforProgress(pbm, sprintf("The %d-th iteration：regular inversion.", iter));
                 parfor iTrace = 1 : traceNum
                     [xs(:, iTrace), ys(:, iTrace)] ...
                         = invNormalOneTrace(...
@@ -68,17 +74,18 @@ function [data, ys] = bsPostInvMultiTracesByDLSR_EM(GInvParam, neiboors, ds, G, 
                         xs_org(:, iTrace), ...
                         scaleFactors(iTrace), ...
                         lambda, initRegParam, GBOptions);
+                    bsIncParforProgress(pbm, iTrace, 1000);
                 end
 
                 Ips = exp(xs);
 
-                fprintf("第%d次迭代：稀疏重构\n", iter);
-        %
+                pbm = bsResetParforProgress(pbm, sprintf("The %d-th iteration：sparse reconstruction.", iter));
                 for iTrace = 1 : traceNum
                     tmp = neiboors{iTrace};
 
                     newIp = bsSparseRebuildOneTrace(GModel, {Ips(:, tmp)}, gamma, inIds(tmp), crossIds(tmp));
                     xs(:, iTrace) = log(newIp);
+                    bsIncParforProgress(pbm, iTrace, 1000);
                 end
                 
                 ys = ds_org - G * xs;
@@ -116,7 +123,7 @@ function [data, ys] = bsPostInvMultiTracesByDLSR_EM(GInvParam, neiboors, ds, G, 
             ds = ds_org - ys * beta;
             
             for iter = 1 : options.maxIter
-                fprintf("第%d次迭代：常规反演\n", iter);
+                pbm = bsResetParforProgress(pbm, sprintf("The %d-th iteration：regular inversion.", iter));
                 parfor iTrace = 1 : traceNum
                     [xs(:, iTrace), ys(:, iTrace)] ...
                         = invNormalOneTrace(...
@@ -126,12 +133,12 @@ function [data, ys] = bsPostInvMultiTracesByDLSR_EM(GInvParam, neiboors, ds, G, 
                         xs_org(:, iTrace), ...
                         scaleFactors(iTrace), ...
                         lambda, initRegParam, GBOptions);
+                    bsIncParforProgress(pbm, iTrace, 1000);
                 end
 
                 Ips = exp(xs);
 
-                fprintf("第%d次迭代：稀疏重构\n", iter);
-                
+                pbm = bsResetParforProgress(pbm, sprintf("The %d-th iteration：sparse reconstruction.", iter));
                 ys_bak = ys;
                 for iTrace = 1 : traceNum
                     tmp = neiboors{iTrace};
@@ -147,6 +154,8 @@ function [data, ys] = bsPostInvMultiTracesByDLSR_EM(GInvParam, neiboors, ds, G, 
                     
                     xs(:, iTrace) = log( out(:, 1) * gamma + (1 - gamma) * Ips(:, iTrace) );
                     ys(:, iTrace) = out(1:sampNum-1, 2);
+                    
+                    bsIncParforProgress(pbm, iTrace, 1000);
                 end
                 
                 % 给未预测的道插值

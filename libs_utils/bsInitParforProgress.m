@@ -22,7 +22,6 @@ function pbm = bsInitParforProgress(numWorkers, nLoop, title, basePath, isPrintB
     
     
     if isPrintBySavingFile
-        fid = fopen(pbm.name, 'w');
-        fclose(fid);
+        bsResetParforProgress(pbm, '');
     end
 end

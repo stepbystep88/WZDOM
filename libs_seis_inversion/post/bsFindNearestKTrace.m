@@ -9,7 +9,9 @@ function ids = bsFindNearestKTrace(iTrace, xs, ys, K, nTracePerLine)
         ePos = length(xs);
     end
     
-    dist = (xs(iTrace) - xs(sPos:ePos)).^2 + (ys(iTrace) - ys(sPos:ePos)).^2;
+    subIndex = sPos : ePos;
+    dist = (xs(iTrace) - xs(subIndex)).^2 + (ys(iTrace) - ys(subIndex)).^2;
     
-    [~, ids] = bsMinK(dist, K);
+    [~, index] = bsMinK([dist', subIndex'], K);
+    ids = subIndex(index);
 end

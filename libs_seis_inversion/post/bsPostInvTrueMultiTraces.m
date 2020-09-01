@@ -253,8 +253,16 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
         ds(:, 1) = preModel.d;
         scaleFactors(1) = preModel.scaleFactor;
         
-        pbm.title = sprintf('Prepare model... %s', method.name);
+        pbm = bsResetParforProgress(pbm, sprintf('Finding neiboors... %s', method.name));
+        for iTrace = 1 : traceNum
+            % 找当前当的所有邻近道
+            neiboors{iTrace} = bsFindNearestKTrace(iTrace, inIds, crossIds, KTrace, nTracePerLine);
+            bsIncParforProgress(pbm, iTrace, 1000);
+        end
         
+        tmp = cell2mat(neiboors);
+        
+        pbm = bsResetParforProgress(pbm, sprintf('Preparing model... %s', method.name));
         parfor iTrace = 2 : traceNum
             model = bsPostPrepareModel(GInvParam, inIds(iTrace), crossIds(iTrace), horizonTimes(iTrace), [], preModel);
 %             xs(:, iTrace) = models{iTrace}.initX;
@@ -262,13 +270,10 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
             ds(:, iTrace) = model.d;
             scaleFactors(iTrace) = model.scaleFactor;
             
-            bsIncParforProgress(pbm, iTrace, 100);
+            bsIncParforProgress(pbm, iTrace, 1000);
         end
         
-        parfor iTrace = 1 : traceNum
-            % 找当前当的所有邻近道
-            neiboors{iTrace} = bsFindNearestKTrace(iTrace, inIds, crossIds, KTrace, nTracePerLine);
-        end
+        
         
         switch method.flag
             case 'DLSR'

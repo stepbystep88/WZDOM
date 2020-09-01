@@ -10,6 +10,13 @@ function colormap = bsGetColormap(name)
         case {'vel', 'velocity', 'pvel'}
             tmp = load('color_hrs_pvel.mat');
             colormap = tmp.color_hrs_pvel;
+        case {'jason_impedance', 'jason'}
+            tmp = load('color_jason_impedance.mat');
+            colormap = tmp.color_jason_impedance;
+            
+        case {'jason_impedance2', 'jason2'}
+            tmp = load('color_jason_impedance2.mat');
+            colormap = tmp.color_jason_impedance2;
             
         case 'seismic'
             tmp = load('color_seismic.mat');

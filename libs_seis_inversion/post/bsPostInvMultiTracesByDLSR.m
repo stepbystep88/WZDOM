@@ -25,21 +25,29 @@ function [data, ys] = bsPostInvMultiTracesByDLSR(GInvParam, neiboors, ds, G, xs,
     
     GSParam = bsInitGSparseParam(GSParam, sampNum, nBlock);
     
+    pbm = bsInitParforProgress(GInvParam.numWorkers, ...
+            traceNum, ...
+            '', ...
+            GInvParam.modelSavePath, ...
+            GInvParam.isPrintBySavingFile);
+        
     for iter = 1 : options.maxIter
-        fprintf("第%d次迭代：常规反演\n", iter);
+        pbm = bsResetParforProgress(pbm, sprintf("The %d-th iteration：regular inversion.", iter));
         parfor iTrace = 1 : traceNum
             xs(:, iTrace) = invNormalOneTrace(ds(:, iTrace), G/scaleFactors(iTrace), xs(:, iTrace), ...
                 xs_org(:, iTrace), mainFunc, lambda, initRegParam, GBOptions);
+            bsIncParforProgress(pbm, iTrace, 1000);
         end
 
         Ips = exp(xs);
-
-        fprintf("第%d次迭代：稀疏重构\n", iter);
+    
+        pbm = bsResetParforProgress(pbm, sprintf("The %d-th iteration：sparse reconstruction.", iter));
         for iTrace = 1 : traceNum
 %             avg_xs(:, iTrace) = sparseRebuildOneTrace(GSParam, Ips(:, neiboors{iTrace}));
             tmp = neiboors{iTrace};
             out = bsSparseRebuildOneTrace(GSParam, {Ips(:, tmp)}, gamma, inIds(tmp), crossIds(tmp));
             xs(:, iTrace) = log(out);
+            bsIncParforProgress(pbm, iTrace, 1000);
         end
 
 %         fprintf("第%d次迭代：反演结果合并\n", iter);
