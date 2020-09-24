@@ -46,9 +46,15 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
     
     
 % -------------------------------------------------------------------------
+    if ~isempty(model) && isfield(model, 'G')
+        G = model.G;
+    else
+        G = [];
+    end
+    
     % build d, G, m
     [model.d, model.G, model.initX, model.lsdCoef, model.angleData] ...
-        = bsPreBuild_d_G_m(GPreInvParam, inline, crossline, startTime, initLog);
+        = bsPreBuild_d_G_m(GPreInvParam, inline, crossline, startTime, initLog, G);
     GPreInvParam.lsdCoef = model.lsdCoef;
     
     % check data

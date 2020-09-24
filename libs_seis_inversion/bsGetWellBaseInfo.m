@@ -28,7 +28,7 @@ function [inline, crossline, time] = bsGetWellBaseInfo(timeLine, X, Y, xId, yId,
         
         index = find(timeLine(:, xId) == X & timeLine(:, yId) == Y);
         if isempty(index)
-            dist = (timeLine(:, xId) - X).^2 + (timeLine(:,yId) - Y).^2;
+            dist = abs(timeLine(:, xId) - X) + abs(timeLine(:,yId) - Y);
             [~, index] = min(dist);
         end
     end

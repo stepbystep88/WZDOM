@@ -3,7 +3,7 @@ function pN = bsAddNoise(pF, flag, SNR, G, xTrue, dt, options)
     [sampNum, nTrace] = size(pF);
     pN = zeros(sampNum, nTrace);
     
-    if options.isMeanZero
+    if ~isfield(options, 'isMeanZero') || options.isMeanZero
         miu = zeros(1, nTrace);
     else
         miu = sign(randn(1, nTrace))*0.4*rand()*max(abs(pF));
@@ -12,16 +12,22 @@ function pN = bsAddNoise(pF, flag, SNR, G, xTrue, dt, options)
     sigma = 1;
     
     for i = 1 : nTrace
-        ndata = bsAdd1d(flag, pF(:, i), SNR, miu(i), sigma, xTrue(:, i), G);
         
-        if options.isBandPass
+        if ~isempty(G)
+            ndata = bsAdd1d(flag, pF(:, i), SNR, miu(i), sigma, xTrue(:, i), G);
+        else
+            ndata = bsAdd1d(flag, pF(:, i), SNR, miu(i), sigma, [], []);
+        end
+        
+        
+        if isfield(options, 'isBandPass') && options.isBandPass
             ndata = bsButtBandPassFilter(ndata, dt, options.lowFreq, options.highFreq);
         end
         
         pN(:, i) = ndata;
     end
     
-    if options.isUseHanming
+    if isfield(options, 'isUseHanming') && options.isUseHanming
         NOISE = pN - pF;
         L = 11;
         op = hamming(L);

@@ -1,11 +1,11 @@
-function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, timeLine, methods)
+function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, timeLine, methods)
 %% inverse multiple traces
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
 % Programming dates: Nov 2019
 % -------------------------------------------------------------------------
 %
 % Input 
-% GPreInvParam     all information of the inverse task
+% GInvParam     all information of the inverse task
 % inIds      	inline ids to be inverted
 % crossIds      crossline ids to be inverted
 % timeLine      horizon information
@@ -20,20 +20,20 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
     assert(length(inIds) == length(crossIds), 'The length of inline ids and crossline ids must be the same.');
     nMethod = size(methods, 1);
     traceNum = length(inIds);
-    sampNum = GPreInvParam.upNum + GPreInvParam.downNum;
+    sampNum = GInvParam.upNum + GInvParam.downNum;
     % save the inverted results
     rangeIn = [min(inIds), max(inIds)];
     rangeCross = [min(crossIds), max(crossIds)];
     
     % horion of the whole volume
-    usedTimeLine = timeLine{GPreInvParam.usedTimeLineId};
+    usedTimeLine = timeLine{GInvParam.usedTimeLineId};
     
     % create folder to save the intermediate results
     try
         warning('off');
-        mkdir([GPreInvParam.modelSavePath,'/models/']);
-        mkdir([GPreInvParam.modelSavePath,'/mat_results/']);
-        mkdir([GPreInvParam.modelSavePath,'/sgy_results/']);
+        mkdir([GInvParam.modelSavePath,'/models/']);
+        mkdir([GInvParam.modelSavePath,'/mat_results/']);
+        mkdir([GInvParam.modelSavePath,'/sgy_results/']);
         warning('on');
     catch
         
@@ -44,9 +44,9 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
     
     % horizon of given traces
     horizonTimes = bsGetHorizonTime(usedTimeLine, inIds, crossIds, ...
-            GPreInvParam.isParallel, GPreInvParam.numWorkers);
+            GInvParam.isParallel, GInvParam.numWorkers);
         
-    startTimes = horizonTimes - GPreInvParam.dt * GPreInvParam.upNum;
+    startTimes = horizonTimes - GInvParam.dt * GInvParam.upNum;
     
     for i = 1 : nMethod
         method = methods{i};
@@ -58,7 +58,11 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
         
         if isempty(res.source)
             % obtain results by computing
-            if isfield(method.parampkgs, 'nMultipleTrace') && method.parampkgs.nMultipleTrace > 1
+            if any(strcmpi({'CSR-GST', 'SSR-GST'}, method.flag)) || ...
+                    (isfield(method.parampkgs, 'nMultipleTrace') ...
+                    && method.parampkgs.nMultipleTrace > 1 ...
+                    && any(strcmpi({'CSR', 'CSR-EM'}, method.flag)))
+                
                 KTrace = method.parampkgs.nMultipleTrace;
                 [vp, vs, rho] = bsCallInvFcnMultiTraces(KTrace);
             else
@@ -81,9 +85,9 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
         res.crossIds = crossIds;    % inverted crossline ids
         res.horizon = horizonTimes; % the horizon of inverted traces
         res.name = method.name;     % the name of this method
-        res.dt = GPreInvParam.dt;
-        res.upNum = GPreInvParam.upNum;
-        res.downNum = GPreInvParam.downNum;
+        res.dt = GInvParam.dt;
+        res.upNum = GInvParam.upNum;
+        res.downNum = GInvParam.downNum;
         
         invResults{i} = res;
         
@@ -103,7 +107,7 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
                     try
                         % from mat file
                         if isfield(loadInfo, 'fileName') && ~isempty(loadInfo.fileName)
-                            load_mat = load(GPreInvParam.load.fileName);
+                            load_mat = load(GInvParam.load.fileName);
                         else
                             load_mat = load(matFileName);
                         end
@@ -140,12 +144,12 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
                         if isfield(loadInfo, 'prestack') && loadInfo.prestack == 1
                             data{iFile} = bsStackPreSeisData(loadInfo.fileName{iFile}, ...
                                 iSegyInfo, ...
-                                inIds, crossIds, startTimes, sampNum, GPreInvParam.dt);
+                                inIds, crossIds, startTimes, sampNum, GInvParam.dt);
                         else
                             [data{iFile}, ~] = bsReadTracesByIds(...
                                 loadInfo.fileName{iFile}, ...
                                 iSegyInfo, ...
-                                inIds, crossIds, startTimes, sampNum, GPreInvParam.dt);
+                                inIds, crossIds, startTimes, sampNum, GInvParam.dt);
                         end
                     end
                     
@@ -180,8 +184,8 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
                 end
                 fprintf('Writing segy file:%s ....\n', segyFileName);
                 bsWriteInvResultIntoSegyFile(res, kdata, ...
-                    GPreInvParam.preSeisData.fileName, ...
-                    GPreInvParam.preSeisData.segyInfo, ...
+                    GInvParam.preSeisData.fileName, ...
+                    GInvParam.preSeisData.segyInfo, ...
                     segyFileName, 0);
                 fprintf('Write segy file:%s successfully!\n', segyFileName);
             end
@@ -192,9 +196,9 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
         if isfield(method, 'isSaveMat') && method.isSaveMat && strcmp(res.source, 'computation')
             fprintf('Writing mat file:%s...\n', matFileName);
             try
-                save(matFileName, 'vp', 'vs', 'rho', 'GPreInvParam', 'inIds', 'crossIds', 'horizonTimes', 'method');
+                save(matFileName, 'vp', 'vs', 'rho', 'GInvParam', 'inIds', 'crossIds', 'horizonTimes', 'method');
             catch
-                save(matFileName, 'vp', 'vs', 'rho', 'GPreInvParam', 'inIds', 'crossIds', 'horizonTimes', 'method', '-v7.3');
+                save(matFileName, 'vp', 'vs', 'rho', 'GInvParam', 'inIds', 'crossIds', 'horizonTimes', 'method', '-v7.3');
             end
             fprintf('Write mat file:%s successfully!\n', matFileName);
         end
@@ -204,10 +208,10 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
         switch type
             case 'mat'
                 fileName = sprintf('%s/mat_results/vpsrho_%s_inline_[%d_%d]_crossline_[%d_%d].mat', ...
-                    GPreInvParam.modelSavePath, methodName, rangeIn(1), rangeIn(2), rangeCross(1), rangeCross(2));
+                    GInvParam.modelSavePath, methodName, rangeIn(1), rangeIn(2), rangeCross(1), rangeCross(2));
             case 'segy'
                 fileName = sprintf('%s/sgy_results/%s_%s_inline_[%d_%d]_crossline_[%d_%d].sgy', ...
-                    GPreInvParam.modelSavePath, attName, methodName, rangeIn(1), rangeIn(2), rangeCross(1), rangeCross(2));
+                    GInvParam.modelSavePath, attName, methodName, rangeIn(1), rangeIn(2), rangeCross(1), rangeCross(2));
         end
         
     end
@@ -220,23 +224,23 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
         
         % obtain a preModel avoid calculating matrix G again and again.
         % see line 20 of function bsPrePrepareModel for details
-        [vp(:, 1), vs(:, 1), rho(:, 1), preModel, output] = bsPreInvOneTrace(GPreInvParam, horizonTimes(1), method, inIds(1), crossIds(1), [], 0);
+        [vp(:, 1), vs(:, 1), rho(:, 1), preModel, output] = bsPreInvOneTrace(GInvParam, horizonTimes(1), method, inIds(1), crossIds(1), [], 0);
         if ~isempty(output)
             method.parampkgs = output.parampkgs;
         end
         
-        if GPreInvParam.isParallel
+        if GInvParam.isParallel
             
-            pbm = bsInitParforProgress(GPreInvParam.numWorkers, ...
+            pbm = bsInitParforProgress(GInvParam.numWorkers, ...
                 traceNum, ...
                 sprintf('Pre inversion progress information by method %s', method.name), ...
-                GPreInvParam.modelSavePath, ...
-                GPreInvParam.isPrintBySavingFile);
+                GInvParam.modelSavePath, ...
+                GInvParam.isPrintBySavingFile);
             
             % parallel computing
             parfor iTrace = 2 : traceNum
                     [vp(:, iTrace), vs(:, iTrace), rho(:, iTrace)] ...
-                        = bsPreInvOneTrace(GPreInvParam, horizonTimes(iTrace), method, ...
+                        = bsPreInvOneTrace(GInvParam, horizonTimes(iTrace), method, ...
                             inIds(iTrace), crossIds(iTrace), preModel, 0);
 
                     bsIncParforProgress(pbm, iTrace, 101);
@@ -250,7 +254,7 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
             % non-parallel computing 
             for iTrace = 2 : traceNum
                 [vp(:, iTrace), vs(:, iTrace), rho(:, iTrace)] ...
-                    = bsPreInvOneTrace(GPreInvParam, horizonTimes(iTrace), method, ...
+                    = bsPreInvOneTrace(GInvParam, horizonTimes(iTrace), method, ...
                         inIds(iTrace), crossIds(iTrace), preModel, 1);
             end
         end
@@ -259,14 +263,14 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
     function [vp, vs, rho] = bsCallInvFcnMultiTraces(KTrace)
         % tackle the inverse task
         xs = zeros(sampNum*3, traceNum);
-        ds = zeros( (sampNum-1)*GPreInvParam.angleTrNum, traceNum);
+        ds = zeros( (sampNum-1)*GInvParam.angleTrNum, traceNum);
         scaleFactors = zeros(1, traceNum);
         Gs = cell(1, traceNum);
         
         neiboors = cell(1, traceNum);
         
         try
-            [rangeInline, rangeCrossline] = bsGetWorkAreaRangeByParam(GPreInvParam);
+            [rangeInline, rangeCrossline] = bsGetWorkAreaRangeByParam(GInvParam);
             nRangeInline = rangeInline(2) - rangeInline(1) + 1;
             nRangeCrossline = rangeCrossline(2) - rangeCrossline(1) + 1;
 
@@ -279,30 +283,30 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
             nTracePerLine = max(crossIds) - min(crossIds) + 1;
         end
     
-        pbm = bsInitParforProgress(GPreInvParam.numWorkers, ...
+        pbm = bsInitParforProgress(GInvParam.numWorkers, ...
             traceNum, ...
             '', ...
-            GPreInvParam.modelSavePath, ...
-            GPreInvParam.isPrintBySavingFile);
+            GInvParam.modelSavePath, ...
+            GInvParam.isPrintBySavingFile);
             
             
         % 第一步获取所需的模型
-        preModel = bsPrePrepareModel(GPreInvParam, inIds(1), crossIds(1), horizonTimes(1), [], []);
+        preModel = bsPrePrepareModel(GInvParam, inIds(1), crossIds(1), horizonTimes(1), [], []);
             
         xs(:, 1) = preModel.initX;
         ds(:, 1) = preModel.d;
-        Gs{1} = preModel.G;
+        G = preModel.orginal_G;
         scaleFactors(1) = preModel.scaleFactor;
-        GPreInvParam.lsdCoef = preModel.lsdCoef;
+        GInvParam.lsdCoef = preModel.lsdCoef;
         
         pbm.title = sprintf('Prepare model... %s', method.name);
         
         parfor iTrace = 2 : traceNum
-            model = bsPrePrepareModel(GPreInvParam, inIds(iTrace), crossIds(iTrace), horizonTimes(iTrace), [], preModel);
+            model = bsPrePrepareModel(GInvParam, inIds(iTrace), crossIds(iTrace), horizonTimes(iTrace), [], preModel);
 %             xs(:, iTrace) = models{iTrace}.initX;
             xs(:, iTrace) = model.initX;
             ds(:, iTrace) = model.d;
-            Gs{iTrace} = model.G;
+%             Gs{iTrace} = model.G;
             scaleFactors(iTrace) = model.scaleFactor;
             
             bsIncParforProgress(pbm, iTrace, 100);
@@ -315,7 +319,14 @@ function [invResults] = bsPreInvTrueMultiTraces(GPreInvParam, inIds, crossIds, t
         
         switch method.flag
             case 'CSR'
-                [vp, vs, rho] = bsPreInvMultiTracesByCSR(GPreInvParam, neiboors, ds, Gs, xs, scaleFactors, inIds, crossIds, method);
+                [vp, vs, rho] = bsPreInvMultiTracesByCSR(GInvParam, neiboors, ds, G, xs, scaleFactors, inIds, crossIds, method);
+            case 'CSR-GST'
+                horizonTime = bsGetHorizonTime(timeLine{GInvParam.usedTimeLineId}, inIds, crossIds, 1);
+                startTime = horizonTime - GInvParam.upNum * GInvParam.dt;
+                postSeisData = bsGetPostSeisData(GInvParam, inIds, crossIds, startTime, sampNum);
+                shiftedData = bsPhase90Shift(postSeisData);
+    
+                [vp, vs, rho] = bsPreInvMultiTracesByCSR_GST(GInvParam, neiboors, ds, G, xs, scaleFactors, shiftedData, inIds, crossIds, method);
 %             case 'DLSR-EM'
 %                 [data, ys] = bsPostInvMultiTracesByDLSR_EM(GInvParam, neiboors, ds, preModel.orginal_G, xs, scaleFactors, inIds, crossIds, method);
         end
@@ -330,47 +341,47 @@ function fileName = bsGetModelFileName(modelSavePath, inId, crossId)
 
 end
 
-function [vp, vs, rho, model, output] = bsPreInvOneTrace(GPreInvParam, horizonTime, method, inId, crossId, preModel, isprint)
+function [vp, vs, rho, model, output] = bsPreInvOneTrace(GInvParam, horizonTime, method, inId, crossId, preModel, isprint)
 
     if isprint
         fprintf('Solving the trace of inline=%d and crossline=%d by using method %s...\n', ...
             inId, crossId, method.name);
     end
     
-    try
+%     try
         % create model data
-        if GPreInvParam.isReadMode
+        if GInvParam.isReadMode
             % in read mode, model is loaded from local file
-            modelFileName = bsGetModelFileName(GPreInvParam.modelSavePath, inId, crossId);
+            modelFileName = bsGetModelFileName(GInvParam.modelSavePath, inId, crossId);
             parLoad(modelFileName);
         else
             % otherwise, create the model by computing. Note that we input
             % argment preModel is a pre-calculated model, by doing this, we
             % avoid wasting time on calculating the common data of different
             % traces such as forward matrix G.
-            model = bsPrePrepareModel(GPreInvParam, inId, crossId, horizonTime, [], preModel);
-            if GPreInvParam.isSaveMode
+            model = bsPrePrepareModel(GInvParam, inId, crossId, horizonTime, [], preModel);
+            if GInvParam.isSaveMode
                 % in save mode, model should be saved as local file
-                modelFileName = bsGetModelFileName(GPreInvParam.modelSavePath, inId, crossId);
+                modelFileName = bsGetModelFileName(GInvParam.modelSavePath, inId, crossId);
                 parSave(modelFileName, model);
             end
         end
 
-        method.mode = GPreInvParam.mode;
+        method.mode = GInvParam.mode;
         method.lsdCoef = model.lsdCoef;
         method.options.inline = inId;
         method.options.crossline = crossId;
         [xOut, ~, ~, output] = bsPreInv1DTrace(model.d, model.G, model.initX, model.Lb, model.Ub, method);                       
 
-        [vp, vs, rho] = bsPreRecoverElasticParam(xOut, GPreInvParam.mode, model.lsdCoef);
-    catch err
-        fprintf(getReport(err));
-        
-        sampNum = GPreInvParam.upNum + GPreInvParam.downNum;
-        vp = zeros(sampNum, 1);
-        vs = zeros(sampNum, 1);
-        rho = zeros(sampNum, 1);
-        model = [];
-        output = [];
-    end
+        [vp, vs, rho] = bsPreRecoverElasticParam(xOut, GInvParam.mode, model.lsdCoef);
+%     catch err
+%         fprintf(getReport(err));
+%         
+%         sampNum = GInvParam.upNum + GInvParam.downNum;
+%         vp = zeros(sampNum, 1);
+%         vs = zeros(sampNum, 1);
+%         rho = zeros(sampNum, 1);
+%         model = [];
+%         output = [];
+%     end
 end

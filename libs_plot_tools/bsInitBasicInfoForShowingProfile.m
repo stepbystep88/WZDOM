@@ -28,6 +28,17 @@ function [basicInfo] = bsInitBasicInfoForShowingProfile(GShowProfileParam, GInvP
         if right > length(profile.inIds)
             right = length(profile.inIds);
         end
+        
+        wellColors = cell(1, length(wellPos));
+        for i = 1 : length(wellPos)
+            if isfield(wellLogs{wellIndex(i)}, 'color')
+                wellColors{i} = wellLogs{wellIndex(i)}.color;
+            else
+                wellColors{i} = 'k';
+            end
+            
+        end
+    
     end
         
     basicInfo.horizon = horizon(left:right);
@@ -42,7 +53,7 @@ function [basicInfo] = bsInitBasicInfoForShowingProfile(GShowProfileParam, GInvP
     basicInfo.wellNames = wellNames;
     basicInfo.upNum = GInvParam.upNum;
     basicInfo.downNum = GInvParam.downNum;
-    
+    basicInfo.wellColors = wellColors;
     % scale the horiozon and get the time information
     scaleFactor = GShowProfileParam.scaleFactor;
     traceNum = length(basicInfo.traceIds);

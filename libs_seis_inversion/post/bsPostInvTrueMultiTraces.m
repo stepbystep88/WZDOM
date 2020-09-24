@@ -96,17 +96,28 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
             
         end
         
+        if isfield(res, 'pickle')
+            pickle = res.pickle;
+        else
+            pickle = [];
+        end
+        
         if isempty(res.source)
             % obtain results by computing
 %             data = bsCallInvFcn();
             
             % obtain results by computing
-            if isfield(method.parampkgs, 'nMultipleTrace') ...
-                    && method.parampkgs.nMultipleTrace > 1 ...
-                    && any(strcmpi({'DLSR', 'DLSR-EM'}, method.flag)) 
+            if any(strcmpi({'DLSR-GST', 'DLSR-EM', 'DLSR-DEM'}, method.flag)) || ...
+                    (isfield(method.parampkgs, 'nMultipleTrace') ...
+                    && method.parampkgs.nMultipleTrace > 1) 
+                
+                if ~isfield(method.parampkgs, 'nMultipleTrace')
+                    method.parampkgs.nMultipleTrace = 1;
+                end
                 
                 KTrace = method.parampkgs.nMultipleTrace;
-                data = bsCallInvFcnMultiTraces(KTrace);
+                [data, pickle] = bsCallInvFcnMultiTraces(KTrace);
+    
             else
                 data = bsCallInvFcnTraceByTrace();
             end
@@ -124,6 +135,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
         res.dt = GInvParam.dt;
         res.upNum = GInvParam.upNum;
         res.downNum = GInvParam.downNum;
+        res.pickle = pickle;
         
         if isfield(method, 'type')  % the type of inverted volume, IP, Seismic, VP, VS, Rho
             res.type = method.type;
@@ -141,7 +153,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
         
         
         % save sgy file
-        if isfield(method, 'isSaveSegy') && method.isSaveSegy && ~strcmp(res.source, 'segy')
+        if isfield(method, 'isSaveSegy') && method.isSaveSegy && ~strcmp(res.source, 'segy') && ~strcmp(res.source, 'mat')
             fprintf('Writing segy file:%s ....\n', segyFileName);
             bsWriteInvResultIntoSegyFile( ...
                 res, data, ...
@@ -155,9 +167,9 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
         if isfield(method, 'isSaveMat') && method.isSaveMat && ~strcmp(res.source, 'mat')
             fprintf('Writing mat file:%s...\n', matFileName);
             try
-                save(matFileName, 'data', 'horizonTimes', 'inIds', 'crossIds', 'method');
+                save(matFileName, 'data', 'res', 'horizonTimes', 'inIds', 'crossIds', 'method');
             catch
-                save(matFileName, 'data', 'horizonTimes', 'inIds', 'crossIds', 'method', '-v7.3');
+                save(matFileName, 'data', 'res', 'horizonTimes', 'inIds', 'crossIds', 'method', '-v7.3');
             end
             fprintf('Write mat file:%s successfully!\n', matFileName);
         end
@@ -234,7 +246,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
                 nTracePerLine = nRangeCrossline;
             end
         catch
-            nTracePerLine = max(crossIds) - min(crossIds) + 1;
+            nTracePerLine = max(max(crossIds) - min(crossIds), max(inIds) - min(inIds)) + 1;
         end
     
         pbm = bsInitParforProgress(GInvParam.numWorkers, ...
@@ -272,81 +284,18 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
             bsIncParforProgress(pbm, iTrace, 1000);
         end
         
-        
-        
         switch method.flag
             case 'DLSR'
                 [data, ys] = bsPostInvMultiTracesByDLSR(GInvParam, neiboors, ds, preModel.orginal_G, xs, scaleFactors, inIds, crossIds, method);
-            case 'DLSR-EM'
+            case {'DLSR-EM', 'DLSR-DEM'}
                 [data, ys] = bsPostInvMultiTracesByDLSR_EM(GInvParam, neiboors, ds, preModel.orginal_G, xs, scaleFactors, inIds, crossIds, method);
+            case 'DLSR-GST'
+                [data, ys] = bsPostInvMultiTracesByDLSR_GST(GInvParam, neiboors, ds, preModel.orginal_G, xs, scaleFactors, inIds, crossIds, method);
         end
+        
+        bsDeleteParforProgress(pbm);
     end
     
-    function [data, ys] = bsCallInvFcnMultiTracesByNLM(KTrace)
-        % tackle the inverse task
-%         data = zeros(sampNum, traceNum);
-        
-%         models = cell(1, traceNum);
-        xs = zeros(sampNum, traceNum);
-        ds = zeros(sampNum-1, traceNum);
-        scaleFactors = zeros(1, traceNum);
-        
-        neiboors = cell(1, traceNum);
-        
-        try
-            [rangeInline, rangeCrossline] = bsGetWorkAreaRangeByParam(GInvParam);
-            nRangeInline = rangeInline(2) - rangeInline(1) + 1;
-            nRangeCrossline = rangeCrossline(2) - rangeCrossline(1) + 1;
-
-            if nRangeInline > nRangeCrossline
-                nTracePerLine = nRangeInline;
-            else
-                nTracePerLine = nRangeCrossline;
-            end
-        catch
-            nTracePerLine = max(crossIds) - min(crossIds) + 1;
-        end
-    
-        pbm = bsInitParforProgress(GInvParam.numWorkers, ...
-            traceNum, ...
-            '', ...
-            GInvParam.modelSavePath, ...
-            GInvParam.isPrintBySavingFile);
-            
-            
-        % 第一步获取所欲的模型
-        preModel = bsPostPrepareModel(GInvParam, inIds(1), crossIds(1), horizonTimes(1), [], []);
-            
-        
-%         models{1} = preModel;
-        xs(:, 1) = preModel.initX;
-        ds(:, 1) = preModel.d;
-        scaleFactors(1) = preModel.scaleFactor;
-        
-        pbm.title = sprintf('Prepare model... %s', method.name);
-        
-        parfor iTrace = 2 : traceNum
-            model = bsPostPrepareModel(GInvParam, inIds(iTrace), crossIds(iTrace), horizonTimes(iTrace), [], preModel);
-%             xs(:, iTrace) = models{iTrace}.initX;
-            xs(:, iTrace) = model.initX;
-            ds(:, iTrace) = model.d;
-            scaleFactors(iTrace) = model.scaleFactor;
-            
-            bsIncParforProgress(pbm, iTrace, 100);
-        end
-        
-        parfor iTrace = 1 : traceNum
-            % 找当前当的所有邻近道
-            neiboors{iTrace} = bsFindNearestKTrace(iTrace, inIds, crossIds, KTrace, nTracePerLine);
-        end
-        
-        switch method.flag
-            case 'DLSR'
-                [data, ys] = bsPostInvMultiTracesByDLSR(GInvParam, neiboors, ds, preModel.orginal_G, xs, scaleFactors, inIds, crossIds, method);
-            case 'DLSR-EM'
-                [data, ys] = bsPostInvMultiTracesByDLSR_EM(GInvParam, neiboors, ds, preModel.orginal_G, xs, scaleFactors, inIds, crossIds, method);
-        end
-    end
 end
 
 

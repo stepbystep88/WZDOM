@@ -166,8 +166,8 @@ function [nRow, nCol, loc, colorbar_pos] = setShareFigureSize(nProfile)
             bsSetPosition(0.3, 0.42);
             nRow = 1;
             nCol = 2;
-            loc = [0.88, 0.88, 0.02, 0.07, 0.05, 0.02];
-            colorbar_pos = [0.93 0.05 0.01 0.9];
+            loc = [0.87, 0.83, 0.025, 0.08, 0.05, -0.005];
+            colorbar_pos = [0.91 0.05 0.01 0.9];
 %             loc = [0.79, 0.94, 0.01, 0.07, 0.09, 0.02];
             
 %             loc = [0.84, 0.91, 0.01, 0.07, 0.06, 0.02];
@@ -176,16 +176,16 @@ function [nRow, nCol, loc, colorbar_pos] = setShareFigureSize(nProfile)
             bsSetPosition(0.3, 0.65);
             nRow = 3;
             nCol = 1;
-%             loc = [0.79, 0.95, 0.01, 0.04, 0.09, 0.01];
-%             colorbar_pos = [0.87 0.05 0.01 0.92];
-            loc = [0.84, 0.94, 0.02, 0.05, 0.07, 0.01];
+            loc = [0.8, 0.93, 0.01, 0.06, 0.09, 0.01];
             colorbar_pos = [0.89 0.05 0.01 0.92];
+%             loc = [0.84, 0.94, 0.02, 0.05, 0.07, 0.01];
+%             colorbar_pos = [0.89 0.05 0.01 0.92];
         case 4
             bsSetPosition(0.6, 0.42);
             nRow = 2;
             nCol = 2;
-            loc = [0.88, 0.91, 0.02, 0.07, 0.05, 0.02];
-            colorbar_pos = [0.93 0.05 0.01 0.9];
+            loc = [0.87, 0.92, 0.025, 0.07, 0.05, 0.01];
+            colorbar_pos = [0.91 0.05 0.01 0.9];
         case {5, 6}
             bsSetPosition(0.6, 0.65);
             nRow = 3;
@@ -531,7 +531,9 @@ function bsShowHorizonedData(GShowProfileParam, basicInfo, profileData, minTime,
             x = ipos - 5*GShowProfileParam.scaleFactor;
             y = round((basicInfo.newHorizon(ipos) - minTime) / basicInfo.newDt) +  GShowProfileParam.scaleFactor * (basicInfo.downNum + 5);
             
+            
             text(x, y, basicInfo.wellNames{i}, ...
+                'color', basicInfo.wellColors{i}, ...
                 'fontsize', GShowProfileParam.plotParam.fontsize,...
                 'fontweight', 'bold', ...
                 'fontname', GShowProfileParam.plotParam.fontname, ...

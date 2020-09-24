@@ -105,8 +105,11 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
             'sparsity', options.sparsity, ...
             'stride', 1);
         
+        [wellPos, wellIndex, wellNames] = bsFindWellLocation(wellLogs, invResult.inIds, invResult.crossIds);
+        
         GInvWellSparse.rangeCoef = rangeCoef;
         GInvWellSparse.output = output;
+        GInvWellSparse.wellPos = wellPos;
 %         [testData] = bsPostReBuildByCSR(GInvParam, GInvWellSparse, wellInvResults{1}.data{iData}, options);
     
 %         figure; plot(testData(:, 1), 'r', 'linewidth', 2); hold on; 
@@ -115,7 +118,12 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
 %         legend('重构结果', '实际测井', '反演结果', 'fontsize', 11);
 %         set(gcf, 'position', [261   558   979   420]);
 %         bsShowFFTResultsComparison(GInvParam.dt, [outLogs{1}.wellLog, testData(:, 1)], {'反演结果', '实际测井', '重构结果'});
-
+        
+%         startTime = invResult.horizon - GInvParam.upNum * GInvParam.dt;
+%         sampNum = GInvParam.upNum + GInvParam.downNum;
+%         inputData = bsStackPreSeisData(GInvParam.preSeisData.fileName, GInvParam.preSeisData.segyInfo, ...
+%             invResult.inIds, invResult.crossIds, startTime, sampNum, GInvParam.dt);
+    
         % 联合字典稀疏重构
         fprintf('联合字典稀疏重构: 参考数据为反演结果...\n');
         if ~options.isInterpolation
@@ -126,7 +134,9 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
                 [outputData, highData, gamma_vals, gamma_locs] = bsPostReBuildMulTraceCSR(GInvParam, GInvWellSparse, invResult.data{i}, invResult.data{i}, invResult.inIds, invResult.crossIds, options);
             end
         else
-            [outputData, highData] = bsPostReBuildInterpolation(GInvParam, outLogs(train_ids), invResult.data, invResult.inIds, invResult.crossIds, options);
+            gamma_locs = [];
+            gamma_vals = [];
+            [outputData, highData] = bsPostReBuildInterpolation(GInvParam, outLogs(train_ids), invResult.data{i}, invResult.inIds, invResult.crossIds, options);
         end
     
         

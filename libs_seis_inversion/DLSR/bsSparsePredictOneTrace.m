@@ -1,10 +1,15 @@
-function [reconstructed, gammas] = bsSparsePredictOneTrace(GSParam, input, inline, crossline)
+function [reconstructed, gammas] = bsSparsePredictOneTrace(GSParam, input, inline, crossline, nlm_ps)
 %% 根据低分辨率字典预测高分辨率
     
     [sampNum, ~] = size(input{1});
     
-    % 首先将输入转化为小块
-    [all_patches] = bsSparseTransInput2Patches(GSParam, input, inline, crossline);
+    % 首先将输入转化为小块 
+    if nargin > 4 && ~isempty(nlm_ps)
+        [all_patches] = bsSparseTransInput2PatchesByNLM(GSParam, input, nlm_ps, inline, crossline);
+    else
+        [all_patches] = bsSparseTransInput2Patches(GSParam, input, inline, crossline);
+    end
+    
     % 归一化
 	[normal_patches, output] = bsSparseNormalization(GSParam.trainDICParam.normalizationMode, all_patches, GSParam.low_min_values, GSParam.low_max_values);
     % 稀疏表示

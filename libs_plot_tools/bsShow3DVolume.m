@@ -69,6 +69,10 @@ function [houts, horizonSlices] = bsShow3DVolume(data, dt, clim, xslices, yslice
 
     [sampNum, nInline, nCrossline] = size(data);
     
+    if isempty(clim)
+        clim = [prctile(data(:), 5), prctile(data(:), 95)];
+    end
+    
     %% check inputs
     p = inputParser;
     
@@ -93,6 +97,7 @@ function [houts, horizonSlices] = bsShow3DVolume(data, dt, clim, xslices, yslice
     addParameter(p, 'smoothFiltCoef', 0.3);
     
     addParameter(p, 'scaleFactor', 1);
+    addParameter(p, 'view', [-49.3414   37.6342]);
     
     p.parse(dt, clim, varargin{:});  
     params = p.Results;
@@ -218,9 +223,9 @@ function [houts, horizonSlices] = bsShow3DVolume(data, dt, clim, xslices, yslice
     horizonSlices = cell(1, nHorizon);
     
     for iHorizon = 1 : nHorizon
-        xd = interp2(xx,yy,zHorizons{iHorizon}.xd,x2,y2);
-        yd = interp2(xx,yy,zHorizons{iHorizon}.yd,x2,y2);
-        zd = interp2(xx,yy,zHorizons{iHorizon}.zd,x2,y2);
+        xd = interp2(xx,yy,(zHorizons{iHorizon}.xd)',x2,y2);
+        yd = interp2(xx,yy,(zHorizons{iHorizon}.yd)',x2,y2);
+        zd = interp2(xx,yy,(zHorizons{iHorizon}.zd'),x2,y2);
         
         horizonSlices{iHorizon} = slice(x3, y3, z3, p_V, xd, yd, zd, 'cubic');
     end
@@ -272,7 +277,8 @@ function [houts, horizonSlices] = bsShow3DVolume(data, dt, clim, xslices, yslice
 %     shading interp;
     
     set(gca, 'clim', clim);
-    colormap(params.colormap);
+    set(gca, 'colormap', params.colormap);
+%     colormap(params.colormap);
     
     
     colorbar('location', 'southoutside', 'position', [0.092 0.039 0.88 0.02]);
@@ -283,8 +289,12 @@ function [houts, horizonSlices] = bsShow3DVolume(data, dt, clim, xslices, yslice
     zlabel('Time (s)', 'fontsize', params.fontsize,'fontweight', params.fontweight, 'fontname', params.fontname);
     set(gca , 'fontsize', params.fontsize,'fontweight', params.fontweight, 'fontname', params.fontname);    
     
-    
-    axis([firstInline firstInline+nInline-1 firstCrossline firstCrossline+nCrossline-1 t(1) t(end)]);
+    set(gca, 'zlim', [min(params.startTime(:)) max(params.startTime(:))+sampNum*dt]/1000);
+    set(gca, 'xlim', [firstInline, firstInline+nInline-1]);
+    set(gca, 'ylim', [firstCrossline, firstCrossline+nCrossline-1]);
+    grid off;
+%     axis([firstInline firstInline+nInline firstCrossline firstCrossline+nCrossline t(1)-dt/1000*5 t(end)+dt/1000*5]);
+    view(params.view);
 end
 
 function bsChangeColorData(isurface, isShading, clim, colormap)

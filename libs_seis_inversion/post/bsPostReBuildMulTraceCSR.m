@@ -22,8 +22,13 @@ function [outputData, highData, gamma_vals, gamma_locs] = ...
         GInvParam.modelSavePath, ...
         GInvParam.isPrintBySavingFile);
 
+    if ~isfield(GSParam, 'wellPos')
+        GSParam.wellPos = [];
+    end
+    
     n = traceNum * options.ratio_to_reconstruction;
-    seqs = round(linspace(1, traceNum, n));
+    seqs = unique([round(linspace(1, traceNum, n)), GSParam.wellPos]);
+    seqs = sort(seqs);
     
     
     % 获取工区范围
@@ -42,10 +47,11 @@ function [outputData, highData, gamma_vals, gamma_locs] = ...
     for iTrace = seqs
         % 找当前当的所有邻近道
         ids = bsFindNearestKTrace(iTrace, inIds, crossIds, K, nTracePerLine);
+%         nlm_ps = bsGetNonLocalSimilarPatches(inputData(:, iTrace), inputData(:, ids), GSParam.sizeAtom, 10);
         
 %         [highData(:, iTrace), gamma_vals(:, iTrace), gamma_locs(:, iTrace)] ...
 %             = bsCalcHighFreqOfOneTrace(GSParam, inputData(:, ids), inIds(ids), crossIds(ids), options);
-        [highData(:, iTrace), t_gammas] = bsSparsePredictOneTrace(GSParam, {inputData(:, ids)}, inIds(ids), crossIds(ids));
+        [highData(:, iTrace), t_gammas] = bsSparsePredictOneTrace(GSParam, {invData(:, ids)}, inIds(ids), crossIds(ids));
         [gamma_vals, gamma_locs] = bsGetNonZeroElements(t_gammas, GSParam.sparsity);
         
         

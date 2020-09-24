@@ -1,4 +1,4 @@
-function [reconstructed, gammas] = bsSparseRebuildOneTrace(GSParam, input, gamma, inline, crossline)
+function [reconstructed, gammas] = bsSparseRebuildOneTrace(GSParam, input, gamma, inline, crossline, nlm_ps)
     % sparse reconstruction
     
     [sampNum, ~] = size(input{1});
@@ -7,8 +7,13 @@ function [reconstructed, gammas] = bsSparseRebuildOneTrace(GSParam, input, gamma
 
     reconstructed = zeros(sampNum, nAtt);
     
-    % 首先将输入转化为小块
-    [all_patches] = bsSparseTransInput2Patches(GSParam, input, inline, crossline);
+    % 首先将输入转化为小块 
+    if nargin > 5 && ~isempty(nlm_ps)
+        [all_patches] = bsSparseTransInput2PatchesByNLM(GSParam, input, nlm_ps, inline, crossline);
+    else
+        [all_patches] = bsSparseTransInput2Patches(GSParam, input, inline, crossline);
+    end
+    
     % 归一化
 	[normal_patches, output] = bsSparseNormalization(GSParam.trainDICParam.normalizationMode, all_patches, GSParam.min_values, GSParam.max_values);
     % 稀疏表示
@@ -37,8 +42,14 @@ function [reconstructed, gammas] = bsSparseRebuildOneTrace(GSParam, input, gamma
 
         i_new_patches = denormal_patches(sPos:ePos, :);
         reconstructed(:, i) = bsAvgPatches(i_new_patches, GSParam.index, sampNum);
-        reconstructed(:, i) = reconstructed(:, i) * gamma + input{i}(:, 1) * (1 - gamma);
         
+        if gamma < 1 && gamma > 0
+            reconstructed(:, i) = reconstructed(:, i) * gamma + input{i}(:, 1) * (1 - gamma);
+        elseif gamma == 0
+            reconstructed(:, i) = input{i}(:, 1);
+        elseif gamma == 1
+%             reconstructed(:, i) = reconstructed(:, i);
+        end
     end
     
 end

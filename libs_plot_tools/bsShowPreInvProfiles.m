@@ -55,6 +55,7 @@ function bsShowPreInvProfiles(GPreInvParam, GShowProfileParam, invResults, wellL
         
     else
         bsShowInvProfiles(GPreInvParam, GShowProfileParam, profiles, wellLogs, timeLine);
+        set(gcf, 'position', position);
     end
 end
 function profile = bsRemoveCell(profile)

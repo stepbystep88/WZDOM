@@ -223,6 +223,11 @@ function [invResults] = bsPostInvTrueMultiTracesPlusLateralContinuty(GInvParam, 
             bsIncParforProgress(pbm, iTrace, 100);
         end
         
+%         ds = ds .* repmat(scaleFactors, sampNum-1, 1);
+%         GST_options = bsCreateGSTParam(2, 'sigma', 4, 'iterNum', 20);
+%         ds = bsSmoothByGST2D(ds, [], GST_options);
+%         ds = ds ./ repmat(scaleFactors, sampNum-1, 1);
+        
         parfor iTrace = 1 : traceNum
             % 找当前当的所有邻近道
             neiboors{iTrace} = bsFindNearestKTrace(iTrace, inIds, crossIds, KTrace, nTracePerLine);
@@ -231,7 +236,7 @@ function [invResults] = bsPostInvTrueMultiTracesPlusLateralContinuty(GInvParam, 
         switch method.flag
             case 'DLSR'
                 [data, ys] = bsPostInvMultiTracesByDLSR(GInvParam, neiboors, ds, preModel.orginal_G, xs, scaleFactors, inIds, crossIds, method);
-            case 'DLSR-EM'
+            case {'DLSR-DEM', 'DLSR-EM'}
                 [data, ys] = bsPostInvMultiTracesByDLSR_EM(GInvParam, neiboors, ds, preModel.orginal_G, xs, scaleFactors, inIds, crossIds, method);
         end
     end

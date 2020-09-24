@@ -1,4 +1,4 @@
-function [vp, vs, rho] = bsPreInvMultiTracesByCSR(GInvParam, neiboors, ds, Gs, xs, scaleFactors, inIds, crossIds, method)
+function [vp, vs, rho] = bsPreInvMultiTracesByCSR(GInvParam, neiboors, ds, G, xs, scaleFactors, inIds, crossIds, method)
     % 第二步：大循环
     options = method.options;
     seisOption = GInvParam.seisInvOptions;
@@ -34,9 +34,9 @@ function [vp, vs, rho] = bsPreInvMultiTracesByCSR(GInvParam, neiboors, ds, Gs, x
             GInvParam.isPrintBySavingFile);
         
     for iter = 1 : options.maxIter
-        pbm.title = sprintf("[第%d/%d次迭代：常规反演] ", iter, options.maxIter);
-        parfor iTrace = 1 : traceNum
-            xs(:, iTrace) = invNormalOneTrace(ds(:, iTrace), Gs{iTrace}, xs(:, iTrace), ...
+        pbm.title = sprintf("The %d/%d-th iteration: regular inversion] ", iter, options.maxIter);
+        for iTrace = 1 : traceNum
+            xs(:, iTrace) = invNormalOneTrace(ds(:, iTrace), G/scaleFactors(iTrace), xs(:, iTrace), ...
                 xs_org(:, iTrace), mainFunc, lambda, initRegParam, GBOptions);
             
             bsIncParforProgress(pbm, iTrace, 200);
@@ -46,7 +46,7 @@ function [vp, vs, rho] = bsPreInvMultiTracesByCSR(GInvParam, neiboors, ds, Gs, x
         [vp, vs, rho] = bsPreRecoverElasticParam(xs, mode, lsdCoef);
         vp_vs = vp ./ vs;
         
-        pbm.title = sprintf("[第%d/%d次迭代：稀疏重构] ", iter, options.maxIter);
+        pbm.title = sprintf("The %d/%d-th iteration: sparse reconstruction ", iter, options.maxIter);
 %         fprintf("第%d次迭代：稀疏重构\n", iter);
         for iTrace = 1 : traceNum
 %             avg_xs(:, iTrace) = sparseRebuildOneTrace(GSParam, Ips(:, neiboors{iTrace}));

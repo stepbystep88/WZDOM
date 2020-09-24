@@ -88,6 +88,7 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByCSR(d, G, xInit, Lb, Ub,
     maxIter = options.maxIter;
 %     lambda = regParam.lambda(1);
     
+    nDic = (size(GSParam.DIC, 1) - GSParam.nSpecialFeat) / GSParam.sizeAtom;
     
     for iter = 1 : maxIter
         
@@ -111,7 +112,15 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByCSR(d, G, xInit, Lb, Ub,
         
         % 接下来的代码时对模型m进行稀疏重构
         vp_vs = data(:, 2)./data(:,3);
-        [out, gammas] = bsSparseRebuildOneTrace(GSParam, {data(:, 2), data(:, 3), data(:, 4), vp_vs}, gamma, inline, crossline);
+        
+        switch nDic
+            case 3
+                [out, gammas] = bsSparseRebuildOneTrace(GSParam, {data(:, 2), data(:, 3), data(:, 4)}, gamma, inline, crossline);
+            case 4
+                [out, gammas] = bsSparseRebuildOneTrace(GSParam, {data(:, 2), data(:, 3), data(:, 4), vp_vs}, gamma, inline, crossline);
+        end
+            
+        
         
         newData = [data(:, 1), out(:, 1:3)];
         

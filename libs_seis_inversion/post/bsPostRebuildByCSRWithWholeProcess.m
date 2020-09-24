@@ -10,6 +10,9 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
         'nAtom', 4000, ...
         'filtCoef', 1);
     
+    if iscell(method)
+        method = method{1};
+    end
     
     addParameter(p, 'ratio_to_reconstruction', '1');
     addParameter(p, 'mode', 'low_high');
@@ -70,14 +73,23 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
         'crossIds', wellCrossIds ...
     );
 
-    fprintf('反演所有测井中...\n');
-    method.load.mode = 'off';
-    method.parampkgs.nMultipleTrace = 1;
+    if isfield(method, 'flag')
+        fprintf('反演所有测井中...\n');
+        method.load.mode = 'off';
+        method.parampkgs.nMultipleTrace = 1;
+        
+        if strcmp(method.flag, 'DLSR-GST')
+            method.flag = 'DLSR';
+        end
+    end
+    method.isSaveSegy = false;
+    method.isSaveMat = false;
+    
     wellInvResults = bsPostInvTrueMultiTraces(GInvParamWell, wellInIds, wellCrossIds, timeLine, {method});
     
     train_ids = setdiff(1:length(wellInIds), options.exception);
     train_ids = setdiff(train_ids, options.mustInclude);
-    train_ids = bsRandSeq(train_ids, options.trainNum);
+    train_ids = bsRandSeq(train_ids, min(options.trainNum, length(train_ids)));
     train_ids = unique([train_ids, options.mustInclude]);
     
     
@@ -130,7 +142,9 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
             sampNum = GInvParam.upNum + GInvParam.downNum;
             inputData = bsGetPostSeisData(GInvParam, invResult.inIds, invResult.crossIds, startTime, sampNum);
     end
-        
+    startTime = invResult.horizon - GInvParam.upNum * GInvParam.dt;
+    sampNum = GInvParam.upNum + GInvParam.downNum;
+    inputData = bsGetPostSeisData(GInvParam, invResult.inIds, invResult.crossIds, startTime, sampNum);
 %     [wellPos, wellIndex, wellNames] = bsFindWellLocation(wellLogs, invResult.inIds, invResult.crossIds);
     
     if ~options.isInterpolation

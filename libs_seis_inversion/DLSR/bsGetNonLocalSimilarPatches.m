@@ -1,39 +1,36 @@
-function [weight, index] = bsGetNonLocalSimilarPatches(self, data, sizeAtom, K)
+function [nlm_ps] = bsGetNonLocalSimilarPatches(self, data, sizeAtom, K)
     [sampNum, nTrace] = size(data);
     ncell = sampNum - sizeAtom + 1;
     
-    D = inf(ncell * nTrace, 2);
-    iter = 0;
-
+    D = inf(ncell * nTrace, 3);
+    
+    
+    v_ones = ones(1, nTrace);
+    v_lin = 1 : nTrace;
+    nlm_ps = zeros(K, ncell);
+    
     for k = 1 : ncell
         kpatch = repmat(self(k : k+sizeAtom-1), 1, nTrace);
+        sp = 1;
         for j = 1 : ncell
             cmp_patches = data(j:j+sizeAtom-1, :);
             
             residual = kpatch - cmp_patches;
             
-            D(k, :, 1) = sum(residual.^2, 1);
+            ep = sp + nTrace - 1;
+            D(sp:ep, 1) = sum(residual.^2, 1);
+            D(sp:ep, 3) = v_ones * j;
+            D(sp:ep, 2) = v_lin;
+            sp = ep + 1;
         end
+        
+        [B, ~] = bsMinK(D, K, 1);
+        nlm_ps(:, k) = (B(:, 2) - 1) * ncell + B(:, 3);
     end
    
-    bsSparseTransInput2Patches
-        for c2 = i2-N : searchStride(2) : i2+N
-            if c2<=0 || c2>n2 || (c2==i2 && c1==i1)
-                continue;
-            end
-
-            iter = iter + 1;
-
-            j = (c1-1)*n2 + c2;
-
-            
-            D(iter, 1) = norm(difference/normCoef);
-            D(iter, 2) = j;
-        end
-    end
-
-    [B, ~] = bsMinK(D, K, 1);
-    weight = B(:, 1).^e;
-    weight = weight / sum(weight);
-    index = B(:, 2);
+    
+%     weight = B(:, 1).^e;
+%     weight = weight / sum(weight);
+%     index = B(:, 2);
+    
 end

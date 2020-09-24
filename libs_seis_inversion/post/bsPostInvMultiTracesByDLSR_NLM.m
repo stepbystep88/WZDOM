@@ -1,4 +1,4 @@
-function [data, ys] = bsPostInvMultiTracesByDLSR(GInvParam, neiboors, ds, G, xs, scaleFactors, inIds, crossIds, method)
+function [data, ys] = bsPostInvMultiTracesByDLSR_NLM(GInvParam, neiboors, nlm_ps, ds, G, xs, scaleFactors, inIds, crossIds, method)
     % 第二步：大循环
     options = method.options;
     seisOption = GInvParam.seisInvOptions;
@@ -15,12 +15,7 @@ function [data, ys] = bsPostInvMultiTracesByDLSR(GInvParam, neiboors, ds, G, xs,
     xs_org = xs;
     
     GSParam = method.parampkgs;
-    
-    if isfield(GSParam, 'nMultipleTrace')
-        nBlock = GSParam.nMultipleTrace;
-    else
-        nBlock = 1;
-    end
+    nBlock = size(nlm_ps{1}, 1);
     
     GSParam = bsInitGSparseParam(GSParam, sampNum, nBlock);
     
@@ -35,7 +30,7 @@ function [data, ys] = bsPostInvMultiTracesByDLSR(GInvParam, neiboors, ds, G, xs,
         parfor iTrace = 1 : traceNum
             xs(:, iTrace) = invNormalOneTrace(ds(:, iTrace), G/scaleFactors(iTrace), xs(:, iTrace), ...
                 xs_org(:, iTrace), mainFunc, lambda, initRegParam, GBOptions);
-            bsIncParforProgress(pbm, iTrace, 1000);
+            bsIncParforProgress(pbm, iTrace, 200);
         end
 
         Ips = exp(xs);
@@ -44,17 +39,11 @@ function [data, ys] = bsPostInvMultiTracesByDLSR(GInvParam, neiboors, ds, G, xs,
         for iTrace = 1 : traceNum
 %             avg_xs(:, iTrace) = sparseRebuildOneTrace(GSParam, Ips(:, neiboors{iTrace}));
             tmp = neiboors{iTrace};
-            out = bsSparseRebuildOneTrace(GSParam, {Ips(:, tmp)}, gamma, inIds(tmp), crossIds(tmp));
+            out = bsSparseRebuildOneTrace(GSParam, {Ips(:, tmp)}, gamma, inIds(tmp), crossIds(tmp), nlm_ps{iTrace});
             xs(:, iTrace) = log(out);
-            bsIncParforProgress(pbm, iTrace, 1000);
+            bsIncParforProgress(pbm, iTrace, 200);
         end
-
-%         fprintf("第%d次迭代：反演结果合并\n", iter);
-%         parfor iTrace = 1 : traceNum
-%             xNew = Ips(:, iTrace) * (1 - gamma) + avg_xs(:, iTrace) * gamma;
-%             xs(:, iTrace) = log(xNew);
-%         end
-
+        
     end
 
     data = exp(xs);

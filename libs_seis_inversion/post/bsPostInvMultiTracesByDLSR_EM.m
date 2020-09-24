@@ -15,6 +15,10 @@ function [data, ys] = bsPostInvMultiTracesByDLSR_EM(GInvParam, neiboors, ds, G, 
     
     ds = ds .* repmat(scaleFactors, sampNum-1, 1);
     
+    
+    
+%     ds = bsSmoothByGST2D(ds, [], GST_options);
+    
     ds_org = ds;
     
     gamma = method.regParam.gamma;
@@ -38,12 +42,21 @@ function [data, ys] = bsPostInvMultiTracesByDLSR_EM(GInvParam, neiboors, ds, G, 
     [X, Y] = meshgrid(seqs, 1:sampNum-1);
 	[Xq,Yq] = meshgrid(1:traceNum, 1:sampNum-1);
     
+    [XX, YY] = meshgrid(seqs, 1:sampNum);
+	[XXq,YYq] = meshgrid(1:traceNum, 1:sampNum);
+    
     pbm = bsInitParforProgress(GInvParam.numWorkers, ...
             traceNum, ...
             '', ...
             GInvParam.modelSavePath, ...
             GInvParam.isPrintBySavingFile);
         
+    
+    GST_options1 = bsCreateGSTParam(2, 'sigma', 100, 'iterNum', 30);
+    GST_options2 = bsCreateGSTParam(2, 'sigma', 10, 'iterNum', 30);
+    
+    xs = bsSmoothByGST2D(xs, [], GST_options1);
+    
     switch flag
         case 2
             GModel = GSParam.model;
@@ -60,8 +73,9 @@ function [data, ys] = bsPostInvMultiTracesByDLSR_EM(GInvParam, neiboors, ds, G, 
             if GSParam.ratio_to_reconstruction < 1 && traceNum > 1
                 ys = interp2(X, Y, ys(:, seqs), Xq, Yq, 'spline');
             end
-            
+            ys = bsSmoothByGST2D(ys, ds_org, GST_options2);
             ds = ds_org - ys * beta;
+%             ds = ds_org;
             
             for iter = 1 : options.maxIter
                 pbm = bsResetParforProgress(pbm, sprintf("The %d-th iteration：regular inversion.", iter));
@@ -78,19 +92,24 @@ function [data, ys] = bsPostInvMultiTracesByDLSR_EM(GInvParam, neiboors, ds, G, 
                 end
 
                 Ips = exp(xs);
-
+                newIps = Ips;
+                
                 pbm = bsResetParforProgress(pbm, sprintf("The %d-th iteration：sparse reconstruction.", iter));
                 for iTrace = 1 : traceNum
                     tmp = neiboors{iTrace};
 
-                    newIp = bsSparseRebuildOneTrace(GModel, {Ips(:, tmp)}, gamma, inIds(tmp), crossIds(tmp));
-                    xs(:, iTrace) = log(newIp);
+                    newIps(:, iTrace) = bsSparseRebuildOneTrace(GModel, {Ips(:, tmp)}, 1, inIds(tmp), crossIds(tmp));
                     bsIncParforProgress(pbm, iTrace, 1000);
                 end
                 
-                ys = ds_org - G * xs;
-%                 
+                xs = log( Ips * (1- gamma) + newIps * gamma );
+                
+%                 xs = bsSmoothByGST2D(xs, [ds_org; ds_org(end, :)], GST_options1);
+                
+%                 ys = ds_org - G * log( Ips * (1- beta) + newIps * beta );
+                ys = G * xs;
                 ys_bak = ys;
+                
                 for iTrace = seqs
                     % 初始化y
                     tmp = neiboors{iTrace};
@@ -103,24 +122,30 @@ function [data, ys] = bsPostInvMultiTracesByDLSR_EM(GInvParam, neiboors, ds, G, 
                     ys = interp2(X, Y, ys(:, seqs), Xq, Yq, 'spline');
                 end
                 
+%                 ys = bsFilterProfileData(ys, 0.1, 1);
+                
+                ys = bsSmoothByGST2D(ys, ds_org, GST_options2);
                 ys = ys * beta + ys_bak * (1 - beta);
+                ds = ds_org - ys * beta;
             end
         case 1
             nDic = (size(GSParam.DIC, 1) - GSParam.nSpecialFeat) / GSParam.sizeAtom;
             
-            for iTrace = seqs
-                % 初始化y
-                tmp = neiboors{iTrace};
-                inity = bsSparsePredictOneTrace(GSParam, {[ds_org(:, tmp); ds_org(end, tmp)]}, inIds(tmp), crossIds(tmp));
-                ys(:, iTrace) = inity(1:sampNum-1, 1);
-            end
-            
-            % 给未预测的道插值
-            if GSParam.ratio_to_reconstruction < 1 && traceNum > 1
-                ys = interp2(X, Y, ys(:, seqs), Xq, Yq, 'spline');
-            end
-            
-            ds = ds_org - ys * beta;
+%             for iTrace = seqs
+%                 % 初始化y
+%                 tmp = neiboors{iTrace};
+%                 inity = bsSparsePredictOneTrace(GSParam, {[ds_org(:, tmp); ds_org(end, tmp)]}, inIds(tmp), crossIds(tmp));
+%                 ys(:, iTrace) = inity(1:sampNum-1, 1);
+%             end
+%             
+%             % 给未预测的道插值
+%             if GSParam.ratio_to_reconstruction < 1 && traceNum > 1
+%                 ys = interp2(X, Y, ys(:, seqs), Xq, Yq, 'spline');
+%             end
+%             
+%             ys = bsSmoothByGST2D(ys, [], GST_options2);
+%             ds = ds_org - ys * beta;  
+            ds = ds_org;
             
             for iter = 1 : options.maxIter
                 pbm = bsResetParforProgress(pbm, sprintf("The %d-th iteration：regular inversion.", iter));
@@ -140,7 +165,7 @@ function [data, ys] = bsPostInvMultiTracesByDLSR_EM(GInvParam, neiboors, ds, G, 
 
                 pbm = bsResetParforProgress(pbm, sprintf("The %d-th iteration：sparse reconstruction.", iter));
                 ys_bak = ys;
-                for iTrace = 1 : traceNum
+                for iTrace = 1:traceNum
                     tmp = neiboors{iTrace};
                     
                     switch nDic
@@ -152,19 +177,26 @@ function [data, ys] = bsPostInvMultiTracesByDLSR_EM(GInvParam, neiboors, ds, G, 
                 
                     out = bsSparseRebuildOneTrace(GSParam, input, 1, inIds(tmp), crossIds(tmp));
                     
-                    xs(:, iTrace) = log( out(:, 1) * gamma + (1 - gamma) * Ips(:, iTrace) );
+                    xs(:, iTrace) = out(:, 1); 
                     ys(:, iTrace) = out(1:sampNum-1, 2);
                     
                     bsIncParforProgress(pbm, iTrace, 1000);
                 end
                 
+            
                 % 给未预测的道插值
                 if GSParam.ratio_to_reconstruction < 1 && traceNum > 1
                     ys = interp2(X, Y, ys(:, seqs), Xq, Yq, 'spline');
+%                     xs = interp2(XX, YY, xs(:, seqs), XXq, YYq, 'spline');
                 end
                 
-                ys = ys * beta + ys_bak * (1 - beta);
+%                 xs = bsSmoothByGST2D(xs, [], GST_options1);
+                xs = (xs  * gamma + (1 - gamma) * Ips );
+                xs = log(xs);
                 
+                ys = ys * beta + ys_bak * (1 - beta);
+                ys = bsSmoothByGST2D(ys, [], GST_options2);
+                ds = ds_org - ys * beta;
             end
     end
     
