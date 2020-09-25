@@ -1,4 +1,4 @@
-function [vp, vs, rho] = bsPreInvMultiTracesByCSR(GInvParam, neiboors, ds, G, xs, scaleFactors, inIds, crossIds, method)
+function [vp, vs, rho] = bsPreInvMultiTracesByCSR(GInvParam, neiboors, ds, G, xs, scaleFactors, lsdCoef, inIds, crossIds, method)
     % 第二步：大循环
     options = method.options;
     seisOption = GInvParam.seisInvOptions;
@@ -16,16 +16,17 @@ function [vp, vs, rho] = bsPreInvMultiTracesByCSR(GInvParam, neiboors, ds, G, xs
     
     GSParam = method.parampkgs;
     
-    if isfield(GSParam, 'nMultipleTrace')
-        nBlock = GSParam.nMultipleTrace;
-    else
-        nBlock = 1;
-    end
+%     if isfield(GSParam, 'nMultipleTrace')
+%         nBlock = GSParam.nMultipleTrace;
+%     else
+%         nBlock = 1;
+%     end
+    nBlock = length(neiboors{1});
     
     GSParam = bsInitGSparseParam(GSParam, sampNum/3, nBlock);
     nDic = (size(GSParam.DIC, 1) - GSParam.nSpecialFeat) / GSParam.sizeAtom;
     mode = GInvParam.mode;
-    lsdCoef = GInvParam.lsdCoef;
+%     lsdCoef = GInvParam.lsdCoef;
     
     pbm = bsInitParforProgress(GInvParam.numWorkers, ...
             traceNum, ...
@@ -35,7 +36,7 @@ function [vp, vs, rho] = bsPreInvMultiTracesByCSR(GInvParam, neiboors, ds, G, xs
         
     for iter = 1 : options.maxIter
         pbm.title = sprintf("The %d/%d-th iteration: regular inversion] ", iter, options.maxIter);
-        for iTrace = 1 : traceNum
+        parfor iTrace = 1 : traceNum
             xs(:, iTrace) = invNormalOneTrace(ds(:, iTrace), G/scaleFactors(iTrace), xs(:, iTrace), ...
                 xs_org(:, iTrace), mainFunc, lambda, initRegParam, GBOptions);
             
@@ -63,7 +64,7 @@ function [vp, vs, rho] = bsPreInvMultiTracesByCSR(GInvParam, neiboors, ds, G, xs
             
             
         
-            xs(:, iTrace) = bsPreBuildModelParam(newData, mode, lsdCoef);
+            xs(:, iTrace) = bsPreBuildModelParam(newData, mode, lsdCoef{iTrace});
             
             bsIncParforProgress(pbm, iTrace, 200);
         end

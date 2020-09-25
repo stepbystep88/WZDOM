@@ -30,7 +30,7 @@ function bsShow3DInvResults(GInvParam, GShowProfileParam, invResult, iAtt, mode,
 	if ~iscell(invResult.data)
         data = invResult.data;
     else
-        data = invResult.data{dataIndex};
+        data = invResult.data{iAtt};
     end
     
     data = bsReshapeDataAs3D(data, nInline, nCrossline);

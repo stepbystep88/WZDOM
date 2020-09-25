@@ -94,11 +94,7 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByCSR(d, G, xInit, Lb, Ub,
         
         % change the current initial guess
         inputObjFcnPkgs{2, 2} = [];
-        if iter == 1
-            inputObjFcnPkgs{2, 3} = 0;
-        else
-            inputObjFcnPkgs{2, 3} = regParam.lambda;
-        end
+        inputObjFcnPkgs{2, 3} = regParam.lambda;
 
         [xOut, fval, exitFlag, output_] = bsGBSolveByOptions(inputObjFcnPkgs, xInit, Lb, Ub, GBOptions);
 

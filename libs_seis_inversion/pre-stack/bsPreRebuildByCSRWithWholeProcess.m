@@ -63,7 +63,7 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
     method.isSaveSegy = 0;
     method.parampkgs.nMultipleTrace = 1;
     method.parampkgs.is3D = false;
-    
+    method.load.mode = 'off';
 %     load test_method.mat;
 %     method = test_method;
     
@@ -133,12 +133,12 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
         % 联合字典稀疏重构
         fprintf('联合字典稀疏重构: 参考数据为反演结果...\n');
         if ~options.isInterpolation
-            if options.nMultipleTrace <= 1
-                [outputData, highData, gamma_vals, gamma_locs] = bsPostReBuildPlusInterpolationCSR(GInvParam, GInvWellSparse, invResult.data{i}, invResult.data{i},...
-                    invResult.inIds, invResult.crossIds, options);
-            else
+%             if options.nMultipleTrace <= 1
+%                 [outputData, highData, gamma_vals, gamma_locs] = bsPostReBuildPlusInterpolationCSR(GInvParam, GInvWellSparse, invResult.data{i}, invResult.data{i},...
+%                     invResult.inIds, invResult.crossIds, options);
+%             else
                 [outputData, highData, gamma_vals, gamma_locs] = bsPostReBuildMulTraceCSR(GInvParam, GInvWellSparse, invResult.data{i}, invResult.data{i}, invResult.inIds, invResult.crossIds, options);
-            end
+%             end
         else
             gamma_locs = [];
             gamma_vals = [];

@@ -46,8 +46,8 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
     
     
 % -------------------------------------------------------------------------
-    if ~isempty(model) && isfield(model, 'G')
-        G = model.G;
+    if ~isempty(model) && isfield(model, 'orginal_G')
+        G = model.orginal_G;
     else
         G = [];
     end

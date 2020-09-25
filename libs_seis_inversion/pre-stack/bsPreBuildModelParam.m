@@ -37,8 +37,25 @@ function [x, output] = bsPreBuildModelParam(welllog, mode, extraInfo)
                 output.ldCoef = polyfit(Lp, Ld, 1);
             end
             
-            deltaLs = Ls - ( output.lsCoef(1)*Lp + output.lsCoef(2) ); 
-            deltaLd = Ld - ( output.ldCoef(1)*Lp + output.ldCoef(2) );
+            if iscell(output)
+                tmp = cell2mat(output);
+                ts = reshape([tmp.lsCoef], 2, []);
+                td = reshape([tmp.ldCoef], 2, []);
+                ls1 = repmat(ts(1, :), sampNum, 1);
+                ls2 = repmat(ts(2, :), sampNum, 1);
+                ld1 = repmat(td(1, :), sampNum, 1);
+                ld2 = repmat(td(2, :), sampNum, 1);
+            else
+                ls1 = output.lsCoef(1);
+                ls2 = output.lsCoef(2);
+                ld1 = output.ldCoef(1);
+                ld2 = output.ldCoef(2);
+            end
+    
+            
+            
+            deltaLs = Ls - ( ls1.*Lp + ls2 ); 
+            deltaLd = Ld - ( ld1.*Lp + ld2 );
             x = [Lp; deltaLs; deltaLd];
             
         case 'lpsd'

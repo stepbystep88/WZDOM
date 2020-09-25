@@ -1,4 +1,4 @@
-function [vp, vs, rho] = bsPreInvMultiTracesByCSR_GST(GInvParam, neiboors, ds, G, xs, scaleFactors, shiftedData, inIds, crossIds, method)
+function [vp, vs, rho] = bsPreInvMultiTracesByCSR_GST(GInvParam, neiboors, ds, G, xs, scaleFactors, lsdCoef, shiftedData, inIds, crossIds, method)
     % 第二步：大循环
     options = method.options;
     seisOption = GInvParam.seisInvOptions;
@@ -22,7 +22,7 @@ function [vp, vs, rho] = bsPreInvMultiTracesByCSR_GST(GInvParam, neiboors, ds, G
     GSParam = bsInitGSparseParam(GSParam, sampNum/3, nBlock);
     nDic = (size(GSParam.DIC, 1) - GSParam.nSpecialFeat) / GSParam.sizeAtom;
     mode = GInvParam.mode;
-    lsdCoef = GInvParam.lsdCoef;
+%     lsdCoef = GInvParam.lsdCoef;
     
     gamma = method.regParam.gamma;
     lambda = method.regParam.lambda;
@@ -91,7 +91,7 @@ function [vp, vs, rho] = bsPreInvMultiTracesByCSR_GST(GInvParam, neiboors, ds, G
 %             b(:, i) = b(:, i) + Gs{i}' * ds(:, i);
 %         end
 %     end
-
+    gst_options.iterNum = options.innerIter;
     for iter = 1 : options.maxIter
         pbm.title = sprintf("The %d/%d-th iteration: regular inversion.", iter, options.maxIter);
 %         b = bsB(xs_org, xs);
@@ -129,22 +129,36 @@ function [vp, vs, rho] = bsPreInvMultiTracesByCSR_GST(GInvParam, neiboors, ds, G
         
         pbm.title = sprintf("The %d/%d-th iteration: sparse reconstruction ", iter, options.maxIter);
 %         fprintf("第%d次迭代：稀疏重构\n", iter);
-        for iTrace = 1 : traceNum
-%             avg_xs(:, iTrace) = sparseRebuildOneTrace(GSParam, Ips(:, neiboors{iTrace}));
-            tmp = neiboors{iTrace};
-            
-            switch nDic
-                case 3
-                    [out, ~] = bsSparseRebuildOneTrace(GSParam, {vp(:, tmp), vs(:, tmp), rho(:, tmp)}, gamma, inIds(tmp), crossIds(tmp));
-                    newData = [out(:, 1), out(:, 1 : 3)];
-                case 4
-                    [out, ~] = bsSparseRebuildOneTrace(GSParam, {vp(:, tmp), vs(:, tmp), rho(:, tmp), vp_vs(:, tmp)}, gamma, inIds(tmp), crossIds(tmp));
-                    newData = [out(:, 1), out(:, 1 : 3)];
+        if nBlock == 1
+            parfor iTrace = 1 : traceNum
+                switch nDic
+                    case 3
+                        [out, ~] = bsSparseRebuildOneTrace(GSParam, {vp(:, iTrace), vs(:, iTrace), rho(:, iTrace)}, gamma, inIds(iTrace), crossIds(iTrace));
+                    case 4
+                        [out, ~] = bsSparseRebuildOneTrace(GSParam, {vp(:, iTrace), vs(:, iTrace), rho(:, iTrace), vp_vs(:, iTrace)}, gamma, inIds(iTrace), crossIds(iTrace));
+                end
+
+                xs(:, iTrace) = bsPreBuildModelParam([out(:, 1), out(:, 1 : 3)], mode, lsdCoef{iTrace});
+
+                bsIncParforProgress(pbm, iTrace, 200);
             end
             
-            xs(:, iTrace) = bsPreBuildModelParam(newData, mode, lsdCoef);
-            
-            bsIncParforProgress(pbm, iTrace, 200);
+        else
+            for iTrace = 1 : traceNum
+    %             avg_xs(:, iTrace) = sparseRebuildOneTrace(GSParam, Ips(:, neiboors{iTrace}));
+                tmp = neiboors{iTrace};
+
+                switch nDic
+                    case 3
+                        [out2, ~] = bsSparseRebuildOneTrace(GSParam, {vp(:, tmp), vs(:, tmp), rho(:, tmp)}, gamma, inIds(tmp), crossIds(tmp));
+                    case 4
+                        [out2, ~] = bsSparseRebuildOneTrace(GSParam, {vp(:, tmp), vs(:, tmp), rho(:, tmp), vp_vs(:, tmp)}, gamma, inIds(tmp), crossIds(tmp));
+                end
+
+                xs(:, iTrace) = bsPreBuildModelParam([out2(:, 1), out2(:, 1 : 3)], mode, lsdCoef{iTrace});
+
+                bsIncParforProgress(pbm, iTrace, 200);
+            end
         end
 
     end

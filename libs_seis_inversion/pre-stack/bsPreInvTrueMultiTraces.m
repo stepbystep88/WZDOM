@@ -56,10 +56,12 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
         % try loading the results from mat or segy file
         res = loadResults();
         
+        
         if isempty(res.source)
             % obtain results by computing
             if any(strcmpi({'CSR-GST', 'SSR-GST'}, method.flag)) || ...
-                    (isfield(method.parampkgs, 'nMultipleTrace') ...
+                    (isfield(method, 'parampkgs') ...
+                    && isfield(method.parampkgs, 'nMultipleTrace') ...
                     && method.parampkgs.nMultipleTrace > 1 ...
                     && any(strcmpi({'CSR', 'CSR-EM'}, method.flag)))
                 
@@ -246,10 +248,7 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
                     bsIncParforProgress(pbm, iTrace, 101);
             end
             
-            try
-                delete(pbm.name);
-            catch
-            end
+            bsDeleteParforProgress(pbm);
         else
             % non-parallel computing 
             for iTrace = 2 : traceNum
@@ -266,6 +265,7 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
         ds = zeros( (sampNum-1)*GInvParam.angleTrNum, traceNum);
         scaleFactors = zeros(1, traceNum);
         Gs = cell(1, traceNum);
+        lsdCoefs = cell(1, traceNum);
         
         neiboors = cell(1, traceNum);
         
@@ -295,9 +295,10 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
             
         xs(:, 1) = preModel.initX;
         ds(:, 1) = preModel.d;
+%         Gs{1} = preModel.G;
         G = preModel.orginal_G;
         scaleFactors(1) = preModel.scaleFactor;
-        GInvParam.lsdCoef = preModel.lsdCoef;
+        lsdCoefs{1} = preModel.lsdCoef;
         
         pbm.title = sprintf('Prepare model... %s', method.name);
         
@@ -307,6 +308,7 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
             xs(:, iTrace) = model.initX;
             ds(:, iTrace) = model.d;
 %             Gs{iTrace} = model.G;
+            lsdCoefs{iTrace} = model.lsdCoef;
             scaleFactors(iTrace) = model.scaleFactor;
             
             bsIncParforProgress(pbm, iTrace, 100);
@@ -319,14 +321,15 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
         
         switch method.flag
             case 'CSR'
-                [vp, vs, rho] = bsPreInvMultiTracesByCSR(GInvParam, neiboors, ds, G, xs, scaleFactors, inIds, crossIds, method);
+                
+                [vp, vs, rho] = bsPreInvMultiTracesByCSR(GInvParam, neiboors, ds, G, xs, scaleFactors, lsdCoefs, inIds, crossIds, method);
             case 'CSR-GST'
                 horizonTime = bsGetHorizonTime(timeLine{GInvParam.usedTimeLineId}, inIds, crossIds, 1);
                 startTime = horizonTime - GInvParam.upNum * GInvParam.dt;
                 postSeisData = bsGetPostSeisData(GInvParam, inIds, crossIds, startTime, sampNum);
                 shiftedData = bsPhase90Shift(postSeisData);
     
-                [vp, vs, rho] = bsPreInvMultiTracesByCSR_GST(GInvParam, neiboors, ds, G, xs, scaleFactors, shiftedData, inIds, crossIds, method);
+                [vp, vs, rho] = bsPreInvMultiTracesByCSR_GST(GInvParam, neiboors, ds, G, xs, scaleFactors, lsdCoefs, shiftedData, inIds, crossIds, method);
 %             case 'DLSR-EM'
 %                 [data, ys] = bsPostInvMultiTracesByDLSR_EM(GInvParam, neiboors, ds, preModel.orginal_G, xs, scaleFactors, inIds, crossIds, method);
         end
