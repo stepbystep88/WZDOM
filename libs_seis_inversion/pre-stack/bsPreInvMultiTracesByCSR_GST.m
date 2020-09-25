@@ -29,6 +29,8 @@ function [vp, vs, rho] = bsPreInvMultiTracesByCSR_GST(GInvParam, neiboors, ds, G
     
     if isfield(GSParam, 'is3D') && GSParam.is3D
         is3D = true;
+        GSParam.nInline = max(inIds) - min(inIds) + 1;
+        GSParam.nCrossline = max(crossIds) - min(crossIds) + 1;
     else
         is3D = false;
         GSParam.nInline = [];

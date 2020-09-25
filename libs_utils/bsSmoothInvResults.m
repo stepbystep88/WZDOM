@@ -35,7 +35,7 @@ function invResults = bsSmoothInvResults(invResults, refData, fcn, varargin)
                 [invResults{i}.data, weightInfo] = bsNLMByRef(data, refData, ...
                     'weightInfo', weightInfo, varargin{:});
             else
-                [invResults{i}.data, weightInfo] = fcn(data, refData, varargin{:});
+                    [invResults{i}.data, weightInfo] = fcn(data, refData, varargin{:});
             end
             
         else
