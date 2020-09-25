@@ -62,8 +62,14 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
     method.isSaveMat = 0;
     method.isSaveSegy = 0;
     method.parampkgs.nMultipleTrace = 1;
+    method.parampkgs.is3D = false;
+    
 %     load test_method.mat;
 %     method = test_method;
+    
+    if startsWith(method.flag, 'CSR')
+        method.flag = 'CSR';
+    end
     
     wellInvResults = bsPreInvTrueMultiTraces(GInvParamWell, wellInIds, wellCrossIds, timeLine, {method});
     [wellInvResults, ~, ~] = bsPreGetOtherAttributesByInvResults(wellInvResults, GInvParam, wellLogs);
