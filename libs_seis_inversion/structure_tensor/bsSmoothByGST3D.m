@@ -48,7 +48,22 @@ function f1 = bsSmoothByGST3D(f, refData, options, S, blur)
     % First initialize the image to diffuse at time \(t=0\).
 
     %% Perform the full diffusion up to a large enough time.
-    f1 = f;
+    maxVal = max(f(:));
+    minVal = min(f(:));
+    
+    if ~isempty(options.filter_fcn)
+        if isa(options.filter_fcn, 'function_handle')
+            f1 = options.filter_fcn(f);
+        elseif  options.filter_fcn
+            f1 = blur(f, 0.01);
+        end
+        
+        f1(f1<minVal) = minVal;
+        f1(f1>maxVal) = maxVal;
+    else
+        f1 = f;
+    end
+    
     nabla = options.nabla;
     
     for i=1:options.iterNum
@@ -56,8 +71,6 @@ function f1 = bsSmoothByGST3D(f, refData, options, S, blur)
         f1 = f1 + tau * div( Mult(S, nabla(f1) ) );
     end
     
-    maxVal = max(f1(:));
-    minVal = min(f1(:));
     
 %     f1 = filter2(options.h, f1, 'same');
     if ~isempty(options.filter_fcn)

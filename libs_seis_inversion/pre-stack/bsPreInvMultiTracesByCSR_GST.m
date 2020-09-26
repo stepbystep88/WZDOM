@@ -66,6 +66,7 @@ function [vp, vs, rho] = bsPreInvMultiTracesByCSR_GST(GInvParam, neiboors, ds, G
     
     % 计算结构张量信息
     if is3D
+        gst_options.iterNum = 50;
         shiftedData = bsSmoothByGST3D(bsReshapeDataAs3D(shiftedData, GSParam.nInline, GSParam.nCrossline), [], gst_options);
         
         [S, ~, blur] = bsGetStructureTensor3D(shiftedData, gst_options);

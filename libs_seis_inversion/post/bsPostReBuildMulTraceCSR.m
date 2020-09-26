@@ -52,7 +52,7 @@ function [outputData, highData, gamma_vals, gamma_locs] = ...
 %         [highData(:, iTrace), gamma_vals(:, iTrace), gamma_locs(:, iTrace)] ...
 %             = bsCalcHighFreqOfOneTrace(GSParam, inputData(:, ids), inIds(ids), crossIds(ids), options);
         [highData(:, iTrace), t_gammas] = bsSparsePredictOneTrace(GSParam, {invData(:, ids)}, inIds(ids), crossIds(ids));
-        [gamma_vals, gamma_locs] = bsGetNonZeroElements(t_gammas, GSParam.sparsity);
+        [gamma_vals(:, iTrace), gamma_locs(:, iTrace)] = bsGetNonZeroElements(t_gammas, GSParam.sparsity);
         
         
     end

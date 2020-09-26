@@ -59,6 +59,9 @@ function options = bsCreateGSegyInfo(varargin)
     % the start time of a segy file, must be set by users
     addParameter(p, 't0', 0);
     
+    addParameter(p, 'getX', @(x)(x));
+    addParameter(p, 'getY', @(x)(x));
+    
     % whether to read the traces from begining, if it is set to 1, the
     % program will ignore the start time information, and just read the
     % data of each trace from the first sample point

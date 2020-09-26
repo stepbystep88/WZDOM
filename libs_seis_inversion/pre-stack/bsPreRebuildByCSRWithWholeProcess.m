@@ -45,38 +45,63 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
                 GTrainDICParam.title, options.lowCut, options.highCut);
     end
     
-    wells = cell2mat(wellLogs);
-    wellInIds = [wells.inline];
-    wellCrossIds = [wells.crossline];
+    [wellPos, wellIndex, wellNames] = bsFindWellLocation(wellLogs, invResult.inIds, invResult.crossIds);
+    
+    names = join(wellNames, ',');
+    try
+        fprintf('反演结果中检测到共%d道过井，分别为:\n\tinIds:%s...\n\tcrossIds:%s\n\twellNames=%s\n', ...
+            length(wellPos), ...
+            mat2str(invResult.inIds(wellPos)), ...
+            mat2str(invResult.crossIds(wellPos)), ...
+            names{1});
+        
+        wellLogs = wellLogs(wellIndex);
+    
+%         wells = cell2mat(wellLogs);
+%         wellInIds = [wells.inline];
+%         wellCrossIds = [wells.crossline];
+    
+    catch
+        error('There is no wells in the inverted data!!!');
+    end
+    
+    
 
     % inverse a profile
-    [~, ~, GInvParamWell] = bsBuildInitModel(GInvParam, timeLine, wellLogs, ...
-        'title', 'all_wells', ...
-        'inIds', wellInIds, ...
-        'filtCoef', options.wellFiltCoef, ...
-        'isRebuild', 1, ...
-        'crossIds', wellCrossIds ...
-    );
-
-    fprintf('反演所有测井中...\n');
-    method.isSaveMat = 0;
-    method.isSaveSegy = 0;
-    method.parampkgs.nMultipleTrace = 1;
-    method.parampkgs.is3D = false;
-    method.load.mode = 'off';
+%     [~, ~, GInvParamWell] = bsBuildInitModel(GInvParam, timeLine, wellLogs, ...
+%         'title', 'all_wells', ...
+%         'inIds', wellInIds, ...
+%         'filtCoef', options.wellFiltCoef, ...
+%         'isRebuild', 1, ...
+%         'crossIds', wellCrossIds ...
+%     );
+% 
+%     fprintf('反演所有测井中...\n');
+%     method.isSaveMat = 0;
+%     method.isSaveSegy = 0;
+%     method.parampkgs.nMultipleTrace = 1;
+%     method.parampkgs.is3D = false;
+%     method.load.mode = 'off';
 %     load test_method.mat;
 %     method = test_method;
     
-    if startsWith(method.flag, 'CSR')
-        method.flag = 'CSR';
+%     if startsWith(method.flag, 'CSR')
+%         method.flag = 'CSR';
+%     end
+    
+%     wellInvResults = bsPreInvTrueMultiTraces(GInvParamWell, wellInIds, wellCrossIds, timeLine, {method});
+%     [wellInvResults, ~, ~] = bsPreGetOtherAttributesByInvResults(wellInvResults, GInvParam, wellLogs);
+    
+    try
+        set_diff = setdiff(1:length(wellPos), options.exception);
+        train_ids = bsRandSeq(set_diff, options.trainNum);
+        train_ids = unique([train_ids, options.mustInclude]);
+        
+    catch
+        options.trainNum = length(wellPos);
+        train_ids = 1 : length(wellPos);
     end
     
-    wellInvResults = bsPreInvTrueMultiTraces(GInvParamWell, wellInIds, wellCrossIds, timeLine, {method});
-    [wellInvResults, ~, ~] = bsPreGetOtherAttributesByInvResults(wellInvResults, GInvParam, wellLogs);
-    
-    set_diff = setdiff(1:length(wellInIds), options.exception);
-    train_ids = bsRandSeq(set_diff, options.trainNum);
-    train_ids = unique([train_ids, options.mustInclude]);
     outResult = bsSetFields(invResult, {'name', name});
     
     %% 叠前有多种属性
@@ -104,26 +129,29 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
                 iData = 5;
         end
         
-        [outLogs] = bsGetPairOfInvAndWell(GInvParam, timeLine, wellLogs, wellInvResults{1}.data{iData}, dataIndex, options);
+        
+        
+        [outLogs] = bsGetPairOfInvAndWell(GInvParam, timeLine, wellLogs, invResult.data{iData}(:, wellPos), dataIndex, options);
         fprintf('训练联合字典中...\n');
         [DIC, train_ids, rangeCoef, output] = bsTrainDics(GTrainDICParam, outLogs, train_ids, [ 1, 2]);
         GInvWellSparse = bsCreateGSparseInvParam(DIC, GTrainDICParam, ...
             'sparsity', options.sparsity, ...
             'stride', 1);
         
-        [wellPos, wellIndex, wellNames] = bsFindWellLocation(wellLogs, invResult.inIds, invResult.crossIds);
+        
         
         GInvWellSparse.rangeCoef = rangeCoef;
         GInvWellSparse.output = output;
         GInvWellSparse.wellPos = wellPos;
-%         [testData] = bsPostReBuildByCSR(GInvParam, GInvWellSparse, wellInvResults{1}.data{iData}, options);
-    
-%         figure; plot(testData(:, 1), 'r', 'linewidth', 2); hold on; 
+%         [testData] = bsPostReBuildByCSR(GInvParam, GInvWellSparse, wellInvResults{1}.data{iData}, wellInIds, wellCrossIds, options);
+       
+%         figure; 
+%         plot(testData(:, 2), 'r', 'linewidth', 2); hold on; 
 %         plot(outLogs{1}.wellLog(:, 2), 'k', 'linewidth', 2); 
 %         plot(outLogs{1}.wellLog(:, 1), 'b', 'linewidth', 2);
 %         legend('重构结果', '实际测井', '反演结果', 'fontsize', 11);
 %         set(gcf, 'position', [261   558   979   420]);
-%         bsShowFFTResultsComparison(GInvParam.dt, [outLogs{1}.wellLog, testData(:, 1)], {'反演结果', '实际测井', '重构结果'});
+%         bsShowFFTResultsComparison(GInvParam.dt, [outLogs{2}.wellLog(:, 1), outLogs{2}.wellLog(:, 2), testData(:, 2)], {'反演结果', '实际测井', '重构结果'});
         
 %         startTime = invResult.horizon - GInvParam.upNum * GInvParam.dt;
 %         sampNum = GInvParam.upNum + GInvParam.downNum;

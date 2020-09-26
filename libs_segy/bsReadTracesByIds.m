@@ -29,7 +29,7 @@ function [trData, GSegyInfo] = bsReadTracesByIds(fileName, GSegyInfo, inIds, cro
 %     volHeader.dataForm = 5;
     
     for i = 1 : trNum
-        if mod(i, 10000) == 0
+        if mod(i, 100000) == 0
             % print information
             fprintf('Reading %d%% data from segy file %s...\n', round(i/trNum*100), fileName);
         end

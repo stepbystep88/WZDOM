@@ -261,27 +261,9 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
     
     function [vp, vs, rho] = bsCallInvFcnMultiTraces(KTrace)
         % tackle the inverse task
-        xs = zeros(sampNum*3, traceNum);
-        ds = zeros( (sampNum-1)*GInvParam.angleTrNum, traceNum);
-        scaleFactors = zeros(1, traceNum);
-        Gs = cell(1, traceNum);
-        lsdCoefs = cell(1, traceNum);
-        
         neiboors = cell(1, traceNum);
         
-        try
-            [rangeInline, rangeCrossline] = bsGetWorkAreaRangeByParam(GInvParam);
-            nRangeInline = rangeInline(2) - rangeInline(1) + 1;
-            nRangeCrossline = rangeCrossline(2) - rangeCrossline(1) + 1;
-
-            if nRangeInline > nRangeCrossline
-                nTracePerLine = nRangeInline;
-            else
-                nTracePerLine = nRangeCrossline;
-            end
-        catch
-            nTracePerLine = max(crossIds) - min(crossIds) + 1;
-        end
+        nTracePerLine = max(max(crossIds) - min(crossIds), max(inIds) - min(inIds)) + 1;
     
         pbm = bsInitParforProgress(GInvParam.numWorkers, ...
             traceNum, ...
@@ -289,29 +271,44 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
             GInvParam.modelSavePath, ...
             GInvParam.isPrintBySavingFile);
             
-            
-        % 第一步获取所需的模型
-        preModel = bsPrePrepareModel(GInvParam, inIds(1), crossIds(1), horizonTimes(1), [], []);
-            
-        xs(:, 1) = preModel.initX;
-        ds(:, 1) = preModel.d;
-%         Gs{1} = preModel.G;
-        G = preModel.orginal_G;
-        scaleFactors(1) = preModel.scaleFactor;
-        lsdCoefs{1} = preModel.lsdCoef;
+        tmp_file_name = sprintf('%s/mid_nTrace_%d_inIds_[%d, %d]_crossIds_[%d %d]_filtCoef_%.2f_angleNum_%d.mat', ...
+            GInvParam.modelSavePath, length(inIds), min(inIds), max(inIds), ...
+            min(crossIds), max(crossIds), GInvParam.initModel.filtCoef, GInvParam.angleTrNum);
         
-        pbm.title = sprintf('Prepare model... %s', method.name);
-        
-        parfor iTrace = 2 : traceNum
-            model = bsPrePrepareModel(GInvParam, inIds(iTrace), crossIds(iTrace), horizonTimes(iTrace), [], preModel);
-%             xs(:, iTrace) = models{iTrace}.initX;
-            xs(:, iTrace) = model.initX;
-            ds(:, iTrace) = model.d;
-%             Gs{iTrace} = model.G;
-            lsdCoefs{iTrace} = model.lsdCoef;
-            scaleFactors(iTrace) = model.scaleFactor;
+        if exist(tmp_file_name, 'file')
+            load(tmp_file_name, 'xs', 'ds', 'lsdCoefs', 'scaleFactors', 'G');
+        else
+            xs = zeros(sampNum*3, traceNum);
+            ds = zeros( (sampNum-1)*GInvParam.angleTrNum, traceNum);
+            scaleFactors = zeros(1, traceNum);
+%             Gs = cell(1, traceNum);
+            lsdCoefs = cell(1, traceNum);
             
-            bsIncParforProgress(pbm, iTrace, 100);
+            % 第一步获取所需的模型
+            preModel = bsPrePrepareModel(GInvParam, inIds(1), crossIds(1), horizonTimes(1), [], []);
+
+            xs(:, 1) = preModel.initX;
+            ds(:, 1) = preModel.d;
+    %         Gs{1} = preModel.G;
+            G = preModel.orginal_G;
+            scaleFactors(1) = preModel.scaleFactor;
+            lsdCoefs{1} = preModel.lsdCoef;
+
+            pbm.title = sprintf('Prepare model... %s', method.name);
+
+
+            parfor iTrace = 2 : traceNum
+                model = bsPrePrepareModel(GInvParam, inIds(iTrace), crossIds(iTrace), horizonTimes(iTrace), [], preModel);
+    %             xs(:, iTrace) = models{iTrace}.initX;
+                xs(:, iTrace) = model.initX;
+                ds(:, iTrace) = model.d;
+    %             Gs{iTrace} = model.G;
+                lsdCoefs{iTrace} = model.lsdCoef;
+                scaleFactors(iTrace) = model.scaleFactor;
+
+                bsIncParforProgress(pbm, iTrace, 100);
+            end
+            save(tmp_file_name, 'xs', 'ds', 'lsdCoefs', 'scaleFactors', 'G');
         end
         
         parfor iTrace = 1 : traceNum

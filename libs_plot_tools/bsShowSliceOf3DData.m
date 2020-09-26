@@ -68,8 +68,8 @@ function angle = bsGetAngelOfCoordinates(GInvParam, rangeInline, rangeCrossline)
     xs = zeros(1, 4);
     ys = zeros(1, 4);
     
-    GSegyInfo = GInvParam.postSeisData.segyInfo;
-    fileName = GInvParam.postSeisData.fileName;
+    [~, ~, fileName, GSegyInfo] ...
+        = bsGetWorkAreaRangeByParam(GInvParam);
     
     GSegyInfo = bsReadVolHeader(fileName, GSegyInfo);        
     sizeTrace = GSegyInfo.volHeader.sizeTrace+240;    
@@ -79,8 +79,8 @@ function angle = bsGetAngelOfCoordinates(GInvParam, rangeInline, rangeCrossline)
         fseek(GSegyInfo.fid, 3600+sizeTrace*(index-1), -1);
         trHeader = bsReadTraceHeader(GSegyInfo);
             
-        xs(i) = trHeader.X/1e4;
-        ys(i) = trHeader.Y/1e4;
+        xs(i) = GSegyInfo.getX(trHeader.X);
+        ys(i) = GSegyInfo.getY(trHeader.Y);
     end
     
     v1 = [xs(2) ys(2)] - [xs(1) ys(1)];
