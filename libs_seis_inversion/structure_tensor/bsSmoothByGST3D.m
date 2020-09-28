@@ -67,7 +67,7 @@ function f1 = bsSmoothByGST3D(f, refData, options, S, blur)
     nabla = options.nabla;
     
     for i=1:options.iterNum
-        
+        fprintf('The %d/%d iteration in the smoothing process.\n', i, options.iterNum);
         f1 = f1 + tau * div( Mult(S, nabla(f1) ) );
     end
     
