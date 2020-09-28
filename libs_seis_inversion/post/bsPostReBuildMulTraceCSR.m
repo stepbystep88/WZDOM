@@ -43,19 +43,27 @@ function [outputData, highData, gamma_vals, gamma_locs] = ...
     end
     
     iterTrace = 1;
-    for iTrace = seqs
+    
+    if K == 1
+        fcn = @(iTrace) iTrace;
+    else
+        fcn = @(iTrace) bsFindNearestKTrace(iTrace, inIds, crossIds, K, nTracePerLine);
+    end
+    
+	for iTrace = seqs
         % 找当前当的所有邻近道
-        ids = bsFindNearestKTrace(iTrace, inIds, crossIds, K, nTracePerLine);
+        ids = fcn(iTrace);
+%             ids = bsFindNearestKTrace(iTrace, inIds, crossIds, K, nTracePerLine);
 %         nlm_ps = bsGetNonLocalSimilarPatches(inputData(:, iTrace), inputData(:, ids), GSParam.sizeAtom, 10);
-        
-%         [highData(:, iTrace), gamma_vals(:, iTrace), gamma_locs(:, iTrace)] ...
-%             = bsCalcHighFreqOfOneTrace(GSParam, inputData(:, ids), inIds(ids), crossIds(ids), options);
         [highData(:, iTrace), t_gammas] = bsSparsePredictOneTrace(GSParam, {invData(:, ids)}, inIds(ids), crossIds(ids));
-        [gamma_vals(:, iTrace), gamma_locs(:, iTrace)] = bsGetNonZeroElements(t_gammas, GSParam.sparsity);
-        
+
+        if ~options.is3D
+            [gamma_vals(:, iTrace), gamma_locs(:, iTrace)] = bsGetNonZeroElements(t_gammas, GSParam.sparsity);
+        end
+
         bsIncParforProgress(pbm, iterTrace, 10000);
         iterTrace = iterTrace + 1;
-    end
+	end
 
     % 给未高分辨率的道插值
     if options.ratio_to_reconstruction < 1 && traceNum > 1
