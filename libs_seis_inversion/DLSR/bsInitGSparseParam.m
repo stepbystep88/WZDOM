@@ -42,6 +42,7 @@ function [GSparseParam] = bsInitGSparseParam(GSparseParam, sampNum, nBlock, lowI
     end
     
     if exist('highIndex', 'var')
+        
         sPos = GSparseParam.nSpecialFeat + (highIndex - 1)*GSparseParam.sizeAtom + 1;
         ePos = sPos + GSparseParam.sizeAtom - 1;
         
@@ -57,8 +58,28 @@ function [GSparseParam] = bsInitGSparseParam(GSparseParam, sampNum, nBlock, lowI
         end
         
         
-        D1 = GSparseParam.DIC(lows, :);
-        D2 = GSparseParam.DIC(highs, :);
+        if strcmpi(GSparseParam.trainDICParam.feature_reduction, 'off')
+            D1 = GSparseParam.DIC(lows, :);
+            D2 = GSparseParam.DIC(highs, :);
+            
+        else
+            nfeat = size(GSparseParam.output.B, 2);
+            D1 = GSparseParam.DIC(1:nfeat, :);
+            D2 = GSparseParam.DIC(nfeat+1:end, :);
+            
+            B = cell(nBlock, nBlock);
+            for i = 1 : nBlock
+                for j = 1 : nBlock
+                    if i == j
+                        B{i, i} = GSparseParam.output.B;
+                    else
+                        B{i, j} = zeros(size(GSparseParam.output.B));
+                    end
+                end
+            end
+            
+            GSparseParam.output.B = sparse(cell2mat(B));
+        end
 
         D1 = repmat(D1, nBlock, 1);
 
@@ -81,6 +102,8 @@ function [GSparseParam] = bsInitGSparseParam(GSparseParam, sampNum, nBlock, lowI
             GSparseParam.high_max_values = [];
         end
     end
+    
+    
 end
 
 function [D1, D2, C] = bsNormalDIC(D1, D2)

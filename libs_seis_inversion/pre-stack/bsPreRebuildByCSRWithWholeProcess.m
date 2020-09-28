@@ -1,4 +1,4 @@
-function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, wellLogs, method, invResult, name, varargin)
+function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, wellLogs, invResult, name, varargin)
 
     p = inputParser;
     GTrainDICParam = bsCreateGTrainDICParam(...
@@ -10,10 +10,11 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
         'nAtom', 4000, ...
         'filtCoef', 1);
     
-
+    is3D = length(invResult.inIds) > 5000;
+    
     addParameter(p, 'ratio_to_reconstruction', 1);
     addParameter(p, 'mode', 'full_freq');
-    addParameter(p, 'wellFiltCoef', 0.1);
+    addParameter(p, 'isSaveSegy', false);
     addParameter(p, 'lowCut', 0.1);
     addParameter(p, 'highCut', 1);
     addParameter(p, 'sparsity', 5);
@@ -23,10 +24,15 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
     addParameter(p, 'exception', []);
     addParameter(p, 'mustInclude', []);
     addParameter(p, 'GTrainDICParam', GTrainDICParam);
-    
+    addParameter(p, 'is3D', is3D);
     % 相邻多个块同时稀疏表示的个数
     addParameter(p, 'nMultipleTrace', 1);
     addParameter(p, 'isInterpolation', 0);
+    if is3D
+        addParameter(p, 'gst_options', bsCreateGSTParam(3));
+    else
+        addParameter(p, 'gst_options', bsCreateGSTParam(2));
+    end
     
     p.parse(varargin{:});  
     options = p.Results;
@@ -56,41 +62,10 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
             names{1});
         
         wellLogs = wellLogs(wellIndex);
-    
-%         wells = cell2mat(wellLogs);
-%         wellInIds = [wells.inline];
-%         wellCrossIds = [wells.crossline];
-    
     catch
         error('There is no wells in the inverted data!!!');
     end
     
-    
-
-    % inverse a profile
-%     [~, ~, GInvParamWell] = bsBuildInitModel(GInvParam, timeLine, wellLogs, ...
-%         'title', 'all_wells', ...
-%         'inIds', wellInIds, ...
-%         'filtCoef', options.wellFiltCoef, ...
-%         'isRebuild', 1, ...
-%         'crossIds', wellCrossIds ...
-%     );
-% 
-%     fprintf('反演所有测井中...\n');
-%     method.isSaveMat = 0;
-%     method.isSaveSegy = 0;
-%     method.parampkgs.nMultipleTrace = 1;
-%     method.parampkgs.is3D = false;
-%     method.load.mode = 'off';
-%     load test_method.mat;
-%     method = test_method;
-    
-%     if startsWith(method.flag, 'CSR')
-%         method.flag = 'CSR';
-%     end
-    
-%     wellInvResults = bsPreInvTrueMultiTraces(GInvParamWell, wellInIds, wellCrossIds, timeLine, {method});
-%     [wellInvResults, ~, ~] = bsPreGetOtherAttributesByInvResults(wellInvResults, GInvParam, wellLogs);
     
     try
         set_diff = setdiff(1:length(wellPos), options.exception);
@@ -165,7 +140,7 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
 %                 [outputData, highData, gamma_vals, gamma_locs] = bsPostReBuildPlusInterpolationCSR(GInvParam, GInvWellSparse, invResult.data{i}, invResult.data{i},...
 %                     invResult.inIds, invResult.crossIds, options);
 %             else
-                [outputData, highData, gamma_vals, gamma_locs] = bsPostReBuildMulTraceCSR(GInvParam, GInvWellSparse, invResult.data{i}, invResult.data{i}, invResult.inIds, invResult.crossIds, options);
+                [outputData, highData, gamma_vals, gamma_locs] = bsPostReBuildMulTraceCSR(GInvParam, GInvWellSparse, invResult.data{i}, invResult.data{1}, invResult.inIds, invResult.crossIds, options);
 %             end
         else
             gamma_locs = [];
@@ -182,10 +157,12 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
         outResult.DIC{i} = DIC;
     end
     
-    try
-        bsWriteInvResultsIntoSegyFiles(GInvParam, {outResult}, options.title, 0);
-    catch
-        fprintf('保存结果为segy文件失败...\n');
+    if options.isSaveSegy
+        try
+            bsWriteInvResultsIntoSegyFiles(GInvParam, {outResult}, options.title, 0);
+        catch
+            fprintf('保存结果为segy文件失败...\n');
+        end
     end
     
 end

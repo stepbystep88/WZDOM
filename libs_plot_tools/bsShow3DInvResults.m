@@ -47,7 +47,7 @@ function bsShow3DInvResults(GInvParam, GShowProfileParam, invResult, iAtt, mode,
             
         case 2
             xslices = rangeInline(1);
-            yslices = rangeInline(1);
+            yslices = rangeCrossline(1);
             startTime = permute(reshape(invResult.horizon, nCrossline, nInline), [2, 1]) - GInvParam.dt*GInvParam.upNum;
             startTime = bsSmoothByGST2D(startTime, [], bsCreateGSTParam(2, 'sigma', 10));
             
@@ -74,7 +74,7 @@ function bsShow3DInvResults(GInvParam, GShowProfileParam, invResult, iAtt, mode,
             
         otherwise
             xslices = rangeInline(1);
-            yslices = rangeInline(1);
+            yslices = rangeCrossline(1);
             startTime = permute(reshape(invResult.horizon, nCrossline, nInline), [2, 1]) - GInvParam.dt*GInvParam.upNum;
             startTime = bsSmoothByGST2D(startTime, [], bsCreateGSTParam(2, 'sigma', 10));
             

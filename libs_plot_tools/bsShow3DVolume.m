@@ -227,7 +227,7 @@ function [houts, horizonSlices] = bsShow3DVolume(data, dt, clim, xslices, yslice
         yd = interp2(xx,yy,(zHorizons{iHorizon}.yd)',x2,y2);
         zd = interp2(xx,yy,(zHorizons{iHorizon}.zd'),x2,y2);
         
-        horizonSlices{iHorizon} = slice(x3, y3, z3, p_V, xd, yd, zd, 'cubic');
+        horizonSlices{iHorizon} = slice(x3, y3, z3, p_V, xd, yd, zd, 'linear');
     end
     
     %% show the titles of all crossed well

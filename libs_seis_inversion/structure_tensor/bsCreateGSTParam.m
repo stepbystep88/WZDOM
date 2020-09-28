@@ -39,7 +39,7 @@ function options = bsCreateGSTParam(dim, varargin)
         case 2
             addParameter(p, 'filter_fcn', @(f)imfilter(f, fspecial('gaussian', [2,2]), 'replicate'));
         case 3
-            addParameter(p, 'filter_fcn', @(f)imgaussfilt3(f, 0.5));
+            addParameter(p, 'filter_fcn', @(f)imgaussfilt3(f, 1));
     end
     
     p.parse(varargin{:});  

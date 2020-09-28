@@ -1,10 +1,21 @@
-function bsShowSliceOf3DData(GInvParam, GShowProfileParam, invResult, iAtt, clim, upOffset, downOffset)
+function bsShowSliceOf3DData(GInvParam, GShowProfileParam, invResult, iAtt, varargin)
     
     GPlotParam = GShowProfileParam.plotParam;
 
     if isempty(iAtt)
         iAtt = 1;
     end
+    
+    p = inputParser;
+    
+    addParameter(p, 'avg_direction', 'center');
+    addParameter(p, 'avg_num', 10);
+    addParameter(p, 'avg_type', 'RMS');
+    addParameter(p, 'shift', 0);
+    addParameter(p, 'clim', []);
+    
+    p.parse(varargin{:});  
+    options = p.Results;
     
     if ~iscell(invResult.type)
         type = invResult.type;
@@ -25,7 +36,32 @@ function bsShowSliceOf3DData(GInvParam, GShowProfileParam, invResult, iAtt, clim
 
     data3D = bsReshapeDataAs3D(data, nInline, nCrossline);
     
-    slice_data = squeeze((mean(data3D((upOffset:downOffset) + GInvParam.upNum, :, :), 1)));
+    avg_num = options.avg_num;
+    pos = GInvParam.upNum + round(options.shift / GInvParam.dt);
+    switch options.avg_direction
+        case 'center'
+            avg_num = floor(avg_num/2);
+            subData = data3D(pos-avg_num:pos+avg_num, :, :);
+        case 'above'
+            subData = data3D(pos-avg_num+1:pos, :, :);
+        case 'below'
+            subData = data3D(pos:pos+avg_num-1, :, :);
+    end
+    
+    switch lower(options.avg_type)
+        case 'rms'
+            avg_slice = rms(subData, 1);
+        case 'mean'
+            avg_slice = mean(subData, 1);
+        case 'constant'
+            avg_slice = data3D(pos, :, :);
+        case 'max'
+            avg_slice = max(subData, 1);
+        case 'min'
+            avg_slice = min(subData, 1);
+    end
+    
+    slice_data = squeeze(avg_slice);
     imagesc(rangeCrossline, rangeInline, slice_data/scale);
     set(gca,'DataAspectRatio',[1 1 1]);
     
@@ -33,9 +69,11 @@ function bsShowSliceOf3DData(GInvParam, GShowProfileParam, invResult, iAtt, clim
     angle = bsGetAngelOfCoordinates(GInvParam, rangeInline, rangeCrossline);
     view([angle, 90]);
     
-    title(sprintf('Offset [%d %d]ms', upOffset*GInvParam.dt, downOffset*GInvParam.dt), 'fontweight', 'bold');
-    if isempty(clim)
+    title(sprintf('Offset [%d %d]ms', options.shift-avg_num*GInvParam.dt, options.shift+avg_num*GInvParam.dt), 'fontweight', 'bold');
+    if isempty(options.clim)
         clim = [prctile(slice_data(:), 5), prctile(slice_data(:), 95)];
+    else
+        clim = options.clim;
     end
     
     set(gca, 'colormap', dataColorTbl);

@@ -28,16 +28,6 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
     % horion of the whole volume
     usedTimeLine = timeLine{GInvParam.usedTimeLineId};
     
-    % create folder to save the intermediate results
-    try
-        warning('off');
-        mkdir([GInvParam.modelSavePath,'/models/']);
-        mkdir([GInvParam.modelSavePath,'/mat_results/']);
-        mkdir([GInvParam.modelSavePath,'/sgy_results/']);
-        warning('on');
-    catch
-    end
-    
     invResults = cell(1, nMethod);
     % horizon of given traces
     horizonTimes = bsGetHorizonTime(usedTimeLine, inIds, crossIds, GInvParam.isParallel, GInvParam.numWorkers);
@@ -52,6 +42,15 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
         matFileName = bsGetFileName('mat');
         segyFileName = bsGetFileName('segy');
         
+        % create folder to save the intermediate results
+        try
+            warning('off');
+            mkdir([GInvParam.modelSavePath, methodName, '/mat_results/']);
+            mkdir([GInvParam.modelSavePath, methodName, '/sgy_results/']);
+            warning('on');
+        catch
+        end
+    
         res.source = [];
         
         if isfield(method, 'load')
@@ -178,11 +177,11 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
     function fileName = bsGetFileName(type)
         switch type
             case 'mat'
-                fileName = sprintf('%s/mat_results/Ip_%s_inline_[%d_%d]_crossline_[%d_%d].mat', ...
-                    GInvParam.modelSavePath, methodName, rangeIn(1), rangeIn(2), rangeCross(1), rangeCross(2));
+                fileName = sprintf('%s/%s/mat_results/Ip_%s_inline_[%d_%d]_crossline_[%d_%d].mat', ...
+                    GInvParam.modelSavePath, methodName, methodName, rangeIn(1), rangeIn(2), rangeCross(1), rangeCross(2));
             case 'segy'
-                fileName = sprintf('%s/sgy_results/Ip_%s_inline_[%d_%d]_crossline_[%d_%d].sgy', ...
-                    GInvParam.modelSavePath, methodName, rangeIn(1), rangeIn(2), rangeCross(1), rangeCross(2));
+                fileName = sprintf('%s/%s/sgy_results/Ip_%s_inline_[%d_%d]_crossline_[%d_%d].sgy', ...
+                    GInvParam.modelSavePath, methodName, methodName, rangeIn(1), rangeIn(2), rangeCross(1), rangeCross(2));
         end
         
     end

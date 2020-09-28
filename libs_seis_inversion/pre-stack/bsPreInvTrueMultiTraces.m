@@ -28,17 +28,6 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
     % horion of the whole volume
     usedTimeLine = timeLine{GInvParam.usedTimeLineId};
     
-    % create folder to save the intermediate results
-    try
-        warning('off');
-        mkdir([GInvParam.modelSavePath,'/models/']);
-        mkdir([GInvParam.modelSavePath,'/mat_results/']);
-        mkdir([GInvParam.modelSavePath,'/sgy_results/']);
-        warning('on');
-    catch
-        
-    end
-    
     invResults = cell(1, nMethod);
     
     
@@ -52,6 +41,18 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
         method = methods{i};
         methodName = method.name;
         matFileName = bsGetFileName('mat');
+        
+        % create folder to save the intermediate results
+%         try
+%             warning('off');
+        if ~isfield(method, 'load') || strcmpi(method.load.mode, 'off')
+            mkdir([GInvParam.modelSavePath, methodName, '/mat_results/']);
+            mkdir([GInvParam.modelSavePath, methodName, '/sgy_results/']);
+        end
+%             warning('on');
+%         catch
+
+%         end
         
         % try loading the results from mat or segy file
         res = loadResults();
@@ -209,11 +210,11 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
     function fileName = bsGetFileName(type, attName)
         switch type
             case 'mat'
-                fileName = sprintf('%s/mat_results/vpsrho_%s_inline_[%d_%d]_crossline_[%d_%d].mat', ...
-                    GInvParam.modelSavePath, methodName, rangeIn(1), rangeIn(2), rangeCross(1), rangeCross(2));
+                fileName = sprintf('%s/%s/mat_results/vpsrho_%s_inline_[%d_%d]_crossline_[%d_%d].mat', ...
+                    GInvParam.modelSavePath, methodName, methodName, rangeIn(1), rangeIn(2), rangeCross(1), rangeCross(2));
             case 'segy'
-                fileName = sprintf('%s/sgy_results/%s_%s_inline_[%d_%d]_crossline_[%d_%d].sgy', ...
-                    GInvParam.modelSavePath, attName, methodName, rangeIn(1), rangeIn(2), rangeCross(1), rangeCross(2));
+                fileName = sprintf('%s/%s/sgy_results/%s_%s_inline_[%d_%d]_crossline_[%d_%d].sgy', ...
+                    GInvParam.modelSavePath, methodName, attName, methodName, rangeIn(1), rangeIn(2), rangeCross(1), rangeCross(2));
         end
         
     end
@@ -241,6 +242,7 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
             
             % parallel computing
             parfor iTrace = 2 : traceNum
+%                     gpuDevice(1);
                     [vp(:, iTrace), vs(:, iTrace), rho(:, iTrace)] ...
                         = bsPreInvOneTrace(GInvParam, horizonTimes(iTrace), method, ...
                             inIds(iTrace), crossIds(iTrace), preModel, 0);

@@ -42,8 +42,7 @@ function [outputData, highData, gamma_vals, gamma_locs] = ...
         nTracePerLine = nRangeCrossline;
     end
     
-    
-    
+    iterTrace = 1;
     for iTrace = seqs
         % 找当前当的所有邻近道
         ids = bsFindNearestKTrace(iTrace, inIds, crossIds, K, nTracePerLine);
@@ -54,7 +53,8 @@ function [outputData, highData, gamma_vals, gamma_locs] = ...
         [highData(:, iTrace), t_gammas] = bsSparsePredictOneTrace(GSParam, {invData(:, ids)}, inIds(ids), crossIds(ids));
         [gamma_vals(:, iTrace), gamma_locs(:, iTrace)] = bsGetNonZeroElements(t_gammas, GSParam.sparsity);
         
-        
+        bsIncParforProgress(pbm, iterTrace, 10000);
+        iterTrace = iterTrace + 1;
     end
 
     % 给未高分辨率的道插值
@@ -65,8 +65,20 @@ function [outputData, highData, gamma_vals, gamma_locs] = ...
         highData = interp2(X, Y, highData(:, seqs), Xq, Yq, 'spline');
     end
     
+    if ~isempty(options.gst_options)
+        if options.is3D
+            nInline = max(inIds(:)) - min(inIds(:)) + 1;
+            nCrossline = max(crossIds(:)) - min(crossIds(:)) + 1;
+
+            highData = bsSmoothByGST3D(bsReshapeDataAs3D(highData, nInline, nCrossline), bsReshapeDataAs3D(inputData, nInline, nCrossline), options.gst_options);
+            highData = bsReshapeDataAs2D(highData);
+        else
+            highData = bsSmoothByGST2D(highData, invData, options.gst_options);
+        end
+    end
+    
     % parallel computing
-    for iTrace = 1 : traceNum
+    parfor iTrace = 1 : traceNum
         outputData(:, iTrace) = bsHandleOneTrace(invData(:, iTrace), highData(:, iTrace), options, dt);
         bsIncParforProgress(pbm, iTrace, 10000);
     end

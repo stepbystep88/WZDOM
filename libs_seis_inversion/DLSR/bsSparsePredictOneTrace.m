@@ -13,6 +13,9 @@ function [reconstructed, gammas] = bsSparsePredictOneTrace(GSParam, input, inlin
     % 归一化
 	[normal_patches, output] = bsSparseNormalization(GSParam.trainDICParam.normalizationMode, all_patches, GSParam.low_min_values, GSParam.low_max_values);
     % 稀疏表示
+    if strcmpi(GSParam.trainDICParam.feature_reduction, 'high_resolution')
+        normal_patches = GSParam.output.B' * normal_patches;
+    end
     gammas = omp(GSParam.lowDIC'*normal_patches, GSParam.omp_low_G, GSParam.sparsity);
     new_patches = GSParam.highDIC *  gammas;
     % 反归一化

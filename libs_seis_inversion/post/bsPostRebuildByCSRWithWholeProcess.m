@@ -14,6 +14,8 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
         method = method{1};
     end
     
+    is3D = length(invResult.inIds) > 5000;
+    
     addParameter(p, 'ratio_to_reconstruction', '1');
     addParameter(p, 'mode', 'low_high');
     addParameter(p, 'nNeibor', '2');
@@ -25,6 +27,8 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
     addParameter(p, 'highCut', 1);
     addParameter(p, 'sparsity', 5);
     addParameter(p, 'gamma', 0.5);
+    addParameter(p, 'is3D', is3D);
+    
     addParameter(p, 'wellFiltCoef', 0.1);
     addParameter(p, 'title', 'HLF');
     addParameter(p, 'trainNum', length(wellLogs));
@@ -32,6 +36,12 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
     addParameter(p, 'mustInclude', []);
     addParameter(p, 'isInterpolation', 0);
     addParameter(p, 'GTrainDICParam', GTrainDICParam);
+    
+    if is3D
+        addParameter(p, 'gst_options', bsCreateGSTParam(3));
+    else
+        addParameter(p, 'gst_options', bsCreateGSTParam(2));
+    end
     
     p.parse(varargin{:});  
     options = p.Results;
@@ -73,24 +83,50 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
         'crossIds', wellCrossIds ...
     );
 
-    if isfield(method, 'flag')
-        fprintf('反演所有测井中...\n');
-        method.load.mode = 'off';
-        method.parampkgs.nMultipleTrace = 1;
+%     if isfield(method, 'flag')
+%         fprintf('反演所有测井中...\n');
+%         method.load.mode = 'off';
+%         method.parampkgs.nMultipleTrace = 1;
+%         
+%         if strcmp(method.flag, 'DLSR-GST')
+%             method.flag = 'DLSR';
+%         end
+%     end
+%     method.isSaveSegy = false;
+%     method.isSaveMat = false;
+%     
+%     wellInvResults = bsPostInvTrueMultiTraces(GInvParamWell, wellInIds, wellCrossIds, timeLine, {method});
+    
+%     train_ids = setdiff(1:length(wellInIds), options.exception);
+%     train_ids = setdiff(train_ids, options.mustInclude);
+%     train_ids = bsRandSeq(train_ids, min(options.trainNum, length(train_ids)));
+%     train_ids = unique([train_ids, options.mustInclude]);
+    
+    [wellPos, wellIndex, wellNames] = bsFindWellLocation(wellLogs, invResult.inIds, invResult.crossIds);
+    names = join(wellNames, ',');
+    try
+        fprintf('反演结果中检测到共%d道过井，分别为:\n\tinIds:%s...\n\tcrossIds:%s\n\twellNames=%s\n', ...
+            length(wellPos), ...
+            mat2str(invResult.inIds(wellPos)), ...
+            mat2str(invResult.crossIds(wellPos)), ...
+            names{1});
         
-        if strcmp(method.flag, 'DLSR-GST')
-            method.flag = 'DLSR';
-        end
+        wellLogs = wellLogs(wellIndex);
+    catch
+        error('There is no wells in the inverted data!!!');
     end
-    method.isSaveSegy = false;
-    method.isSaveMat = false;
     
-    wellInvResults = bsPostInvTrueMultiTraces(GInvParamWell, wellInIds, wellCrossIds, timeLine, {method});
+    try
+        set_diff = setdiff(1:length(wellPos), options.exception);
+        train_ids = bsRandSeq(set_diff, options.trainNum);
+        train_ids = unique([train_ids, options.mustInclude]);
+        
+    catch
+        options.trainNum = length(wellPos);
+        train_ids = 1 : length(wellPos);
+    end
     
-    train_ids = setdiff(1:length(wellInIds), options.exception);
-    train_ids = setdiff(train_ids, options.mustInclude);
-    train_ids = bsRandSeq(train_ids, min(options.trainNum, length(train_ids)));
-    train_ids = unique([train_ids, options.mustInclude]);
+    
     
     
     [outLogs] = bsGetPairOfInvAndWell(GInvParamWell, timeLine, wellLogs, wellInvResults{1}.data, ...
@@ -134,29 +170,28 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
     %% 联合字典稀疏重构
     fprintf('联合字典稀疏重构: 参考数据为反演结果...\n');
     
-    switch options.mode
-        case {'full_freq', 'low_high', 'residual'}
-            inputData = invResult.data;
-        case 'seismic_high'
-            startTime = invResult.horizon - GInvParam.upNum * GInvParam.dt;
-            sampNum = GInvParam.upNum + GInvParam.downNum;
-            inputData = bsGetPostSeisData(GInvParam, invResult.inIds, invResult.crossIds, startTime, sampNum);
-    end
+%     switch options.mode
+%         case {'full_freq', 'low_high', 'residual'}
+%             inputData = invResult.data;
+%         case 'seismic_high'
+%             startTime = invResult.horizon - GInvParam.upNum * GInvParam.dt;
+%             sampNum = GInvParam.upNum + GInvParam.downNum;
+%             inputData = bsGetPostSeisData(GInvParam, invResult.inIds, invResult.crossIds, startTime, sampNum);
+%     end
     startTime = invResult.horizon - GInvParam.upNum * GInvParam.dt;
     sampNum = GInvParam.upNum + GInvParam.downNum;
     inputData = bsGetPostSeisData(GInvParam, invResult.inIds, invResult.crossIds, startTime, sampNum);
 %     [wellPos, wellIndex, wellNames] = bsFindWellLocation(wellLogs, invResult.inIds, invResult.crossIds);
     
     if ~options.isInterpolation
-        if options.nMultipleTrace <= 1
-            [outputData, highData] = bsPostReBuildPlusInterpolationCSR(GInvParam, GInvWellSparse, invResult.data, inputData, invResult.inIds, invResult.crossIds, options);
-        else
-            [outputData, highData] = bsPostReBuildMulTraceCSR(GInvParam, GInvWellSparse, invResult.data, inputData, invResult.inIds, invResult.crossIds, options);
-        end
+%         if options.nMultipleTrace <= 1
+%             [outputData, highData] = bsPostReBuildPlusInterpolationCSR(GInvParam, GInvWellSparse, invResult.data, inputData, invResult.inIds, invResult.crossIds, options);
+%         else
+        [outputData, highData] = bsPostReBuildMulTraceCSR(GInvParam, GInvWellSparse, invResult.data, inputData, invResult.inIds, invResult.crossIds, options);
+%         end
     else
         [outputData, highData] = bsPostReBuildInterpolation(GInvParam, outLogs(train_ids), invResult.data, invResult.inIds, invResult.crossIds, options);
     end
-    
     
     
     outResult = bsSetFields(invResult, {'data', outputData; 'name', name; 'highData', highData; 'train_ids', train_ids});

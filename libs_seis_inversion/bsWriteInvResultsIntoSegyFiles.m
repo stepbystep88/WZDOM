@@ -48,7 +48,7 @@ end
 
 function str = getDstFileName(GInvParam, name, type, title)
     warning('off');
-    mkdir(sprintf('%s/sgy_results', GInvParam.modelSavePath));
-    str = sprintf('%s/sgy_results/%s-%s-%s.sgy', GInvParam.modelSavePath, type, title, name);
+    mkdir(sprintf('%s/%s/sgy_results', GInvParam.modelSavePath, name));
+    str = sprintf('%s/%s/sgy_results/%s-%s-%s.sgy', GInvParam.modelSavePath, name, type, name, title);
     warning('on');
 end
