@@ -53,8 +53,11 @@ function xk = bsCGMultiTraces(xs, b, bsAx, maxIter, S, gst_options, is3D, nInlin
         xk = xk + alphak * pk + tau * delta;
 %         xk = log(exp(xk + alphak * pk) + tau * delta);
         rk_new = rk - alphak * Apk;
-
-        betak = sum(rk_new.^2, 'all') / sum(rk.^2, 'all');
+        
+        t1 = rk_new.^2;
+        t2 = rk.^2;
+        
+        betak = sum(t1(:)) / sum(t2(:));
         pk = rk_new + betak * pk;
         rk = rk_new;
         
