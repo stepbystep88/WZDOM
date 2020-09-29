@@ -150,7 +150,7 @@ function [xOut, fval, exitFlag, output] = bsPreInv1DTrace(d, G, xInit, Lb, Ub, m
             % Tikhonov regularization
             [xOut, fval, exitFlag, output] = bsSeisInv1DTraceByRegFunc(d, G, xInit, Lb, Ub, regParam, parampkgs, options, @bsReg1DTK);
             
-        case 'DLSR'
+        case {'DLSR','SSR'}
             % dictionary learning and sparse representation
             [xOut, fval, exitFlag, output] = bsPreInv1DTraceByDLSR(d, G, xInit, Lb, Ub, regParam, parampkgs, options, method.mode, method.lsdCoef);
         
