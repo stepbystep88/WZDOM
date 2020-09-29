@@ -17,6 +17,7 @@ function [basicInfo] = bsInitBasicInfoForShowingProfile(GShowProfileParam, GInvP
     if isempty(wellPos)
         left = 1;
         right = length(profile.inIds);
+        wellColors = [];
     else
         left = min(wellPos) - GShowProfileParam.showLeftTrNumByWells;
         right = max(wellPos) + GShowProfileParam.showRightTrNumByWells;

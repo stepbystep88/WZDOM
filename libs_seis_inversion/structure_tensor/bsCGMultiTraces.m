@@ -20,7 +20,18 @@ function xk = bsCGMultiTraces(xs, b, bsAx, maxIter, S, gst_options, is3D, nInlin
     for k = 1 : maxIter
 %         alphak = 0.01;
         Apk = bsAx(pk);
-        alphak = sum(rk .^ 2, 'all') / sum(pk .* Apk, 'all');
+        try
+            alphak = sum(rk .^ 2, 'all') / sum(pk .* Apk, 'all');
+            if alphak < -5 || alphak > 5
+                alphak = 0.01;
+            end
+            
+        catch ME
+%             warning(ME.msg);
+            warning('Getting alphak encouters an error.');
+            alphak = 0.001;
+        end
+        
 %         if alphak < 0 || alphak > 1
 %             disp(alphak);
 %             alphak = 0.001;
