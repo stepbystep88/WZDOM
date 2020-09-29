@@ -43,12 +43,14 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
         segyFileName = bsGetFileName('segy');
         
         % create folder to save the intermediate results
-        try
-            warning('off');
-            mkdir([GInvParam.modelSavePath, methodName, '/mat_results/']);
-            mkdir([GInvParam.modelSavePath, methodName, '/sgy_results/']);
-            warning('on');
-        catch
+        if ~isfield(method, 'load') || strcmpi(method.load.mode, 'off') || ~exist(method.load.fileName, 'file')
+            try
+                warning('off');
+                mkdir([GInvParam.modelSavePath, methodName, '/mat_results/']);
+                mkdir([GInvParam.modelSavePath, methodName, '/sgy_results/']);
+                warning('on');
+            catch
+            end
         end
     
         res.source = [];
@@ -61,7 +63,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
                     try
                         % from mat file
                         if isfield(loadInfo, 'fileName') && ~isempty(loadInfo.fileName)
-                            load(GInvParam.load.fileName);
+                            load(loadInfo.fileName);
                         else
                             load(matFileName);
                         end
@@ -107,7 +109,8 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
             
             % obtain results by computing
             if any(strcmpi({'DLSR-GST', 'DLSR-EM', 'DLSR-DEM'}, method.flag)) || ...
-                    (isfield(method.parampkgs, 'nMultipleTrace') ...
+                    ( isfield(method, 'parampkgs') ...
+                    && isfield(method.parampkgs, 'nMultipleTrace') ...
                     && method.parampkgs.nMultipleTrace > 1) 
                 
                 if ~isfield(method.parampkgs, 'nMultipleTrace')
@@ -225,14 +228,6 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
     
     function [data, ys] = bsCallInvFcnMultiTraces(KTrace)
         % tackle the inverse task
-%         data = zeros(sampNum, traceNum);
-        
-%         models = cell(1, traceNum);
-        xs = zeros(sampNum, traceNum);
-        ds = zeros(sampNum-1, traceNum);
-        scaleFactors = zeros(1, traceNum);
-        
-        neiboors = cell(1, traceNum);
         
         try
             [rangeInline, rangeCrossline] = bsGetWorkAreaRangeByParam(GInvParam);
@@ -253,35 +248,57 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
             '', ...
             GInvParam.modelSavePath, ...
             GInvParam.isPrintBySavingFile);
-            
-            
+        
+        try
+            [~,name,~] = fileparts(GInvParam.initModel.ip.fileName);
+        catch
+            name = '';
+        end
+        
+        tmp_file_name = sprintf('%s/mid_nTrace_%d_inIds_[%d, %d]_crossIds_[%d %d]_filtCoef_%.2f_init_model_name_%s.mat', ...
+            GInvParam.modelSavePath, length(inIds), min(inIds), max(inIds), ...
+            min(crossIds), max(crossIds), GInvParam.initModel.filtCoef, name);
+        
         % 第一步获取所欲的模型
         preModel = bsPostPrepareModel(GInvParam, inIds(1), crossIds(1), horizonTimes(1), [], []);
             
+        if exist(tmp_file_name, 'file')
+            load(tmp_file_name, 'xs', 'ds', 'scaleFactors');
+        else
+            xs = zeros(sampNum, traceNum);
+            ds = zeros(sampNum-1, traceNum);
+            scaleFactors = zeros(1, traceNum);
+
+            neiboors = cell(1, traceNum);
         
-%         models{1} = preModel;
-        xs(:, 1) = preModel.initX;
-        ds(:, 1) = preModel.d;
-        scaleFactors(1) = preModel.scaleFactor;
+    %         models{1} = preModel;
+            xs(:, 1) = preModel.initX;
+            ds(:, 1) = preModel.d;
+            scaleFactors(1) = preModel.scaleFactor;
+
+            pbm = bsResetParforProgress(pbm, sprintf('Preparing model... %s', method.name));
+            parfor iTrace = 2 : traceNum
+                model = bsPostPrepareModel(GInvParam, inIds(iTrace), crossIds(iTrace), horizonTimes(iTrace), [], preModel);
+    %             xs(:, iTrace) = models{iTrace}.initX;
+                xs(:, iTrace) = model.initX;
+                ds(:, iTrace) = model.d;
+                scaleFactors(iTrace) = model.scaleFactor;
+
+                bsIncParforProgress(pbm, iTrace, 1000);
+            end
+            
+            save(tmp_file_name, 'xs', 'ds', 'scaleFactors');
+        end
+        
         
         pbm = bsResetParforProgress(pbm, sprintf('Finding neiboors... %s', method.name));
         parfor iTrace = 1 : traceNum
             % 找当前当的所有邻近道
             neiboors{iTrace} = bsFindNearestKTrace(iTrace, inIds, crossIds, KTrace, nTracePerLine);
             bsIncParforProgress(pbm, iTrace, 1000);
-        end
+        end    
+        bsDeleteParforProgress(pbm);    
         
-        
-        pbm = bsResetParforProgress(pbm, sprintf('Preparing model... %s', method.name));
-        parfor iTrace = 2 : traceNum
-            model = bsPostPrepareModel(GInvParam, inIds(iTrace), crossIds(iTrace), horizonTimes(iTrace), [], preModel);
-%             xs(:, iTrace) = models{iTrace}.initX;
-            xs(:, iTrace) = model.initX;
-            ds(:, iTrace) = model.d;
-            scaleFactors(iTrace) = model.scaleFactor;
-            
-            bsIncParforProgress(pbm, iTrace, 1000);
-        end
         
         switch method.flag
             case 'DLSR'
@@ -292,7 +309,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
                 [data, ys] = bsPostInvMultiTracesByDLSR_GST(GInvParam, neiboors, ds, preModel.orginal_G, xs, scaleFactors, inIds, crossIds, method);
         end
         
-        bsDeleteParforProgress(pbm);
+        
     end
     
 end

@@ -1,4 +1,4 @@
-function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wellLogs, method, invResult, name, varargin)
+function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wellLogs, invResult, name, varargin)
 
     p = inputParser;
     GTrainDICParam = bsCreateGTrainDICParam(...
@@ -9,10 +9,6 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
         'iterNum', 5, ...
         'nAtom', 4000, ...
         'filtCoef', 1);
-    
-    if iscell(method)
-        method = method{1};
-    end
     
     is3D = length(invResult.inIds) > 5000;
     
@@ -70,18 +66,18 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
                 GTrainDICParam.title, options.lowCut);
     end
     
-    wells = cell2mat(wellLogs);
-    wellInIds = [wells.inline];
-    wellCrossIds = [wells.crossline];
+%     wells = cell2mat(wellLogs);
+%     wellInIds = [wells.inline];
+%     wellCrossIds = [wells.crossline];
 
     % inverse a profile
-    [~, ~, GInvParamWell] = bsBuildInitModel(GInvParam, timeLine, wellLogs, ...
-        'title', 'all_wells', ...
-        'inIds', wellInIds, ...
-        'isRebuild', 1, ...
-        'filtCoef', options.wellFiltCoef, ...
-        'crossIds', wellCrossIds ...
-    );
+%     [~, ~, GInvParamWell] = bsBuildInitModel(GInvParam, timeLine, wellLogs, ...
+%         'title', 'all_wells', ...
+%         'inIds', wellInIds, ...
+%         'isRebuild', 1, ...
+%         'filtCoef', options.wellFiltCoef, ...
+%         'crossIds', wellCrossIds ...
+%     );
 
 %     if isfield(method, 'flag')
 %         fprintf('反演所有测井中...\n');
@@ -126,11 +122,7 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
         train_ids = 1 : length(wellPos);
     end
     
-    
-    
-    
-    [outLogs] = bsGetPairOfInvAndWell(GInvParamWell, timeLine, wellLogs, wellInvResults{1}.data, ...
-        GInvParamWell.indexInWellData.ip, options);
+    [outLogs] = bsGetPairOfInvAndWell(GInvParam, timeLine, wellLogs, invResult.data(:, wellPos), GInvParam.indexInWellData.ip, options);
     
 %     bsShowFFTResultsComparison(GInvParam.dt, outLogs{1}.wellLog, {'反演结果', '联合字典配对'});
 
@@ -153,7 +145,6 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
         GInvWellSparse.output = output;
     else
         GTrainDICParam.isRebuild = 0;
-        [DIC, train_ids, rangeCoef, output] = bsTrainDics(GTrainDICParam, outLogs, train_ids, [ 1, 2]);
     end
     
     
