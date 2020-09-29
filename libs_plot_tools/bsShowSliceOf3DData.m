@@ -63,11 +63,13 @@ function bsShowSliceOf3DData(GInvParam, GShowProfileParam, invResult, iAtt, vara
     
     slice_data = squeeze(avg_slice);
     imagesc(rangeCrossline, rangeInline, slice_data/scale);
-    set(gca,'DataAspectRatio',[1 1 1]);
+    
     
     % 获取需要旋转的角度
-    angle = bsGetAngelOfCoordinates(GInvParam, rangeInline, rangeCrossline);
-    view([angle, 90]);
+    [angle, ratio] = bsGetAngelOfCoordinates(GInvParam, rangeInline, rangeCrossline);
+    view([angle, -90]);
+    
+    set(gca,'DataAspectRatio',[ratio(1) ratio(2) 1]);
     
     title(sprintf('Offset [%d %d]ms', options.shift-avg_num*GInvParam.dt, options.shift+avg_num*GInvParam.dt), 'fontweight', 'bold');
     if isempty(options.clim)
@@ -99,7 +101,7 @@ function bsShowSliceOf3DData(GInvParam, GShowProfileParam, invResult, iAtt, vara
 end
 
 
-function angle = bsGetAngelOfCoordinates(GInvParam, rangeInline, rangeCrossline)
+function [angle, ratio] = bsGetAngelOfCoordinates(GInvParam, rangeInline, rangeCrossline)
     inIds = [rangeInline(1), rangeInline(1), rangeInline(end), rangeInline(end)];
     crossIds = [rangeCrossline(1), rangeCrossline(end), rangeCrossline(1), rangeCrossline(end)];
     
@@ -126,5 +128,13 @@ function angle = bsGetAngelOfCoordinates(GInvParam, rangeInline, rangeCrossline)
     
     angle = acos(dot(v1, v2)/(norm(v1)*norm(v2)));
     angle = angle/pi*180;
+    
+    if angle == 90
+        angle = -90;
+    end
+    
+    
+    
+    ratio = abs([(xs(4) - xs(1))/(max(inIds) - min(inIds) + 1), (ys(4) - ys(1))/(max(crossIds) - min(crossIds) + 1)]);
 end
 

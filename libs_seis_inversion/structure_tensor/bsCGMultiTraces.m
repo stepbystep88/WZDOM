@@ -21,7 +21,10 @@ function xk = bsCGMultiTraces(xs, b, bsAx, maxIter, S, gst_options, is3D, nInlin
 %         alphak = 0.01;
         Apk = bsAx(pk);
         try
-            alphak = sum(rk .^ 2, 'all') / sum(pk .* Apk, 'all');
+            t1 = rk.^2;
+            t2 = pk .* Apk;
+            
+            alphak = sum(t1(:)) / sum(t2(:));
             if alphak < -5 || alphak > 5
                 alphak = 0.01;
             end

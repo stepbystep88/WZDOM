@@ -15,7 +15,8 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
     addParameter(p, 'ratio_to_reconstruction', '1');
     addParameter(p, 'mode', 'low_high');
     addParameter(p, 'nNeibor', '2');
-    
+    addParameter(p, 'isSaveSegy', '1');
+
     % 相邻多个块同时稀疏表示的个数
     addParameter(p, 'nMultipleTrace', 1);
     
@@ -187,6 +188,7 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
     
     outResult = bsSetFields(invResult, {'data', outputData; 'name', name; 'highData', highData; 'train_ids', train_ids});
     
-                        
-%     bsWriteInvResultsIntoSegyFiles(GInvParam, {outResult}, options.title);
+    if options.isSaveSegy                    
+        bsWriteInvResultsIntoSegyFiles(GInvParam, {outResult}, options.title);
+    end
 end
