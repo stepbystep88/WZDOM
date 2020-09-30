@@ -45,7 +45,7 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
         % create folder to save the intermediate results
 %         try
 %             warning('off');
-        if ~isfield(method, 'load') || strcmpi(method.load.mode, 'off') || (~exist(method.load.fileName, 'file') && ~exist(matFileName, 'file'))
+        if ~isfield(method, 'load') || strcmpi(method.load.mode, 'off') || (ischar(method.load.fileName) && ~exist(method.load.fileName, 'file') && ~exist(matFileName, 'file'))
             mkdir([GInvParam.modelSavePath, methodName, '/mat_results/']);
             mkdir([GInvParam.modelSavePath, methodName, '/sgy_results/']);
         end
@@ -310,7 +310,12 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
 
                 bsIncParforProgress(pbm, iTrace, 100);
             end
-            save(tmp_file_name, 'xs', 'ds', 'lsdCoefs', 'scaleFactors', 'G');
+            try
+                save(tmp_file_name, 'xs', 'ds', 'lsdCoefs', 'scaleFactors', 'G');
+            catch
+                save(tmp_file_name, 'xs', 'ds', 'lsdCoefs', 'scaleFactors', 'G', '-v7.3');
+            end
+            
         end
         
         parfor iTrace = 1 : traceNum

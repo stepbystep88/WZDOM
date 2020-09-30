@@ -286,8 +286,12 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
 
                 bsIncParforProgress(pbm, iTrace, 1000);
             end
+            try
+                save(tmp_file_name, 'xs', 'ds', 'scaleFactors');
+            catch
+                save(tmp_file_name, 'xs', 'ds', 'scaleFactors', '-v7.3');
+            end
             
-            save(tmp_file_name, 'xs', 'ds', 'scaleFactors');
         end
         
         

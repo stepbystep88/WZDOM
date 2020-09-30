@@ -134,7 +134,8 @@ function [angle, ratio] = bsGetAngelOfCoordinates(GInvParam, rangeInline, rangeC
     end
     
     
-    
-    ratio = abs([(xs(4) - xs(1))/(max(inIds) - min(inIds) + 1), (ys(4) - ys(1))/(max(crossIds) - min(crossIds) + 1)]);
+    d2 = sqrt((xs(1) - xs(2)).^2 + (ys(1) - ys(2)).^2);
+    d1 = sqrt((xs(1) - xs(3)).^2 + (ys(1) - ys(3)).^2);
+    ratio = abs([d1/(max(inIds) - min(inIds) + 1), d2/(max(crossIds) - min(crossIds) + 1)]);
 end
 
