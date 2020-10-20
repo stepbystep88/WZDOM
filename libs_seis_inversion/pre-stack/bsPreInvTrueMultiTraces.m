@@ -278,8 +278,13 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
             min(crossIds), max(crossIds), GInvParam.initModel.filtCoef, GInvParam.angleTrNum);
         
         if exist(tmp_file_name, 'file')
-            load(tmp_file_name, 'xs', 'ds', 'lsdCoefs', 'scaleFactors', 'G');
-        else
+            try
+                load(tmp_file_name, 'xs', 'ds', 'lsdCoefs', 'scaleFactors', 'G');
+            catch
+            end
+        end
+        
+        if ~exist('ds', 'var')
             xs = zeros(sampNum*3, traceNum);
             ds = zeros( (sampNum-1)*GInvParam.angleTrNum, traceNum);
             scaleFactors = zeros(1, traceNum);
@@ -311,7 +316,7 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
                 bsIncParforProgress(pbm, iTrace, 100);
             end
             try
-                save(tmp_file_name, 'xs', 'ds', 'lsdCoefs', 'scaleFactors', 'G');
+                save(tmp_file_name, 'xs', 'ds', 'lsdCoefs', 'scaleFactors', 'G', '-v7.3');
             catch
                 save(tmp_file_name, 'xs', 'ds', 'lsdCoefs', 'scaleFactors', 'G', '-v7.3');
             end

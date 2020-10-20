@@ -54,7 +54,7 @@ function model = bsPrePrepareModel(GPreInvParam, inline, crossline, horizonTime,
     
     % build d, G, m
     [model.d, model.G, model.initX, model.lsdCoef, model.angleData] ...
-        = bsPreBuild_d_G_m(GPreInvParam, inline, crossline, startTime, initLog, G);
+        = bsPreBuild_d_G_m(GPreInvParam, inline, crossline, startTime, initLog, []);
     GPreInvParam.lsdCoef = model.lsdCoef;
     
     % check data

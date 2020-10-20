@@ -67,7 +67,7 @@ function bsShowSliceOf3DData(GInvParam, GShowProfileParam, invResult, iAtt, vara
     
     % 获取需要旋转的角度
     [angle, ratio] = bsGetAngelOfCoordinates(GInvParam, rangeInline, rangeCrossline);
-    view([angle, -90]);
+    
     
     set(gca,'DataAspectRatio',[ratio(1) ratio(2) 1]);
     
@@ -88,16 +88,16 @@ function bsShowSliceOf3DData(GInvParam, GShowProfileParam, invResult, iAtt, vara
             'fontsize', GPlotParam.fontsize,...
             'fontweight', 'bold', ...
             'fontname', GPlotParam.fontname);
-    hc.Position = hc.Position .* [1.0 1 0.5 1] + [0.05 0 0 0];
+    hc.Position = hc.Position .* [1.0 1 0.5 1] + [0.03 0 0 0];
 
-    ylabel(hc, attName, ...
-        'fontsize', GPlotParam.fontsize, ...
-        'fontweight', 'bold', ...
-        'fontname', GPlotParam.fontname);
+%     ylabel(hc, attName, ...
+%         'fontsize', GPlotParam.fontsize, ...
+%         'fontweight', 'bold', ...
+%         'fontname', GPlotParam.fontname);
     
     bsSetDefaultPlotSet(GPlotParam);
     
-    
+    view([angle, -90]);
 end
 
 

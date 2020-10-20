@@ -48,6 +48,7 @@ function [S, org_S, blur] = bsGetStructureTensor3D(f, options)
     % are the eigenvalues.
     if options.show_mid_results
         figure;
+        
 %         tbl = bsGetColormap('seismic');
         bsShow3DVolume(f, 1, [prctile(f(:), 10), prctile(f(:), 90)], 1, 1, 1, [], 'colormap', options.colormap);
     end
@@ -57,15 +58,15 @@ function [S, org_S, blur] = bsGetStructureTensor3D(f, options)
         
     % 重新构建S，加强横向连续性的约束
     if options.show_mid_results
-        [S, Ds] = reconstruted_tensor(org_S, options);
-        bsPlotTensorField3D(f, Ds, options);
+        [S, Ds, lens] = reconstruted_tensor(org_S, options);
+        bsPlotTensorField3D(f, Ds, lens,options);
     else
         [S] = reconstruted_tensor(org_S, options);
     end
     
 end
 
-function [S, Ds] = reconstruted_tensor(T, options)
+function [S, Ds, eigs] = reconstruted_tensor(T, options)
         
         
     [n1, n2, n3, ~] = size(T);
@@ -84,10 +85,12 @@ function [S, Ds] = reconstruted_tensor(T, options)
     
     if nargout > 1
         Ds = cell(1, n);
+        eigs = zeros(1, n);
         isOutDs = true;
     else
         Ds = [];
         isOutDs = false;
+        eigs = [];
     end
     
     c1 = 0.001;
@@ -123,6 +126,7 @@ function [S, Ds] = reconstruted_tensor(T, options)
         
         if isOutDs
             Ds{i}= V;
+            eigs(i) = (D(2,2) - D(1,1))/D(2,2);
         end
         
         bsIncParforProgress(pbm, i, 1000000);
@@ -133,5 +137,6 @@ function [S, Ds] = reconstruted_tensor(T, options)
     S = reshape(S, n1, n2, n3, []);
     if isOutDs
         Ds = reshape(Ds, n1, n2, n3);
+        eigs = reshape(eigs, n1, n2, n3);
     end
 end

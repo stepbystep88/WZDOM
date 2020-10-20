@@ -324,7 +324,7 @@ set(gcf, 'position', [680   223   800   755]);
 % Set the values of \(m\) and \(C_m\).
 
 m = 4;
-Cm = 3.31488;
+Cm = 4;
 
 %%
 % Define \(\phi\).
