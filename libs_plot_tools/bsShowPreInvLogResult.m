@@ -209,7 +209,7 @@ function bsSetPreSubPlotSize(nItems, iItem, k, ntype)
         case 2
             bsSubPlotFit(nItems, ntype, index, 0.93, 0.88, 0.02, 0.05, 0.06, 0.01);
         case 3
-            bsSubPlotFit(nItems, ntype, index, 0.93, 0.91, 0.02, 0.04, 0.06, 0.01);
+            bsSubPlotFit(nItems, ntype, index, 0.93, 0.88, 0.02, 0.05, 0.06, 0.01);
         case 4
             bsSubPlotFit(nItems, ntype, index, 0.93, 0.92, 0.02, 0.03, 0.06, 0.00);
     end
