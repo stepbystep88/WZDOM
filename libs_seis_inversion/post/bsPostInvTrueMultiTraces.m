@@ -43,14 +43,15 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
         segyFileName = bsGetFileName('segy');
         
         % create folder to save the intermediate results
-        if ~isfield(method, 'load') || strcmpi(method.load.mode, 'off') || (~exist(method.load.fileName, 'file') && ~exist(matFileName, 'file'))
-            try
+        try
+            if ~isfield(method, 'load') || strcmpi(method.load.mode, 'off') || (~exist(method.load.fileName, 'file') && ~exist(matFileName, 'file'))
+
                 warning('off');
-                mkdir([GInvParam.modelSavePath, methodName, '/mat_results/']);
-                mkdir([GInvParam.modelSavePath, methodName, '/sgy_results/']);
+                mkdir([GInvParam.modelSavePath, '/', methodName, '/mat_results/']);
+                mkdir([GInvParam.modelSavePath, '/', methodName, '/sgy_results/']);
                 warning('on');
-            catch
             end
+        catch
         end
     
         res.source = [];
@@ -196,7 +197,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
         
         % obtain a preModel avoid calculating matrix G again and again.
         % see line 20 of function bsPostPrepareModel for details
-        [data(:, 1), preModel, output] = bsPostInvOneTrace(GInvParam, horizonTimes(1), method, inIds(1), crossIds(1), [], 0);
+        [data(:, 1), preModel, output] = bsPostInvOneTrace(GInvParam, horizonTimes(1), method, inIds(1), crossIds(1), [], 0, 1);
         if ~isempty(output)
             method.parampkgs = output.parampkgs;
         end
@@ -212,7 +213,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
             % parallel computing
             parfor iTrace = 2 : traceNum
                 
-                data(:, iTrace) = bsPostInvOneTrace(GInvParam, horizonTimes(iTrace), method, inIds(iTrace), crossIds(iTrace), preModel, 0);
+                data(:, iTrace) = bsPostInvOneTrace(GInvParam, horizonTimes(iTrace), method, inIds(iTrace), crossIds(iTrace), preModel, 0, iTrace);
                 
                 bsIncParforProgress(pbm, iTrace, 100);
             end
@@ -221,7 +222,7 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
         else
             % non-parallel computing 
             for iTrace = 2 : traceNum
-                data(:, iTrace) = bsPostInvOneTrace(GInvParam, horizonTimes(iTrace), method, inIds(iTrace), crossIds(iTrace), preModel, 1);
+                data(:, iTrace) = bsPostInvOneTrace(GInvParam, horizonTimes(iTrace), method, inIds(iTrace), crossIds(iTrace), preModel, 1, iTrace);
             end
         end
     end
@@ -326,7 +327,7 @@ function fileName = bsGetModelFileName(modelSavePath, inId, crossId)
 
 end
 
-function [idata, model, output] = bsPostInvOneTrace(GInvParam, horizonTime, method, inId, crossId, preModel, isprint)
+function [idata, model, output] = bsPostInvOneTrace(GInvParam, horizonTime, method, inId, crossId, preModel, isprint, iTrace)
 
     if isprint
         fprintf('Solving the trace of inline=%d and crossline=%d by using method %s...\n', ...
@@ -355,6 +356,10 @@ function [idata, model, output] = bsPostInvOneTrace(GInvParam, horizonTime, meth
         method.options.inline = inId;
         method.options.crossline = crossId;
         method.options.scaleFactor = model.scaleFactor;
+        
+        if isa(method.regParam, 'function_handle')
+            method.regParam = method.regParam(iTrace);
+        end
         
         [xOut, ~, ~, output] = bsPostInv1DTrace(model.d, model.G, model.initX, model.Lb, model.Ub, method);                       
 

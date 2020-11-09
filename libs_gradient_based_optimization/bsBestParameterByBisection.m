@@ -41,14 +41,14 @@ function bestLambda = bsBestParameterByBisection(trueModel, logLeft, logRight, n
 
     mseOld = zeros(1, 3);
     
-    mseOld(1) = bsGetMse(logLeft, inputObjFcnPkgs, xInit, Lb, Ub, options, trueModel);
-    mseOld(3) = bsGetMse(logRight, inputObjFcnPkgs, xInit, Lb, Ub, options, trueModel);
+    [mseOld(1), xOut] = bsGetMse(logLeft, inputObjFcnPkgs, xInit, Lb, Ub, options, trueModel);
+    [mseOld(3), xOut] = bsGetMse(logRight, inputObjFcnPkgs, xInit, Lb, Ub, options, trueModel);
     
     while nIter > 0
         
         logMid = 0.5 * (logLeft + logRight);
         
-        mseOld(2) = bsGetMse(logMid, inputObjFcnPkgs, xInit, Lb, Ub, options, trueModel);
+        [mseOld(2), xOut] = bsGetMse(logMid, inputObjFcnPkgs, xInit, Lb, Ub, options, trueModel);
         
         [minMse, minIndex] = min(mseOld);
         
@@ -70,7 +70,7 @@ function bestLambda = bsBestParameterByBisection(trueModel, logLeft, logRight, n
     
     for i = 1 : nIter
         logLeftNew = 0.5 * (logLeft + logMid);
-        mseLeft = bsGetMse(logLeftNew, inputObjFcnPkgs, xInit, Lb, Ub, options, trueModel);
+        [mseLeft, xOut] = bsGetMse(logLeftNew, inputObjFcnPkgs, xInit, Lb, Ub, options, trueModel);
         
         if minMse > mseLeft
             logRight = logMid;
@@ -81,7 +81,7 @@ function bestLambda = bsBestParameterByBisection(trueModel, logLeft, logRight, n
         end
         
         logRightNew = 0.5 * (logRight + logMid);
-        mseRight = bsGetMse(logRightNew, inputObjFcnPkgs, xInit, Lb, Ub, options, trueModel);
+        [mseRight, xOut] = bsGetMse(logRightNew, inputObjFcnPkgs, xInit, Lb, Ub, options, trueModel);
         
         if minMse > mseRight
             logLeft = logMid;
@@ -100,7 +100,7 @@ function bestLambda = bsBestParameterByBisection(trueModel, logLeft, logRight, n
     
 end
 
-function mseModel = bsGetMse(logLambda, inputObjFcnPkgs, xInit, Lb, Ub, options, trueModel)
+function [mseModel, xOut] = bsGetMse(logLambda, inputObjFcnPkgs, xInit, Lb, Ub, options, trueModel)
     
     if ~isempty(options.plotFcn)
         fprintf('In bisection method. Runing the optimization process with regularization parameter=%d\n', exp(logLambda));
@@ -111,5 +111,6 @@ function mseModel = bsGetMse(logLambda, inputObjFcnPkgs, xInit, Lb, Ub, options,
         
     % call bsGBSolverByOptions to solve the problem at current lambda
     xOut = bsGBSolveByOptions(inputObjFcnPkgs, xInit, Lb, Ub, options);
-    mseModel(1) = sqrt(mse(xOut - trueModel));
+%     mseModel(1) = sqrt(mse(xOut - trueModel));
+    mseModel(1) = sum(abs(xOut - trueModel)) + 2*sum(abs(gradient(xOut)));
 end
