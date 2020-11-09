@@ -27,7 +27,7 @@ function [trData, GSegyInfo] = bsReadTracesByIds(fileName, GSegyInfo, inIds, cro
     end
 
 %     volHeader.dataForm = 5;
-    
+    step = 1;
     for i = 1 : trNum
         if mod(i, 100000) == 0
             % print information
@@ -37,14 +37,16 @@ function [trData, GSegyInfo] = bsReadTracesByIds(fileName, GSegyInfo, inIds, cro
         if i == 1
             index = bsIndexOfTraceSetOnInIdAndCrossId(GSegyInfo, inIds(i), crossIds(i));
         else
-            index = bsIndexOfTraceSetOnInIdAndCrossId(GSegyInfo, inIds(i), crossIds(i), index);
+            newIndex = bsIndexOfTraceSetOnInIdAndCrossId(GSegyInfo, inIds(i), crossIds(i), index+step);
+            step = newIndex - index;
+            index = newIndex;
         end
         
         if index > 0
             fseek(GSegyInfo.fid, 3600+sizeTrace*(index-1), -1);
             trHeader = bsReadTraceHeader(GSegyInfo);
 %             disp([trHeader.X, trHeader.Y]);
-            index = index + 1;
+%             index = index + step;
         else
             warning('Trace inline=%d, crossline=%d can not be found in file %s', inIds(i), crossIds(i), fileName);
             continue;

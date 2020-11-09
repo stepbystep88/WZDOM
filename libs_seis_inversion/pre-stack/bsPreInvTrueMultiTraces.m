@@ -171,6 +171,17 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
     end
 
     function saveResults()
+        % save mat file
+        if isfield(method, 'isSaveMat') && method.isSaveMat && strcmp(res.source, 'computation')
+            fprintf('Writing mat file:%s...\n', matFileName);
+            try
+                save(matFileName, 'vp', 'vs', 'rho', 'GInvParam', 'inIds', 'crossIds', 'horizonTimes', 'method');
+            catch
+                save(matFileName, 'vp', 'vs', 'rho', 'GInvParam', 'inIds', 'crossIds', 'horizonTimes', 'method', '-v7.3');
+            end
+            fprintf('Write mat file:%s successfully!\n', matFileName);
+        end
+        
         % save sgy file
         if isfield(method, 'isSaveSegy') && method.isSaveSegy 
             for k = 1 : 3
@@ -195,16 +206,7 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
             res.data = [];
         end
         
-        % save mat file
-        if isfield(method, 'isSaveMat') && method.isSaveMat && strcmp(res.source, 'computation')
-            fprintf('Writing mat file:%s...\n', matFileName);
-            try
-                save(matFileName, 'vp', 'vs', 'rho', 'GInvParam', 'inIds', 'crossIds', 'horizonTimes', 'method');
-            catch
-                save(matFileName, 'vp', 'vs', 'rho', 'GInvParam', 'inIds', 'crossIds', 'horizonTimes', 'method', '-v7.3');
-            end
-            fprintf('Write mat file:%s successfully!\n', matFileName);
-        end
+        
     end
 
     function fileName = bsGetFileName(type, attName)

@@ -21,7 +21,7 @@ function bsWriteTracesByRefFileAndIds(refFileName, dstfileName, GSegyInfo, trDat
     
     trNum = length(inIds);
     index = -1;
-    
+    step = 1;
     for i = 1 : trNum
         if mod(i, 10000) == 0
             % print information
@@ -31,7 +31,9 @@ function bsWriteTracesByRefFileAndIds(refFileName, dstfileName, GSegyInfo, trDat
         if i == 1
             [index, traceHeader] = bsIndexOfTraceSetOnInIdAndCrossId(sourceSegyInfo, inIds(i), crossIds(i));
         else
-            [index, traceHeader] = bsIndexOfTraceSetOnInIdAndCrossId(sourceSegyInfo, inIds(i), crossIds(i), index);
+            [newIndex, traceHeader] = bsIndexOfTraceSetOnInIdAndCrossId(sourceSegyInfo, inIds(i), crossIds(i), index+step);
+            step = newIndex - index;
+            index = newIndex;
         end
         
         if index > 0
@@ -42,7 +44,7 @@ function bsWriteTracesByRefFileAndIds(refFileName, dstfileName, GSegyInfo, trDat
             end
             
             bsWriteTrace(outSegyInfo, traceHeader, trDatas(:, i));
-            index = index + 1;
+%             index = index + step;
         else
             warning('Trace inline=%d, crossline=%d can not be found in file %s', inIds(i), crossIds(i), refFileName);
             continue;
