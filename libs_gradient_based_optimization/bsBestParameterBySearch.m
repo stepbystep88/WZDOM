@@ -66,7 +66,8 @@ function [bestLambda, curveData] = bsBestParameterBySearch(lambdas, trueModel, i
         curveData(i, 1) = inputObjFcnPkgs{1, 1}(xOut, inputObjFcnPkgs{1, 2});
         curveData(i, 2) = inputObjFcnPkgs{2, 1}(xOut, inputObjFcnPkgs{2, 2});
         
-        mseModel(i) = sqrt(mse(xOut - trueModel));
+%         mseModel(i) = sqrt(mse(xOut - trueModel));
+        mseModel(i) = sum(abs(xOut - trueModel)) + 0.5*sum(abs(gradient(xOut)));
         
     end
     

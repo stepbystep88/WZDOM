@@ -112,5 +112,5 @@ function [mseModel, xOut] = bsGetMse(logLambda, inputObjFcnPkgs, xInit, Lb, Ub, 
     % call bsGBSolverByOptions to solve the problem at current lambda
     xOut = bsGBSolveByOptions(inputObjFcnPkgs, xInit, Lb, Ub, options);
 %     mseModel(1) = sqrt(mse(xOut - trueModel));
-    mseModel(1) = sum(abs(xOut - trueModel)) + 2*sum(abs(gradient(xOut)));
+    mseModel(1) = sum(abs(xOut - trueModel)) + 0.5*sum(abs(gradient(xOut)));
 end
