@@ -51,7 +51,7 @@ function bsSaveFigure(path, name)
     fileName = sprintf('%s/eps/%s.eps', path, name);
     print('-depsc', fileName);
 % %     
-%     fileName = sprintf('%s/pdf/%s.pdf', path, name);
+    fileName = sprintf('%s/pdf/%s.pdf', path, name);
     print('-dpdf', '-bestfit', fileName);
     saveas(gcf, fileName);
     

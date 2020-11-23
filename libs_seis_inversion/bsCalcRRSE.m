@@ -7,8 +7,8 @@ function RRSEs = bsCalcRRSE(truemodel, initial, output)
 %         RMSE = sqrt(mse(output(:, i) - truemodel(:, i)));
         RMSE = norm(output(:, i) - truemodel(:, i), 1);
 %         RRMSE = RMSE / (sqrt(mse(initial(:, i)-truemodel(:, i))));
-        RRMSE = RMSE / norm(initial(:, i) - truemodel(:, i), 1);
-%         RRMSE = RMSE / norm(truemodel(:, i));
+%         RRMSE = RMSE / norm(initial(:, i) - truemodel(:, i), 1);
+        RRMSE = RMSE / norm(truemodel(:, i));
         
 %         tmp = corrcoef(output(:, i), truemodel(:, i));
 %         RRMSE = tmp(1, 2);
