@@ -51,41 +51,45 @@ function bsShowPreInvLogResult(GInvParam, GShowProfileParam, ...
             end
             
             for k = 1 : ntype
+                
+                [~, ~, ~, ~, attName] = ...
+                    bsGetInfoByType(GShowProfileParam, GInvParam, type{k});
+
                 switch lower(type{k})
                     case 'vp'
                         
                         index = GInvParam.indexInWellData.vp;
                         range = GShowProfileParam.range.vp/1000;
                         
-                        bsShowPostSubInvLogResult(GPlotParam, ...
+                        bsShowPostSubInvLogResult(GShowProfileParam, ...
                         invVal.data{k}/1000, trueLog(:, index)/1000, model.initLog(:, index)/1000, ...
-                        t, invVal.name, 'V_P (km/s)', range, ...
+                        t, invVal.name, attName, range, ...
                         nItems, iItem, k, ntype);
                     case 'vs'
                         index = GInvParam.indexInWellData.vs;
                         range = GShowProfileParam.range.vs/1000;
                         
-                        bsShowPostSubInvLogResult(GPlotParam, ...
+                        bsShowPostSubInvLogResult(GShowProfileParam, ...
                         invVal.data{k}/1000, trueLog(:, index)/1000, model.initLog(:, index)/1000, ...
-                        t, invVal.name, 'V_S (km/s)', range, ...
+                        t, invVal.name, attName, range, ...
                         nItems, iItem, k, ntype);
             
                     case 'rho'
                         index = GInvParam.indexInWellData.rho;
                         range = GShowProfileParam.range.rho;
                         
-                        bsShowPostSubInvLogResult(GPlotParam, ...
+                        bsShowPostSubInvLogResult(GShowProfileParam, ...
                             invVal.data{k}, trueLog(:, index), model.initLog(:, index), ...
-                            t, invVal.name, '\rho (g/cm^3)', range, ...
+                            t, invVal.name, attName, range, ...
                             nItems, iItem, k, ntype);
                     case {'vp_vs', 'vsvs_ratio', 'vp_vs_ratio'}
                         vpvs_trueLog = bsGetVp_Vs(trueLog(:, GInvParam.indexInWellData.vp), trueLog(:, GInvParam.indexInWellData.vs));
                         vpvs_initLog = bsGetVp_Vs(model.initLog(:, GInvParam.indexInWellData.vp), model.initLog(:, GInvParam.indexInWellData.vs));
                         range = GShowProfileParam.range.vpvs_ratio;
                         
-                        bsShowPostSubInvLogResult(GPlotParam, ...
+                        bsShowPostSubInvLogResult(GShowProfileParam, ...
                             invVal.data{k}, vpvs_trueLog, vpvs_initLog, ...
-                            t, invVal.name, 'VpVs Ratio', range, ...
+                            t, invVal.name, attName, range, ...
                             nItems, iItem, k, ntype);
                 end
                 
@@ -100,9 +104,14 @@ function bsShowPreInvLogResult(GInvParam, GShowProfileParam, ...
             end
             
         end
-
-        legends = {'Initial model', 'Real model', 'Inversion result'};
-        bsSetLegend(GPlotParam, {'g', 'b-.', 'r'}, legends);
+        
+        if strcmpi(GShowProfileParam.language, 'en')
+            legends = {'Initial model', 'Real model', 'Inversion result'};
+        else
+            legends = {'初始模型', '真实模型', '反演结果'};
+        end
+        
+        bsSetLegend(GPlotParam, {'g', 'k', 'r'}, legends);
        
         
         
@@ -120,9 +129,14 @@ function bsShowPreInvLogResult(GInvParam, GShowProfileParam, ...
         synFromTrue = reshape(model.G * model.trueX, sampNum-1, GInvParam.angleTrNum);
         seisData = reshape(model.original_d, sampNum-1, GInvParam.angleTrNum);
         
-        bsShowPreSubSynSeisData(GPlotParam, 'real', seisData, t, angleData, nItems, 1);
-        bsShowPreSubSynSeisData(GPlotParam, 'synthetic from welllog', synFromTrue, t, angleData, nItems, 2);
-            
+        if strcmpi(GShowProfileParam.language, 'en')
+            bsShowPreSubSynSeisData(GPlotParam, 'real', seisData, t, angleData, nItems, 1);
+            bsShowPreSubSynSeisData(GPlotParam, 'synthetic from welllog', synFromTrue, t, angleData, nItems, 2);
+        else
+            bsShowPreSubSynSeisData(GPlotParam, '实际观测道集', seisData, t, angleData, nItems, 1);
+            bsShowPreSubSynSeisData(GPlotParam, '基于测井的合成道集', synFromTrue, t, angleData, nItems, 2);
+        end
+        
         for iItem = 1 : nItems
         
             figure(hf);
@@ -137,7 +151,7 @@ function bsShowPreInvLogResult(GInvParam, GShowProfileParam, ...
             
             
             
-            bsShowPreSubSynSeisData(GPlotParam, invVal.name, synFromInv, t, angleData, nItems, iItem+2);
+            bsShowPreSubSynSeisData(GPlotParam, sprintf('基于%s的合成道集', invVal.name), synFromInv, t, angleData, nItems, iItem+2);
             
 %             bsShowPreSubSynSeisData(GPlotParam, 
 %                 t, invVal.name, GShowProfileParam.range.seismic, nItems, iItem)
@@ -216,10 +230,11 @@ function bsSetPreSubPlotSize(nItems, iItem, k, ntype)
 end
 
 %% show comparasions of welllog inversion results
-function bsShowPostSubInvLogResult(GPlotParam, ...
+function bsShowPostSubInvLogResult(GShowProfileParam, ...
     invVal, trueVal, initVal, ...
     t, tmethod, attName, range, nItems, iItem, k, ntype)
     
+    GPlotParam = GShowProfileParam.plotParam;
     
     bsSetPreSubPlotSize(nItems, iItem, k, ntype);
     plot(initVal, t, 'g', 'linewidth', GPlotParam.linewidth); hold on;
@@ -231,7 +246,11 @@ function bsShowPostSubInvLogResult(GPlotParam, ...
     end
     
     if k == 1
-        ylabel('Time (s)');
+        if strcmpi(GShowProfileParam.language, 'en')
+            ylabel('Time (s)');
+        else
+            ylabel('时间 (s)');
+        end
     else
         set(gca, 'ytick', [], 'yticklabel', []);
     end
@@ -258,8 +277,10 @@ function bsShowPostSubInvLogResult(GPlotParam, ...
     set(gca , 'fontsize', GPlotParam.fontsize,'fontweight', GPlotParam.fontweight, 'fontname', GPlotParam.fontname);
 end
 
-function bsShowPreSubSynSeisData(GPlotParam, tmethod, data, t, angleData, nItems, iItem)
+function bsShowPreSubSynSeisData(GShowProfileParam, tmethod, data, t, angleData, nItems, iItem)
 
+    GPlotParam = GShowProfileParam.plotParam;
+    
 %     bsSetPreSubPlotSize(nItems, iItem, k);
     nRow = ceil((nItems+2)/2);
 %     subplot(nRow, 3, iItem);
@@ -275,7 +296,11 @@ function bsShowPreSubSynSeisData(GPlotParam, tmethod, data, t, angleData, nItems
     
     
     if mod(iItem, 2) == 1
-        ylabel('Time (s)');
+        if strcmpi(GShowProfileParam.language, 'en')
+            ylabel('Time (s)');
+        else
+            ylabel('时间 (s)');
+        end
     else
         set(gca, 'ytick', [], 'yticklabel', []);
     end

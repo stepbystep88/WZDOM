@@ -14,6 +14,9 @@ function options = bsCreateGShowProfileParam(varargin)
     addParameter(p, 'yLabelNum', 8); 
     
     addParameter(p, 'emptyOffset', 2); 
+    
+    addParameter(p, 'language', 'zh'); 
+    
     % 
 %     addParameter(p, 'isLegend', 1); 
     

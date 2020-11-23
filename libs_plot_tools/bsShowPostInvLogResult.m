@@ -35,7 +35,7 @@ function bsShowPostInvLogResult(GPostInvParam, GShowProfileParam, invVals, trueL
                 trueLog = bsButtLowPassFilter(trueLog, trueLogFiltcoef);
             end
 
-            bsShowPostSubInvLogResult(GPlotParam, ...
+            bsShowPostSubInvLogResult(GShowProfileParam, ...
                 invVal.Ip/1000, trueLog/1000, model.initLog/1000, ...
                 t, invVal.name, ...
                 GShowProfileParam.range.ip/1000, nItems, iItem);
@@ -45,9 +45,16 @@ function bsShowPostInvLogResult(GPostInvParam, GShowProfileParam, invVals, trueL
         
 
         end
-
-        legends = {'Initial model', 'True model', 'Inversion result'};
-        bsSetLegend(GPlotParam, {'g', 'k', 'r'}, legends, 'I_{\it{P}} (g/cc*km/s)');
+        
+        if strcmpi(GShowProfileParam.language, 'en')
+            legends = {'Initial model', 'True model', 'Inversion result'};
+            bsSetLegend(GPlotParam, {'g', 'k', 'r'}, legends, 'I_{\it{P}} (g/cc*km/s)');
+        else
+            legends = {'初始模型', '真实模型', '反演结果'};
+            bsSetLegend(GPlotParam, {'g', 'k', 'r'}, legends, '阻抗 (g/cc*km/s)');
+        end
+        
+        
        
     end
 
@@ -68,14 +75,19 @@ function bsShowPostInvLogResult(GPostInvParam, GShowProfileParam, invVals, trueL
             synFromTrue = G * log(model.trueLog);
             seisData = model.dTrue;
             
-            bsShowPostSubSynSeisData(GPlotParam, ...
+            bsShowPostSubSynSeisData(GShowProfileParam, ...
                 synFromTrue, synFromInv, seisData, ...
                 t, invVal.name, ...
                 GShowProfileParam.range.seismic, nItems, iItem);
 
         end
-
-        legends = {'Synthetic from true welllog', 'Real data', 'Synthetic from inversion result'};
+        
+        if strcmpi(GShowProfileParam.language, 'en')
+            legends = {'Synthetic from true welllog', 'Real data', 'Synthetic from inversion result'};
+        else
+            legends = {'基于测井的合成记录', '实际观测记录', '基于反演结果的合成记录'};
+        end
+        
         bsSetLegend(GPlotParam, {'b-.', 'k', 'r'}, legends, '');
     end
 end
@@ -128,17 +140,23 @@ function bsSetSubPlotSize(nItems, iItem)
 end
 
 %% show comparasions of welllog inversion results
-function bsShowPostSubInvLogResult(GPlotParam, ...
+function bsShowPostSubInvLogResult(GShowProfileParam, ...
     invVal, trueVal, initVal, ...
     t, tmethod, range, nItems, iItem)
 
+    GPlotParam = GShowProfileParam.plotParam;
     bsSetSubPlotSize(nItems, iItem);
     
     plot(initVal, t, 'g', 'linewidth', GPlotParam.linewidth); hold on;
     plot(trueVal, t, 'k', 'LineWidth', GPlotParam.linewidth);   hold on;
     plot(invVal, t, 'r','LineWidth', GPlotParam.linewidth);    hold on;
     
-    ylabel('Time (s)');
+    if strcmpi(GShowProfileParam.language, 'en')
+        ylabel('Time (s)');
+    else
+        ylabel('时间 (s)');
+    end
+    
     set(gca,'ydir','reverse');
     
     title(sprintf('(%s) %s', char( 'a' + (iItem-1) ), tmethod));
@@ -154,17 +172,23 @@ function bsShowPostSubInvLogResult(GPlotParam, ...
 end
 
 %% show comparasions of synthetic seismic data and real seismic data
-function bsShowPostSubSynSeisData(GPlotParam, ...
+function bsShowPostSubSynSeisData(GShowProfileParam, ...
     synFromTrue, synFromInv, seisData, ...
     t, tmethod, range, nItems, iItem)
 
     bsSetSubPlotSize(nItems, iItem);
     
+    GPlotParam = GShowProfileParam.plotParam;
+    
     plot(synFromTrue/norm(synFromTrue), t(1:end-1), 'b-.', 'linewidth', GPlotParam.linewidth); hold on;
     plot(seisData/norm(seisData), t(1:end-1), 'k','LineWidth', GPlotParam.linewidth);    hold on;
     plot(synFromInv/norm(synFromInv), t(1:end-1), 'r', 'LineWidth', GPlotParam.linewidth);   hold on;
     
-    ylabel('Time (s)');
+    if strcmpi(GShowProfileParam.language, 'en')
+        ylabel('Time (s)');
+    else
+        ylabel('时间 (s)');
+    end
     set(gca,'ydir','reverse');
     
     title(sprintf('(%s) %s', char( 'a' + (iItem-1) ), tmethod));

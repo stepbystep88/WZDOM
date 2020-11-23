@@ -1,5 +1,5 @@
 function [d, G, initX, lsdCoef, angleData] = bsPreBuild_d_G_m(GPreInvParam, inline, crossline, startTime, initLog, G)
-    sampNum = GPreInvParam.upNum + GPreInvParam.downNum; 
+    sampNum = size(initLog, 1); 
     
     % load prestack seismic data
     preDataInfo = GPreInvParam.preSeisData;

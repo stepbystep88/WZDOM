@@ -43,16 +43,16 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
         matFileName = bsGetFileName('mat');
         
         % create folder to save the intermediate results
-%         try
-%             warning('off');
-        if ~isfield(method, 'load') || strcmpi(method.load.mode, 'off') || (ischar(method.load.fileName) && ~exist(method.load.fileName, 'file') && ~exist(matFileName, 'file'))
-            mkdir([GInvParam.modelSavePath, methodName, '/mat_results/']);
-            mkdir([GInvParam.modelSavePath, methodName, '/sgy_results/']);
-        end
-%             warning('on');
-%         catch
+        try
+            warning('off');
+            if ~isfield(method, 'load') || strcmpi(method.load.mode, 'off') || (ischar(method.load.fileName) && ~exist(method.load.fileName, 'file') && ~exist(matFileName, 'file'))
+                mkdir([GInvParam.modelSavePath, methodName, '/mat_results/']);
+                mkdir([GInvParam.modelSavePath, methodName, '/sgy_results/']);
+            end
+            warning('on');
+        catch
 
-%         end
+        end
         
         % try loading the results from mat or segy file
         res = loadResults();
@@ -60,7 +60,7 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
         
         if isempty(res.source)
             % obtain results by computing
-            if any(strcmpi({'CSR-GST', 'SSR-GST'}, method.flag)) || ...
+            if ( isfield(method, 'flag') && any(strcmpi({'CSR-GST', 'SSR-GST'}, method.flag)) ) || ...
                     (isfield(method, 'parampkgs') ...
                     && isfield(method.parampkgs, 'nMultipleTrace') ...
                     && method.parampkgs.nMultipleTrace > 1 ...
@@ -106,6 +106,10 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
             loadInfo = method.load;
             switch loadInfo.mode
                 % load results directly
+                case 'assign'
+                    res.source = 'assign';
+                    res.type = loadInfo.type;
+                    res.data = loadInfo.data;
                 case 'mat'
                     try
                         % from mat file

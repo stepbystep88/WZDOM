@@ -5,7 +5,7 @@ function [GInvParam, prestackFreeNoise, prestackNoise, options] ...
     
     addParameter(p, 'title', '');
     addParameter(p, 'dstPath', sprintf('%s/', GInvParam.modelSavePath));
-    addParameter(p, 'noistFlag', 1);
+    addParameter(p, 'noiseFlag', 1);
     addParameter(p, 'SNR', 10);
     addParameter(p, 'isRebuild', 0);
     
@@ -79,7 +79,7 @@ function [GInvParam, prestackFreeNoise, prestackNoise, options] ...
                 prestackNoise{i} = prestackFreeNoise{i};
             else
                 prestackNoise{i} = bsAddNoise(prestackFreeNoise{i}, ...
-                    options.noistFlag, options.SNR, G, x, GInvParam.dt, options);
+                    options.noiseFlag, options.SNR, [], x, GInvParam.dt, options);
             end
         
         end
@@ -94,6 +94,6 @@ function [GInvParam, prestackFreeNoise, prestackNoise, options] ...
         end
         
         fileName = sprintf('%s/SynPreModel_MainFreq%.1f_dt_%d_nflag_%d_SNR_%.1f.mat', ...
-            options.dstPath, GInvParam.waveletFreq, GInvParam.dt, options.noistFlag, options.SNR);
+            options.dstPath, GInvParam.waveletFreq, GInvParam.dt, options.noiseFlag, options.SNR);
     end
 end

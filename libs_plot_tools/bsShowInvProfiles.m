@@ -501,11 +501,21 @@ function bsShowHorizonedData(GShowProfileParam, basicInfo, profileData, minTime,
     set(gca,'Xtick', label, 'XtickLabel', data);
         
     % set title
-    xlabel('Trace numbers');
+    if strcmpi(GShowProfileParam.language, 'en')
+        xlabel('Trace numbers');
+    else
+        xlabel('µÀºÅ');
+    end
+    
     if(~isempty(name))
         title(name, 'fontweight', 'bold'); 
     end
-    ylabel('Time (s)');
+    
+    if strcmpi(GShowProfileParam.language, 'en')
+        ylabel('Time (s)');
+    else
+        ylabel('Ê±¼ä (s)');
+    end
     
 %     set(gca, 'ydir', 'reverse');
 %     set(gca, 'xlim', [traceIds(1), traceIds(end)]);
