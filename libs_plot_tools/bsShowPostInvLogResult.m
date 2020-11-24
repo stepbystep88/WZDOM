@@ -48,10 +48,10 @@ function bsShowPostInvLogResult(GPostInvParam, GShowProfileParam, invVals, trueL
         
         if strcmpi(GShowProfileParam.language, 'en')
             legends = {'Initial model', 'True model', 'Inversion result'};
-            bsSetLegend(GPlotParam, {'g', 'k', 'r'}, legends, 'I_{\it{P}} (g/cc*km/s)');
+            bsSetLegend(GPlotParam, {'g', 'k-.', 'r'}, legends, 'I_{\it{P}} (g/cc*km/s)');
         else
             legends = {'初始模型', '真实模型', '反演结果'};
-            bsSetLegend(GPlotParam, {'g', 'k', 'r'}, legends, '阻抗 (g/cc*km/s)');
+            bsSetLegend(GPlotParam, {'g', 'k-.', 'r'}, legends, '阻抗 (g/cc*km/s)');
         end
         
         
@@ -148,7 +148,7 @@ function bsShowPostSubInvLogResult(GShowProfileParam, ...
     bsSetSubPlotSize(nItems, iItem);
     
     plot(initVal, t, 'g', 'linewidth', GPlotParam.linewidth); hold on;
-    plot(trueVal, t, 'k', 'LineWidth', GPlotParam.linewidth);   hold on;
+    plot(trueVal, t, 'k-.', 'LineWidth', GPlotParam.linewidth);   hold on;
     plot(invVal, t, 'r','LineWidth', GPlotParam.linewidth);    hold on;
     
     if strcmpi(GShowProfileParam.language, 'en')

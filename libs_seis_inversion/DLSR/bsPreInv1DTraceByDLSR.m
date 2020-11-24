@@ -110,6 +110,7 @@ function [x, fval, exitFlag, output] = bsPreInv1DTraceByDLSR(d, G, xInit, Lb, Ub
             gammas = omp(GSparseInvParam.DIC{i-1}'*patches, ...
                 GSparseInvParam.omp_G{i-1}, ...
                 GSparseInvParam.sparsity);
+            
             new_patches = GSparseInvParam.DIC{i-1} *  gammas;
         
             %% reconstruct model by equations

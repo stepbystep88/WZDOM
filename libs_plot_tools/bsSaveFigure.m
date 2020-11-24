@@ -43,10 +43,10 @@ function bsSaveFigure(path, name)
 %     print('-dmeta', fileName);
 %     
     fileName = sprintf('%s/png/%s.png', path, name);
-    print('-dpng', '-r600', fileName);
+    print('-dpng', '-r300', fileName);
     
     fileName = sprintf('%s/jpg/%s.jpg', path, name);
-    print('-djpeg', '-r600', fileName);
+    print('-djpeg', '-r300', fileName);
 %     
     fileName = sprintf('%s/eps/%s.eps', path, name);
     print('-depsc', fileName);

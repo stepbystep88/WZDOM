@@ -111,7 +111,7 @@ function bsShowPreInvLogResult(GInvParam, GShowProfileParam, ...
             legends = {'初始模型', '真实模型', '反演结果'};
         end
         
-        bsSetLegend(GPlotParam, {'g', 'k', 'r'}, legends);
+        bsSetLegend(GPlotParam, {'g', 'k-.', 'r'}, legends);
        
         
         
@@ -130,11 +130,11 @@ function bsShowPreInvLogResult(GInvParam, GShowProfileParam, ...
         seisData = reshape(model.original_d, sampNum-1, GInvParam.angleTrNum);
         
         if strcmpi(GShowProfileParam.language, 'en')
-            bsShowPreSubSynSeisData(GPlotParam, 'real', seisData, t, angleData, nItems, 1);
-            bsShowPreSubSynSeisData(GPlotParam, 'synthetic from welllog', synFromTrue, t, angleData, nItems, 2);
+            bsShowPreSubSynSeisData(GShowProfileParam, 'real', seisData, t, angleData, nItems, 1);
+            bsShowPreSubSynSeisData(GShowProfileParam, 'synthetic from welllog', synFromTrue, t, angleData, nItems, 2);
         else
-            bsShowPreSubSynSeisData(GPlotParam, '实际观测道集', seisData, t, angleData, nItems, 1);
-            bsShowPreSubSynSeisData(GPlotParam, '基于测井的合成道集', synFromTrue, t, angleData, nItems, 2);
+            bsShowPreSubSynSeisData(GShowProfileParam, '实际观测道集', seisData, t, angleData, nItems, 1);
+            bsShowPreSubSynSeisData(GShowProfileParam, '基于测井的合成道集', synFromTrue, t, angleData, nItems, 2);
         end
         
         for iItem = 1 : nItems
@@ -151,7 +151,7 @@ function bsShowPreInvLogResult(GInvParam, GShowProfileParam, ...
             
             
             
-            bsShowPreSubSynSeisData(GPlotParam, sprintf('基于%s的合成道集', invVal.name), synFromInv, t, angleData, nItems, iItem+2);
+            bsShowPreSubSynSeisData(GShowProfileParam, sprintf('基于%s的合成道集', invVal.name), synFromInv, t, angleData, nItems, iItem+2);
             
 %             bsShowPreSubSynSeisData(GPlotParam, 
 %                 t, invVal.name, GShowProfileParam.range.seismic, nItems, iItem)
@@ -174,7 +174,7 @@ function bsSetLegend(GPlotParam, colors, legends, attrName)
 
     set(lgd, 'Orientation', 'horizon', ...
         'fontsize', GPlotParam.fontsize, ...
-        'fontweight', 'bold', ...
+        'fontweight', GPlotParam.fontweight, ...
         'fontname', GPlotParam.fontname);
     set(lgd, 'position', poshL);      % Adjusting legend's position
     axis(hL, 'off');                 % Turning its axis off
@@ -183,7 +183,7 @@ function bsSetLegend(GPlotParam, colors, legends, attrName)
         annotation('textbox', [0.05, 0.07, 0, 0], 'string', attrName, ...
             'edgecolor', 'none', 'fitboxtotext', 'on', ...
             'fontsize', GPlotParam.fontsize,...
-            'fontweight', 'bold', ...
+            'fontweight', GPlotParam.fontweight, ...
             'fontname', GPlotParam.fontname);
     end
 end
@@ -219,13 +219,13 @@ function bsSetPreSubPlotSize(nItems, iItem, k, ntype)
     index = ntype * (iItem - 1) + k;
     switch nItems
         case 1
-            bsSubPlotFit(nItems, ntype, index, 0.93, 0.75, 0.02, 0.00, 0.06, -0.05);
+            bsSubPlotFit(nItems, ntype, index, 0.9, 0.75, 0.02, 0.00, 0.08, -0.05);
         case 2
-            bsSubPlotFit(nItems, ntype, index, 0.93, 0.88, 0.02, 0.05, 0.06, 0.01);
+            bsSubPlotFit(nItems, ntype, index, 0.9, 0.88, 0.02, 0.05, 0.08, 0.01);
         case 3
-            bsSubPlotFit(nItems, ntype, index, 0.93, 0.88, 0.02, 0.05, 0.06, 0.01);
+            bsSubPlotFit(nItems, ntype, index, 0.9, 0.88, 0.02, 0.05, 0.08, 0.01);
         case 4
-            bsSubPlotFit(nItems, ntype, index, 0.93, 0.92, 0.02, 0.03, 0.06, 0.00);
+            bsSubPlotFit(nItems, ntype, index, 0.9, 0.92, 0.02, 0.03, 0.08, 0.00);
     end
 end
 
@@ -238,7 +238,7 @@ function bsShowPostSubInvLogResult(GShowProfileParam, ...
     
     bsSetPreSubPlotSize(nItems, iItem, k, ntype);
     plot(initVal, t, 'g', 'linewidth', GPlotParam.linewidth); hold on;
-    plot(trueVal, t, 'b-.', 'LineWidth', GPlotParam.linewidth);   hold on;
+    plot(trueVal, t, 'k-.', 'LineWidth', GPlotParam.linewidth);   hold on;
     plot(invVal, t, 'r','LineWidth', GPlotParam.linewidth);    hold on;
         
     if exist('timeLine', 'var')
@@ -257,7 +257,7 @@ function bsShowPostSubInvLogResult(GShowProfileParam, ...
 
     if k == 2
         title(sprintf('(%s) %s', char( 'a' + (iItem-1) ), tmethod), ...
-            'fontsize', GPlotParam.fontsize+2, 'fontweight', 'bold', 'interpreter','latex');
+            'fontsize', GPlotParam.fontsize+2, 'fontweight', GPlotParam.fontweight, 'interpreter','latex');
     end
     
     if iItem == nItems
@@ -272,7 +272,12 @@ function bsShowPostSubInvLogResult(GShowProfileParam, ...
         set(gca, 'xlim', range);
     end
     
-    set(gca, 'ylim', [t(1), t(end)]);
+    if GShowProfileParam.showPartVert.downTime > 0 && GShowProfileParam.showPartVert.downTime > GShowProfileParam.showPartVert.upTime
+        set(gca, 'ylim', [t(GShowProfileParam.showPartVert.upTime), t(GShowProfileParam.showPartVert.downTime)]);
+    else
+        set(gca, 'ylim', [t(1), t(end)]);
+    end
+    
     
     set(gca , 'fontsize', GPlotParam.fontsize,'fontweight', GPlotParam.fontweight, 'fontname', GPlotParam.fontname);
 end
@@ -294,19 +299,20 @@ function bsShowPreSubSynSeisData(GShowProfileParam, tmethod, data, t, angleData,
 %         {'wiggle_color', wiggles{k}}, ...
 %         {'peak_fill', peaks{k}});
     
+    set(gca , 'fontsize', GPlotParam.fontsize,'fontweight', GPlotParam.fontweight, 'fontname', GPlotParam.fontname);
     
     if mod(iItem, 2) == 1
         if strcmpi(GShowProfileParam.language, 'en')
-            ylabel('Time (s)');
+            ylabel('Time (s)', 'fontsize', GPlotParam.fontsize,'fontweight', GPlotParam.fontweight, 'fontname', GPlotParam.fontname);
         else
-            ylabel('时间 (s)');
+            ylabel('时间 \fontname{Times New Roman}(s)', 'fontsize', GPlotParam.fontsize,'fontweight', GPlotParam.fontweight, 'fontname', GPlotParam.fontname);
         end
     else
         set(gca, 'ytick', [], 'yticklabel', []);
     end
     
-    xlabel(sprintf('(%s) %s', char( 'a' + (iItem-1) ), tmethod), ...
-            'fontsize', GPlotParam.fontsize+2, 'fontweight', 'bold');
+    xlabel(sprintf('\fontname{Times New Roman}(%s) \fontname{%s} %s', char( 'a' + (iItem-1) ), GPlotParam.fontname, tmethod), ...
+            'fontsize', GPlotParam.fontsize+2, 'fontweight', GPlotParam.fontweight, 'fontname', GPlotParam.fontname);
 
-    set(gca , 'fontsize', GPlotParam.fontsize,'fontweight', GPlotParam.fontweight, 'fontname', GPlotParam.fontname);
+    
 end

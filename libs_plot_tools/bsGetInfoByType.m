@@ -16,7 +16,7 @@ function [range, scale, dataIndex, dataColorTbl, attName] = ...
             if strcmpi(GShowProfileParam.language, 'en')
                 attName = 'Impedance (g/cm^3\cdotkm/s)';
             else
-                attName = '阻抗 (g/cm^3\cdotkm/s)';
+                attName = '阻抗 \fontname{Times New Roman}(g/cm^3\cdotkm/s)';
             end
 
         case 'vp'
@@ -27,7 +27,7 @@ function [range, scale, dataIndex, dataColorTbl, attName] = ...
             if strcmpi(GShowProfileParam.language, 'en')
                 attName = 'V_P km/s';
             else
-                attName = '纵波速度 (km/s)';
+                attName = '纵波速度 \fontname{Times New Roman}(km/s)';
             end
 
         case 'vs'
@@ -38,7 +38,7 @@ function [range, scale, dataIndex, dataColorTbl, attName] = ...
             if strcmpi(GShowProfileParam.language, 'en')
                 attName = 'V_S km/s';
             else
-                attName = '横波速度 (km/s)';
+                attName = '横波速度 \fontname{Times New Roman}(km/s)';
             end
 
         case {'rho', 'density'}
@@ -49,7 +49,7 @@ function [range, scale, dataIndex, dataColorTbl, attName] = ...
             if strcmpi(GShowProfileParam.language, 'en')
                 attName = 'Density g/cm^3';
             else
-                attName = '密度 (g/cm^3)';
+                attName = '密度 \fontname{Times New Roman}(g/cm^3)';
             end
 
         case {'vp_vs', 'vpvs_ratio'}

@@ -184,7 +184,7 @@ function [nRow, nCol, loc, colorbar_pos] = setShareFigureSize(nProfile)
             bsSetPosition(0.6, 0.42);
             nRow = 2;
             nCol = 2;
-            loc = [0.87, 0.92, 0.025, 0.07, 0.05, 0.01];
+            loc = [0.87, 0.9, 0.04, 0.07, 0.07, 0.01];
             colorbar_pos = [0.91 0.05 0.01 0.9];
         case {5, 6}
             bsSetPosition(0.6, 0.65);
@@ -514,7 +514,7 @@ function bsShowHorizonedData(GShowProfileParam, basicInfo, profileData, minTime,
     if strcmpi(GShowProfileParam.language, 'en')
         ylabel('Time (s)');
     else
-        ylabel('时间 (s)');
+        ylabel('时间 \fontname{Times New Roman}(s)');
     end
     
 %     set(gca, 'ydir', 'reverse');
