@@ -74,7 +74,7 @@ function bsShowIterationProcess(GInvParam, GShowProfileParam, invVals, outputs, 
         end
         
         fig = figure;
-        set(gcf, 'position', [ 450   325   938   343]);
+        set(gcf, 'position', [ 450   325   768   343]);
 %         set(fig,'defaultAxesColorOrder',[bsHex2RGB({left_color}); bsHex2RGB({right_color})]);
 %         set(fig,'defaultAxesColorOrder',[left_color; right_color]);
         
@@ -82,7 +82,7 @@ function bsShowIterationProcess(GInvParam, GShowProfileParam, invVals, outputs, 
         colors = colorTbl([4,2,1]);
         plotParam = GShowProfileParam.plotParam;
         
-        loc = [0.94, 0.83, 0.07, 0.075, 0.07, 0];
+        loc = [0.94, 0.83, 0.07, 0.075, 0.075, 0];
         
         for i = 1 : 1
             

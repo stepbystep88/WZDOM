@@ -219,13 +219,13 @@ function bsSetPreSubPlotSize(nItems, iItem, k, ntype)
     index = ntype * (iItem - 1) + k;
     switch nItems
         case 1
-            bsSubPlotFit(nItems, ntype, index, 0.9, 0.75, 0.02, 0.00, 0.08, -0.05);
+            bsSubPlotFit(nItems, ntype, index, 0.9, 0.75, 0.03, 0.00, 0.09, -0.05);
         case 2
-            bsSubPlotFit(nItems, ntype, index, 0.9, 0.88, 0.02, 0.05, 0.08, 0.01);
+            bsSubPlotFit(nItems, ntype, index, 0.9, 0.88, 0.03, 0.05, 0.09, 0.01);
         case 3
-            bsSubPlotFit(nItems, ntype, index, 0.9, 0.88, 0.02, 0.05, 0.08, 0.01);
+            bsSubPlotFit(nItems, ntype, index, 0.9, 0.88, 0.03, 0.05, 0.09, 0.01);
         case 4
-            bsSubPlotFit(nItems, ntype, index, 0.9, 0.92, 0.02, 0.03, 0.08, 0.00);
+            bsSubPlotFit(nItems, ntype, index, 0.9, 0.90, 0.03, 0.04, 0.09, 0.005);
     end
 end
 
@@ -257,7 +257,7 @@ function bsShowPostSubInvLogResult(GShowProfileParam, ...
 
     if k == 2
         title(sprintf('(%s) %s', char( 'a' + (iItem-1) ), tmethod), ...
-            'fontsize', GPlotParam.fontsize+2, 'fontweight', GPlotParam.fontweight, 'interpreter','latex');
+            'fontsize', GPlotParam.fontsize, 'fontweight', GPlotParam.fontweight, 'interpreter','tex');
     end
     
     if iItem == nItems

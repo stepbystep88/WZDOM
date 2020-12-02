@@ -78,6 +78,9 @@ function [inIds, crossIds, GInvParam, dstFileNames, segyInfo, options] = bsBuild
     horizonTimes = bsGetHorizonTime(usedTimeLine, inIds, crossIds, ...
             GInvParam.isParallel, GInvParam.numWorkers);
         
+    if ~isempty(GInvParam.smooth_horizon_fcn)
+        horizonTimes = GInvParam.smooth_horizon_fcn(horizonTimes);
+    end    
     
 %     [~, wellIndex, ~] = bsFindWellLocation(wellLogs, inIds, crossIds);
 %     subIndex = setdiff(1:length(wellLogs) , wellIndex);

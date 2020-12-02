@@ -47,6 +47,8 @@ function [options] = bsCreateGInvParam(flag, varargin)
             % the number of angle traces
             addParameter(p, 'angleTrNum', 10);
             
+            addParameter(p, 'smooth_horizon_fcn', []);
+            
         case {'poststack', 'post-stack'}
             
         otherwise

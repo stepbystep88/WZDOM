@@ -35,7 +35,12 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
     horizonTimes = bsGetHorizonTime(usedTimeLine, inIds, crossIds, ...
             GInvParam.isParallel, GInvParam.numWorkers);
         
+    if ~isempty(GInvParam.smooth_horizon_fcn)
+        horizonTimes = GInvParam.smooth_horizon_fcn(horizonTimes);
+    end
+    
     startTimes = horizonTimes - GInvParam.dt * GInvParam.upNum;
+    
     
     for i = 1 : nMethod
         method = methods{i};
