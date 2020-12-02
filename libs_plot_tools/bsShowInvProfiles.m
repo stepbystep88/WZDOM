@@ -74,13 +74,13 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
 
         hc = colorbar( ...
             'fontsize', GPlotParam.fontsize,...
-            'fontweight', 'bold', ...
+            'fontweight', GShowProfileParam.plotParam.fontweight, ...
             'fontname', GPlotParam.fontname);
         hc.Position = hc.Position + [0 0 0.01 0];
 
         ylabel(hc, attName, ...
             'fontsize', GShowProfileParam.plotParam.fontsize, ...
-            'fontweight', 'bold', ...
+            'fontweight', GShowProfileParam.plotParam.fontweight, ...
             'fontname', GShowProfileParam.plotParam.fontname);
     end
 
@@ -145,7 +145,7 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
         if ~isSameColorbar
             ylabel(colorbar(), attName, ...
                 'fontsize', GShowProfileParam.plotParam.fontsize, ...
-                'fontweight', 'bold', ...
+                'fontweight', GShowProfileParam.plotParam.fontweight, ...
                 'fontname', GShowProfileParam.plotParam.fontname);
         end
         bsSetDefaultPlotSet(GShowProfileParam.plotParam);
@@ -176,7 +176,7 @@ function [nRow, nCol, loc, colorbar_pos] = setShareFigureSize(nProfile)
             bsSetPosition(0.3, 0.65);
             nRow = 3;
             nCol = 1;
-            loc = [0.8, 0.93, 0.01, 0.06, 0.09, 0.01];
+            loc = [0.85, 0.93, 0.01, 0.06, 0.1, 0.01];
             colorbar_pos = [0.89 0.05 0.01 0.92];
 %             loc = [0.84, 0.94, 0.02, 0.05, 0.07, 0.01];
 %             colorbar_pos = [0.89 0.05 0.01 0.92];
@@ -184,8 +184,8 @@ function [nRow, nCol, loc, colorbar_pos] = setShareFigureSize(nProfile)
             bsSetPosition(0.6, 0.42);
             nRow = 2;
             nCol = 2;
-            loc = [0.87, 0.9, 0.04, 0.07, 0.07, 0.01];
-            colorbar_pos = [0.91 0.05 0.01 0.9];
+            loc = [0.83, 0.9, 0.03, 0.07, 0.08, 0.01];
+            colorbar_pos = [0.89 0.05 0.01 0.9];
         case {5, 6}
             bsSetPosition(0.6, 0.65);
             nRow = 3;
@@ -220,7 +220,7 @@ function [nRow, nCol, loc] = setFigureSize(nProfile)
             bsSetPosition(0.3, 0.2);
             nRow = 1;
             nCol = 1;
-            loc = [0.87, 0.82, 0.01, 0.08, 0.09, 0.00];
+            loc = [0.81, 0.82, 0.01, 0.08, 0.12, 0.00];
         case 2
             bsSetPosition(0.3, 0.42);
 %             nRow = 2;
@@ -508,7 +508,7 @@ function bsShowHorizonedData(GShowProfileParam, basicInfo, profileData, minTime,
     end
     
     if(~isempty(name))
-        title(name, 'fontweight', 'bold'); 
+        title(name, 'fontweight', GShowProfileParam.plotParam.fontweight); 
     end
     
     if strcmpi(GShowProfileParam.language, 'en')
@@ -545,7 +545,7 @@ function bsShowHorizonedData(GShowProfileParam, basicInfo, profileData, minTime,
             text(x, y, basicInfo.wellNames{i}, ...
                 'color', basicInfo.wellColors{i}, ...
                 'fontsize', GShowProfileParam.plotParam.fontsize,...
-                'fontweight', 'bold', ...
+                'fontweight', GShowProfileParam.plotParam.fontweight, ...
                 'fontname', GShowProfileParam.plotParam.fontname, ...
                 'Interpreter','none');
         end

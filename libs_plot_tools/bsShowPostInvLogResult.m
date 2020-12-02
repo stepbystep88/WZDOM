@@ -104,14 +104,14 @@ function bsSetLegend(GPlotParam, colors, legends, attrName)
 
     set(lgd, 'Orientation', 'horizon', ...
         'fontsize', GPlotParam.fontsize, ...
-        'fontweight', 'bold', ...
+        'fontweight', GPlotParam.fontweight, ...
         'fontname', GPlotParam.fontname);
     set(lgd, 'position', poshL);      % Adjusting legend's position
     axis(hL, 'off');                 % Turning its axis off
     annotation('textbox', [0.05, 0.07, 0, 0], 'string', attrName, ...
         'edgecolor', 'none', 'fitboxtotext', 'on', ...
         'fontsize', GPlotParam.fontsize,...
-        'fontweight', 'bold', ...
+        'fontweight', GPlotParam.fontweight, ...
         'fontname', GPlotParam.fontname);
 end
 
@@ -133,7 +133,7 @@ end
 function bsSetSubPlotSize(nItems, iItem)
     switch nItems
         case {1, 2, 3}
-            bsSubPlotFit(1, nItems, iItem, 0.96, 0.92, 0.08, 0.11, 0.085, 0.045);
+            bsSubPlotFit(1, nItems, iItem, 0.9, 0.92, 0.02, 0.12, 0.085, 0.05);
         otherwise
             bsSubPlotFit(1, nItems, iItem, 0.96, 0.92, 0.08, 0.11, 0.085, 0.045);
     end
@@ -151,10 +151,20 @@ function bsShowPostSubInvLogResult(GShowProfileParam, ...
     plot(trueVal, t, 'k-.', 'LineWidth', GPlotParam.linewidth);   hold on;
     plot(invVal, t, 'r','LineWidth', GPlotParam.linewidth);    hold on;
     
-    if strcmpi(GShowProfileParam.language, 'en')
-        ylabel('Time (s)');
+    if iItem == 1
+        if strcmpi(GShowProfileParam.language, 'en')
+            ylabel('Time (s)');
+        else
+            ylabel('时间 \fontname{Times New Roman}(s)');
+        end
     else
-        ylabel('时间 (s)');
+        set(gca, 'ytick', [], 'yticklabel', []);
+    end
+    
+    if GShowProfileParam.showPartVert.downTime > 0 && GShowProfileParam.showPartVert.downTime > GShowProfileParam.showPartVert.upTime
+        set(gca, 'ylim', [t(GShowProfileParam.showPartVert.upTime), t(GShowProfileParam.showPartVert.downTime)]);
+    else
+        set(gca, 'ylim', [t(1), t(end)]);
     end
     
     set(gca,'ydir','reverse');
@@ -165,7 +175,7 @@ function bsShowPostSubInvLogResult(GShowProfileParam, ...
         set(gca, 'xlim', range) ; 
     end
     
-    set(gca, 'ylim', [t(1) t(end)]);
+%     set(gca, 'ylim', [t(1) t(end)]);
 %     bsTextSeqIdFit(ichar - 'a' + 1, 0, 0, 12);
 
     set(gca , 'fontsize', GPlotParam.fontsize,'fontweight', GPlotParam.fontweight, 'fontname', GPlotParam.fontname);
@@ -187,7 +197,7 @@ function bsShowPostSubSynSeisData(GShowProfileParam, ...
     if strcmpi(GShowProfileParam.language, 'en')
         ylabel('Time (s)');
     else
-        ylabel('时间 (s)');
+        ylabel('时间 \fontname{Times New Roman}(s)');
     end
     set(gca,'ydir','reverse');
     
