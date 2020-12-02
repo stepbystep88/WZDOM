@@ -29,7 +29,7 @@ function pN = bsAddNoise(pF, flag, SNR, G, xTrue, dt, options)
     
     if isfield(options, 'isUseHanming') && options.isUseHanming
         NOISE = pN - pF;
-        L = 11;
+        L = 7;
         op = hamming(L);
         ops = sum(sum(op));
         op = op/ops;

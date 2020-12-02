@@ -75,9 +75,16 @@ function [invVals, model, outputs] = bsPreInvTrueWell(GPreInvParam, wellInfo, ti
         invVals{i} = res;
         
         output.timeCost = toc;
-        output.RMSEVp = sqrt(mse(res.data{1} - trueLog(:, 2)));
-        output.RMSEVs = sqrt(mse(res.data{2} - trueLog(:, 3)));
-        output.RMSERho = sqrt(mse(res.data{3} - trueLog(:, 4)));
+        output.RMSEVp = sqrt(mse(res.data{1} - trueLog(:, 2))) ./ sqrt(mse(trueLog(:, 2) - model.initLog(:, 2)));
+        output.RMSEVs = sqrt(mse(res.data{2} - trueLog(:, 3))) ./ sqrt(mse(trueLog(:, 3) - model.initLog(:, 3)));
+        output.RMSERho = sqrt(mse(res.data{3} - trueLog(:, 4)))./ sqrt(mse(trueLog(:, 4) - model.initLog(:, 4)));
+%         output.RMSEVp = sum(abs( (res.data{1} - trueLog(:, 2)) ./ (trueLog(:, 2) - model.initLog(:, 2)) ));
+%         output.RMSEVs = sum(abs( (res.data{2} - trueLog(:, 3)) ./ (trueLog(:, 3) - model.initLog(:, 3)) ));
+%         output.RMSERho = sum(abs( (res.data{3} - trueLog(:, 4))./ (trueLog(:, 4) - model.initLog(:, 4)) ));
+%         output.RMSEVp = median(res.data{1} - trueLog(:, 2)) ./ sqrt(mse(trueLog(:, 2) - model.initLog(:, 2)));
+%         output.RMSEVs = median(res.data{2} - trueLog(:, 3)) ./ sqrt(mse(trueLog(:, 3) - model.initLog(:, 3)));
+%         output.RMSERho = median(res.data{3} - trueLog(:, 4))./ sqrt(mse(trueLog(:, 4) - model.initLog(:, 4)));
+        
         outputs{i} = output;
         
         fprintf('[RMSEVp=%.2e, RMSEVs=%.2e, RMSERho=%.2e, fval=%.3e, timeCost=%.2f, exitFlag=%d]\n', ...
