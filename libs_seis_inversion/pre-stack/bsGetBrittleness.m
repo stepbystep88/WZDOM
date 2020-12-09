@@ -3,7 +3,7 @@ function data = bsGetBrittleness(vp, vs, rho)
     wIs = vs .* rho;
     wrho = rho;
     wPossion = (wIp.^2 - 2*wIs.^2) ./ (2*wIp.^2 - wIs.^2);
-    wPossion(wPossion<0, 1) = 0;
+    wPossion(wPossion<0) = 0;
     
     minPossin = min(wPossion(:));
     maxPossin = max(wPossion(:));

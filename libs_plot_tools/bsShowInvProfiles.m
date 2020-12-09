@@ -285,6 +285,8 @@ function [profileData, range, wellData, wellTime] ...
 
     if ~isempty(range)
         range = range / scale;
+    else
+        range = [prctile(profileData(:), 5), prctile(profileData(:), 95)];
     end
     
     if isempty(dataIndex)

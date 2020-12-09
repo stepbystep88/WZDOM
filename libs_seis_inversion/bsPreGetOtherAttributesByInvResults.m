@@ -1,8 +1,9 @@
 function [invResults, GInvParam, wellLogs] = bsPreGetOtherAttributesByInvResults(invResults, GInvParam, wellLogs, varargin)
     
     p = inputParser;
-    p = bsAddCommonParam(p, GSegyInfo);
     addParameter(p, 'atts', {'vp_vs', 'possion', 'brittleness', 'toc'});
+    p.parse(varargin{:});  
+    options = p.Results;
     
     vp = [];
     vs = [];
@@ -35,7 +36,7 @@ function [invResults, GInvParam, wellLogs] = bsPreGetOtherAttributesByInvResults
                     case 'possion'
                         data = bsGetPossion(vp, vs);
                         type = 'possion';
-                    case 'brittleness'
+                    case {'brittleness', 'cuixing', 'cui_xing'}
                         data = bsGetBrittleness(vp, vs, rho);
                         type = 'brittleness';
                     case 'toc'
@@ -43,8 +44,8 @@ function [invResults, GInvParam, wellLogs] = bsPreGetOtherAttributesByInvResults
                         type = 'toc';
                 end
                 
-                profile.data{nData+1} = data;
-                profile.type{nData+1} = type;
+                profile.data{nData+k} = data;
+                profile.type{nData+k} = type;
             end
             
         end
