@@ -13,7 +13,7 @@ function [ W, wavelet ] = bsWaveletMatrix(sampNum, wavelet, waveletFreq, dt)
 end
 
 function [wavelet] = bsGenRickerWavelet(freq, dt)
-    wave = s_create_wavelet({'type','ricker'}, {'frequencies', freq}, {'step', dt}, {'wlength', 80});   
+    wave = s_create_wavelet({'type','ricker'}, {'frequencies', freq}, {'step', dt}, {'wlength', 150});   
     wavelet = wave.traces;                                      
 end
 

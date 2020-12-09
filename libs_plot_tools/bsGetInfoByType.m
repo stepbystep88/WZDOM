@@ -73,6 +73,29 @@ function [range, scale, dataIndex, dataColorTbl, attName] = ...
             range = GShowProfileParam.range.possion;
             dataIndex = GInvParam.indexInWellData.possion;
             dataColorTbl = GShowProfileParam.colormap.possion;
+        
+        case {'brittleness', 'cuixing', 'cui_xing'}
+            if strcmpi(GShowProfileParam.language, 'en')
+                attName = 'Brittleness';
+            else
+                attName = '脆性';
+            end
+            
+            range = GShowProfileParam.range.brittleness;
+            dataIndex = GInvParam.indexInWellData.brittleness;
+            dataColorTbl = GShowProfileParam.colormap.brittleness;
+        
+        case {'toc'}
+            if strcmpi(GShowProfileParam.language, 'en')
+                attName = 'TOC';
+            else
+                attName = '有机含碳量';
+            end
+            
+            range = GShowProfileParam.range.toc;
+            dataIndex = GInvParam.indexInWellData.toc;
+            dataColorTbl = GShowProfileParam.colormap.toc;
+            
         case 'seismic'
             if strcmpi(GShowProfileParam.language, 'en')
                 attName = 'Seismic (Amplitude)';

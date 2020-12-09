@@ -17,6 +17,6 @@ function [GInvParam, postSeisData, horizon] = bsPrepareForExtractingWavelet(GInv
     GInvParam.waveletFreq = freq;
     
     % create wavelet
-    GInvParam.wavelet = bsGenWavelet(type, freq, dt, GInvParam.wavelet);
+    GInvParam.wavelet = bsGenWavelet(type, freq, dt, GInvParam.wavelet, GInvParam.waveletLength);
 
 end

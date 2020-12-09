@@ -1,17 +1,17 @@
-function wavelet = bsGenWavelet(type, freq, dt, wavelet)
+function wavelet = bsGenWavelet(type, freq, dt, wavelet, wlength)
     switch type
         case {'ricker', 'neg-ricker'}
-            wave = s_create_wavelet({'type','ricker'}, {'frequencies', freq}, {'step', dt}, {'wlength', 80});
+            wave = s_create_wavelet({'type','ricker'}, {'frequencies', freq}, {'step', dt}, {'wlength', wlength});
         case {'zero-phase', 'neg-zero-phase'}
             wave = s_create_wavelet({'type','zero-phase'}, ...
                 {'frequencies', freq-20,freq-10,freq+10,freq+20}, ...
                 {'step', dt}, ...
-                {'wlength', 100});
+                {'wlength', wlength});
         case {'min-phase', 'neg-min-phase'}
             wave = s_create_wavelet({'type','min-phase'}, ...
                 {'frequencies', freq-10,freq-5,freq+5,freq+10}, ...
                 {'step', dt}, ...
-                {'wlength', 100});
+                {'wlength', wlength});
         case 'input'
             if isempty(wavelet)
                 disp(wavelet);
