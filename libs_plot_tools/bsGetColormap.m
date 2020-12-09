@@ -10,6 +10,10 @@ function colormap = bsGetColormap(name)
         case {'vel', 'velocity', 'pvel'}
             tmp = load('color_hrs_pvel.mat');
             colormap = tmp.color_hrs_pvel;
+        case {'hrs'}
+            tmp = load('color_hrs.mat');
+            colormap = tmp.color_hrs;
+            
         case {'jason_impedance', 'jason'}
             tmp = load('color_jason_impedance.mat');
             colormap = tmp.color_jason_impedance;
