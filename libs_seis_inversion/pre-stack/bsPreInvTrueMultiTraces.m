@@ -371,7 +371,7 @@ function [vp, vs, rho, model, output] = bsPreInvOneTrace(GInvParam, horizonTime,
             inId, crossId, method.name);
     end
     
-%     try
+    try
         % create model data
         if GInvParam.isReadMode
             % in read mode, model is loaded from local file
@@ -397,14 +397,14 @@ function [vp, vs, rho, model, output] = bsPreInvOneTrace(GInvParam, horizonTime,
         [xOut, ~, ~, output] = bsPreInv1DTrace(model.d, model.G, model.initX, model.Lb, model.Ub, method);                       
 
         [vp, vs, rho] = bsPreRecoverElasticParam(xOut, GInvParam.mode, model.lsdCoef);
-%     catch err
-%         fprintf(getReport(err));
-%         
-%         sampNum = GInvParam.upNum + GInvParam.downNum;
-%         vp = zeros(sampNum, 1);
-%         vs = zeros(sampNum, 1);
-%         rho = zeros(sampNum, 1);
-%         model = [];
-%         output = [];
-%     end
+    catch err
+        fprintf(getReport(err));
+        fprintf('The trace of inId=%d, crossId=%d has errors.\n', inId, crossId);
+        sampNum = GInvParam.upNum + GInvParam.downNum;
+        vp = zeros(sampNum, 1);
+        vs = zeros(sampNum, 1);
+        rho = zeros(sampNum, 1);
+        model = [];
+        output = [];
+    end
 end
