@@ -40,7 +40,7 @@ function [GInvParam, poststackFreeNoise, poststackNoise, G, options] ...
         
         logModel = log(trueModel);
         wavelet = bsGenWavelet(options.waveletType, ...
-             GInvParam.waveletFreq, GInvParam.dt, []);
+             GInvParam.waveletFreq, GInvParam.dt, [], GInvParam.waveletLength);
         GInvParam.wavelet = wavelet;
         
         G = bsPostGenGMatrix(GInvParam.wavelet, sampNum);
