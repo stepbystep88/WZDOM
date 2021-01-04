@@ -43,7 +43,7 @@ function [GInvParam, prestackFreeNoise, prestackNoise, options] ...
             
         GInvParam.angleData = angleData;
         wavelet = bsGenWavelet(options.waveletType, ...
-             GInvParam.waveletFreq, GInvParam.dt, []);
+             GInvParam.waveletFreq, GInvParam.dt, [], GInvParam.waveletLength);
         GInvParam.wavelet = wavelet;
         
         prestackFreeNoise = cell(1, traceNum);
