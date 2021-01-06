@@ -15,12 +15,20 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
     
     
     figure;
-    % set the screen size
-    if isSameType
-        [nRow, nCol, loc, colorbar_pos] = setShareFigureSize(nProfile);
+    if strcmp(GShowProfileParam.layoout.mode, 'auto')
+        % set the screen size
+        if isSameType
+            [nRow, nCol, loc, colorbar_pos] = setShareFigureSize(nProfile);
+        else
+            [nRow, nCol, loc] = setFigureSize(nProfile);
+        end
     else
-        [nRow, nCol, loc] = setFigureSize(nProfile);
+        nRow = GShowProfileParam.layoout.nRow;
+        nCol = GShowProfileParam.layoout.nCol;
+        loc = GShowProfileParam.layoout.loc;
+        colorbar_pos = GShowProfileParam.layoout.colorbar_pos;
     end
+    
     
     % show profiles
     for iProfile = 1 : nProfile
@@ -132,15 +140,15 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
         
         [newProfileData, minTime] = bsShowVerticalPartData(GShowProfileParam, basicInfo, newProfileData);    
 
-        % replace the traces that are near by well location as welllog data
-        newProfileData = bsReplaceWellLocationData(GShowProfileParam, basicInfo, newProfileData, wellData, wellTime, minTime);
-        
+        if ~isempty(wellLogs) && strcmpi(GShowProfileParam.showWellMode, 'color')
+            % replace the traces that are near by well location as welllog data
+            newProfileData = bsReplaceWellLocationData(GShowProfileParam, basicInfo, newProfileData, wellData, wellTime, minTime);
+        end
         
         % show the filled data by using imagesc
         bsShowHorizonedData(GShowProfileParam, basicInfo, newProfileData, minTime, ...
             profile.name, range, dataColorTbl, wellData)
 
-        
         % set attribute name of colorbar
         if ~isSameColorbar
             ylabel(colorbar(), attName, ...
@@ -531,14 +539,25 @@ function bsShowHorizonedData(GShowProfileParam, basicInfo, profileData, minTime,
         end
     end
     
-    % show the name of wells
-    if ~isempty(wellData) && GShowProfileParam.isShowWellNames
-        nWell = length(basicInfo.wellPos);
-        
+    nWell = length(basicInfo.wellPos);
+    % show the curves of wells
+    if ~isempty(wellData) && strcmpi(GShowProfileParam.showWellMode, 'curve')
         for i = 1 : nWell
-            x = mod(i, 2);
             
-          
+            ipos = GShowProfileParam.scaleFactor * basicInfo.wellPos(i);
+            offset = GShowProfileParam.scaleFactor*GShowProfileParam.showWellOffset;
+            x = normalize(wellData{i}, 'range', [ipos-offset, ipos+offset]); 
+            y = (-basicInfo.upNum : basicInfo.downNum-1)*basicInfo.dt + basicInfo.horizon(ipos);
+            
+            y = 1 + (y - minTime) / basicInfo.newDt;
+            
+            plot(x, y, 'k-', 'linewidth', 2);
+        end
+    end
+    
+    % show the names of wells
+    if ~isempty(wellData) && GShowProfileParam.isShowWellNames
+        for i = 1 : nWell
             ipos = GShowProfileParam.scaleFactor * basicInfo.wellPos(i);
             x = ipos - 5*GShowProfileParam.scaleFactor;
             y = round((basicInfo.newHorizon(ipos) - minTime) / basicInfo.newDt) +  GShowProfileParam.scaleFactor * (basicInfo.downNum + 5);
