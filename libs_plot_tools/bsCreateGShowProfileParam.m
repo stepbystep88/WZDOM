@@ -65,6 +65,8 @@ function options = bsCreateGShowProfileParam(varargin)
     % the thickness of a colored well shown in a profile
     addParameter(p, 'showWellOffset', 3); 
     
+    addParameter(p, 'showWellMode', 'color');   % should be color or curve 
+    
     % the scale factor of showing a profile, must be a non-negative integer
     addParameter(p, 'scaleFactor', 2);
     
