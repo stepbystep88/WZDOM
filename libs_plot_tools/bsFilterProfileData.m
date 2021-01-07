@@ -23,6 +23,7 @@ function profileData = bsFilterProfileData(profileData, showFiltCoef, isHorizonF
                 profileData(i, :) = filtfilt(b, a, profileData(i, :));
 %                     profileData(i, :) = bsButtLowPassFilter(profileData(i, :), showFiltCoef);
             catch
+                warning('Filtering failed.');
             end
         end
     end
