@@ -15,7 +15,7 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
     
     
     figure;
-    if strcmp(GShowProfileParam.layoout.mode, 'auto')
+    if strcmp(GShowProfileParam.layout.mode, 'auto')
         % set the screen size
         if isSameType
             [nRow, nCol, loc, colorbar_pos] = setShareFigureSize(nProfile);
@@ -23,10 +23,10 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
             [nRow, nCol, loc] = setFigureSize(nProfile);
         end
     else
-        nRow = GShowProfileParam.layoout.nRow;
-        nCol = GShowProfileParam.layoout.nCol;
-        loc = GShowProfileParam.layoout.loc;
-        colorbar_pos = GShowProfileParam.layoout.colorbar_pos;
+        nRow = GShowProfileParam.layout.nRow;
+        nCol = GShowProfileParam.layout.nCol;
+        loc = GShowProfileParam.layout.loc;
+        colorbar_pos = GShowProfileParam.layout.colorbar_pos;
     end
     
     
@@ -172,8 +172,8 @@ function [nRow, nCol, loc, colorbar_pos] = setShareFigureSize(nProfile)
             colorbar_pos = [0.87 0.06 0.01 0.88];
         case 2
             bsSetPosition(0.3, 0.42);
-            nRow = 1;
-            nCol = 2;
+            nRow = 2;
+            nCol = 1;
             loc = [0.87, 0.83, 0.025, 0.08, 0.05, -0.005];
             colorbar_pos = [0.91 0.05 0.01 0.9];
 %             loc = [0.79, 0.94, 0.01, 0.07, 0.09, 0.02];
