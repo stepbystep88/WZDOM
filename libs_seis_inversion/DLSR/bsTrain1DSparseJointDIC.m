@@ -181,7 +181,11 @@ function [DIC, rangeCoef, output] = bsTrain1DSparseJointDIC(datas, GTrainDICPara
     
     params.data = allPatchs;
     params.Tdata = GTrainDICParam.sparsity;
-    params.dictsize = GTrainDICParam.nAtom;
+    if GTrainDICParam.nAtom <= 1 && GTrainDICParam.nAtom > 0
+        params.dictsize = round(size(allPatchs, 2)* GTrainDICParam.nAtom);
+    else
+        params.dictsize = GTrainDICParam.nAtom;
+    end
     params.iternum = GTrainDICParam.iterNum;
     params.memusage = 'high';
 

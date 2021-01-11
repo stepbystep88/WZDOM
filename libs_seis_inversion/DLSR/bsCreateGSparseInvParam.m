@@ -7,6 +7,13 @@ function options = bsCreateGSparseInvParam(DIC, GTrainDICParam, varargin)
 % -------------------------------------------------------------------------
     p = inputParser;
     
+    if iscell(DIC)
+        GTrainDICParam.nAtom = size(DIC{1}, 2);
+    else
+        GTrainDICParam.nAtom = size(DIC, 2);
+    end
+    
+    
     % the sparsity controlling the sparse representation 
     addParameter(p, 'sparsity', 1); 
     

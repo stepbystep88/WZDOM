@@ -90,7 +90,12 @@ function [DIC, rangeCoef, output] = bsTrain1DSparseDIC(datas, GTrainDICParam, xs
     
     params.data = new_patches;
     params.Tdata = GTrainDICParam.sparsity;
-    params.dictsize = GTrainDICParam.nAtom;
+%     params.dictsize = GTrainDICParam.nAtom;
+    if GTrainDICParam.nAtom <= 1 && GTrainDICParam.nAtom > 0
+        params.dictsize = round(size(new_patches, 2)* GTrainDICParam.nAtom);
+    else
+        params.dictsize = GTrainDICParam.nAtom;
+    end
     params.iternum = GTrainDICParam.iterNum;
     params.memusage = 'high';
 
