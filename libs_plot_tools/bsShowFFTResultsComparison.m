@@ -2,12 +2,13 @@ function bsShowFFTResultsComparison(dt, curves, titles)
 
     GShowProfileParam = bsCreateGShowProfileParam();
     GPlotParam = GShowProfileParam.plotParam;
+    GPlotParam.fontsize = 12;
     
     nItems = size(curves, 2);
 
 
     hf = figure;
-    subplot('Position', [0.1, 0.1 0.85 0.85]);
+    subplot('Position', [0.1, 0.15 0.85 0.8]);
 
     cTbl = bsGetColormap('separate');
     shapes = {'-', '-.', '--', '-.', '--'};
@@ -33,10 +34,17 @@ function bsShowFFTResultsComparison(dt, curves, titles)
     lgd = legend(titles);
     set(lgd, ...
         'fontsize', GPlotParam.fontsize, ...
-        'fontweight', 'bold', ...
+        'fontweight', 'normal', ...
         'fontname', GPlotParam.fontname);
-    xlabel('Frequency');
-    ylabel('Amplitude');
+    
+    if strcmpi(GShowProfileParam.language, 'en')
+        xlabel('Frequency');
+        ylabel('Amplitude');
+    else
+        xlabel('ÆµÂÊ \fontname{Times New Roman}(Hz)');
+        ylabel('Õñ·ù');
+    end
+    
 %         set(gca, 'ylim', [0, 2000]);
     set(gca , 'fontsize', GPlotParam.fontsize,'fontweight', GPlotParam.fontweight, 'fontname', GPlotParam.fontname);
 

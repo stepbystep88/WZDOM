@@ -23,6 +23,15 @@ function bsShowPostInvLogResult(GPostInvParam, GShowProfileParam, invVals, trueL
         hf = figure;
         bsSetFigureSize(nItems);
         
+        if strcmpi(GShowProfileParam.language, 'en')
+            attName = 'I_{\it{P}} (g/cc*km/s)';
+            legends = {'Initial model', 'True model', 'Inversion result'};
+            
+        else
+            attName =  '阻抗 (g/cc*km/s)';
+            legends = {'初始模型', '真实模型', '反演结果'};
+        end
+        
         for iItem = 1 : nItems
         
             figure(hf);
@@ -38,7 +47,7 @@ function bsShowPostInvLogResult(GPostInvParam, GShowProfileParam, invVals, trueL
             bsShowPostSubInvLogResult(GShowProfileParam, ...
                 invVal.Ip/1000, trueLog/1000, model.initLog/1000, ...
                 t, invVal.name, ...
-                GShowProfileParam.range.ip/1000, nItems, iItem);
+                GShowProfileParam.range.ip/1000, nItems, iItem, attName);
             
             MRRMSE = bsCalcRRSE(trueLog, model.initLog, invVal.Ip);
             fprintf('[RRMSE=%.3f]\n', MRRMSE);
@@ -46,14 +55,8 @@ function bsShowPostInvLogResult(GPostInvParam, GShowProfileParam, invVals, trueL
 
         end
         
-        if strcmpi(GShowProfileParam.language, 'en')
-            legends = {'Initial model', 'True model', 'Inversion result'};
-            bsSetLegend(GPlotParam, {'g', 'k-.', 'r'}, legends, 'I_{\it{P}} (g/cc*km/s)');
-        else
-            legends = {'初始模型', '真实模型', '反演结果'};
-            bsSetLegend(GPlotParam, {'g', 'k-.', 'r'}, legends, '阻抗 (g/cc*km/s)');
-        end
         
+        bsSetLegend(GPlotParam, {'g', 'k-.', 'r'}, legends, attName);
         
        
     end
@@ -108,11 +111,11 @@ function bsSetLegend(GPlotParam, colors, legends, attrName)
         'fontname', GPlotParam.fontname);
     set(lgd, 'position', poshL);      % Adjusting legend's position
     axis(hL, 'off');                 % Turning its axis off
-    annotation('textbox', [0.05, 0.07, 0, 0], 'string', attrName, ...
-        'edgecolor', 'none', 'fitboxtotext', 'on', ...
-        'fontsize', GPlotParam.fontsize,...
-        'fontweight', GPlotParam.fontweight, ...
-        'fontname', GPlotParam.fontname);
+%     annotation('textbox', [0.05, 0.07, 0, 0], 'string', attrName, ...
+%         'edgecolor', 'none', 'fitboxtotext', 'on', ...
+%         'fontsize', GPlotParam.fontsize,...
+%         'fontweight', GPlotParam.fontweight, ...
+%         'fontname', GPlotParam.fontname);
 end
 
 function bsSetFigureSize(nPlot)
@@ -133,7 +136,7 @@ end
 function bsSetSubPlotSize(nItems, iItem)
     switch nItems
         case {1, 2, 3}
-            bsSubPlotFit(1, nItems, iItem, 0.9, 0.92, 0.02, 0.12, 0.085, 0.05);
+            bsSubPlotFit(1, nItems, iItem, 0.9, 0.91, 0.05, 0.17, 0.12, 0.1);
         otherwise
             bsSubPlotFit(1, nItems, iItem, 0.96, 0.92, 0.08, 0.11, 0.085, 0.045);
     end
@@ -142,7 +145,7 @@ end
 %% show comparasions of welllog inversion results
 function bsShowPostSubInvLogResult(GShowProfileParam, ...
     invVal, trueVal, initVal, ...
-    t, tmethod, range, nItems, iItem)
+    t, tmethod, range, nItems, iItem, attName)
 
     GPlotParam = GShowProfileParam.plotParam;
     bsSetSubPlotSize(nItems, iItem);
@@ -160,6 +163,7 @@ function bsShowPostSubInvLogResult(GShowProfileParam, ...
     else
         set(gca, 'ytick', [], 'yticklabel', []);
     end
+    xlabel(attName);
     
     if GShowProfileParam.showPartVert.downTime > 0 && GShowProfileParam.showPartVert.downTime > GShowProfileParam.showPartVert.upTime
         set(gca, 'ylim', [t(GShowProfileParam.showPartVert.upTime), t(GShowProfileParam.showPartVert.downTime)]);

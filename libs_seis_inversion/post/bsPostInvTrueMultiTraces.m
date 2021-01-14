@@ -44,14 +44,17 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
         
         % create folder to save the intermediate results
         try
-            if ~isfield(method, 'load') || strcmpi(method.load.mode, 'off') || (~exist(method.load.fileName, 'file') && ~exist(matFileName, 'file'))
-
+            if ~isfield(method, 'load') || strcmpi(method.load.mode, 'off') || (ischar(method.load.fileName) && ~exist(method.load.fileName, 'file') && ~exist(matFileName, 'file'))
                 warning('off');
                 mkdir([GInvParam.modelSavePath, '/', methodName, '/mat_results/']);
                 mkdir([GInvParam.modelSavePath, '/', methodName, '/sgy_results/']);
                 warning('on');
             end
         catch
+            warning('off');
+            mkdir([GInvParam.modelSavePath, '/', methodName, '/mat_results/']);
+            mkdir([GInvParam.modelSavePath, '/', methodName, '/sgy_results/']);
+            warning('on');
         end
     
         res.source = [];

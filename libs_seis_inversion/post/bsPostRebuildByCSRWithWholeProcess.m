@@ -34,6 +34,8 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
     addParameter(p, 'isInterpolation', 0);
     addParameter(p, 'GTrainDICParam', GTrainDICParam);
     
+    addParameter(p, 'invDataAtWellLocation', []);
+    
     if is3D
         addParameter(p, 'gst_options', bsCreateGSTParam(3));
     else
@@ -67,64 +69,41 @@ function outResult = bsPostRebuildByCSRWithWholeProcess(GInvParam, timeLine, wel
                 GTrainDICParam.title, options.lowCut);
     end
     
-%     wells = cell2mat(wellLogs);
-%     wellInIds = [wells.inline];
-%     wellCrossIds = [wells.crossline];
+    if isempty(options.invDataAtWellLocation)
+        % 如果测井位置的反演结果没有给出，则从反演结果中搜索过井的数据
+        [wellPos, wellIndex, wellNames] = bsFindWellLocation(wellLogs, invResult.inIds, invResult.crossIds);
+        names = join(wellNames, ',');
+        try
+            fprintf('反演结果中检测到共%d道过井，分别为:\n\tinIds:%s...\n\tcrossIds:%s\n\twellNames=%s\n', ...
+                length(wellPos), ...
+                mat2str(invResult.inIds(wellPos)), ...
+                mat2str(invResult.crossIds(wellPos)), ...
+                names{1});
 
-    % inverse a profile
-%     [~, ~, GInvParamWell] = bsBuildInitModel(GInvParam, timeLine, wellLogs, ...
-%         'title', 'all_wells', ...
-%         'inIds', wellInIds, ...
-%         'isRebuild', 1, ...
-%         'filtCoef', options.wellFiltCoef, ...
-%         'crossIds', wellCrossIds ...
-%     );
+            wellLogs = wellLogs(wellIndex);
+        catch
+            error('There is no wells in the inverted data!!!');
+        end
 
-%     if isfield(method, 'flag')
-%         fprintf('反演所有测井中...\n');
-%         method.load.mode = 'off';
-%         method.parampkgs.nMultipleTrace = 1;
-%         
-%         if strcmp(method.flag, 'DLSR-GST')
-%             method.flag = 'DLSR';
-%         end
-%     end
-%     method.isSaveSegy = false;
-%     method.isSaveMat = false;
-%     
-%     wellInvResults = bsPostInvTrueMultiTraces(GInvParamWell, wellInIds, wellCrossIds, timeLine, {method});
-    
-%     train_ids = setdiff(1:length(wellInIds), options.exception);
-%     train_ids = setdiff(train_ids, options.mustInclude);
-%     train_ids = bsRandSeq(train_ids, min(options.trainNum, length(train_ids)));
-%     train_ids = unique([train_ids, options.mustInclude]);
-    
-    [wellPos, wellIndex, wellNames] = bsFindWellLocation(wellLogs, invResult.inIds, invResult.crossIds);
-    names = join(wellNames, ',');
-    try
-        fprintf('反演结果中检测到共%d道过井，分别为:\n\tinIds:%s...\n\tcrossIds:%s\n\twellNames=%s\n', ...
-            length(wellPos), ...
-            mat2str(invResult.inIds(wellPos)), ...
-            mat2str(invResult.crossIds(wellPos)), ...
-            names{1});
+        try
+            set_diff = setdiff(1:length(wellPos), options.exception);
+            train_ids = bsRandSeq(set_diff, options.trainNum);
+            train_ids = unique([train_ids, options.mustInclude]);
+
+        catch
+            options.trainNum = length(wellPos);
+            train_ids = 1 : length(wellPos);
+        end
+
+        [outLogs] = bsGetPairOfInvAndWell(GInvParam, timeLine, wellLogs, invResult.data(:, wellPos), GInvParam.indexInWellData.ip, options);
+    else
+        % 相反，则直接运用给定的options.invDataAtWellLocation来训练字典
+        options.trainNum = length(wellLogs);
+        train_ids = 1 : length(wellLogs);
         
-        wellLogs = wellLogs(wellIndex);
-    catch
-        error('There is no wells in the inverted data!!!');
+        assert(size(options.invDataAtWellLocation, 2) == length(wellLogs), '训练井的数量应该与其对应的反演结果道数一致');
+        [outLogs] = bsGetPairOfInvAndWell(GInvParam, timeLine, wellLogs, options.invDataAtWellLocation, GInvParam.indexInWellData.ip, options);
     end
-    
-    try
-        set_diff = setdiff(1:length(wellPos), options.exception);
-        train_ids = bsRandSeq(set_diff, options.trainNum);
-        train_ids = unique([train_ids, options.mustInclude]);
-        
-    catch
-        options.trainNum = length(wellPos);
-        train_ids = 1 : length(wellPos);
-    end
-    
-    [outLogs] = bsGetPairOfInvAndWell(GInvParam, timeLine, wellLogs, invResult.data(:, wellPos), GInvParam.indexInWellData.ip, options);
-    
 %     bsShowFFTResultsComparison(GInvParam.dt, outLogs{1}.wellLog, {'反演结果', '联合字典配对'});
 
 %     bsShowWellLogs(outLogs([2, 5,9]), 4, [1], {'I_P'}, 'colors', {'r'});

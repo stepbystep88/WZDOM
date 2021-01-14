@@ -1,6 +1,12 @@
 function z = bsMixTwoSignal(x, y, fs1, fs2, dt)
     
     n = length(x);
+    
+    if mod(n, 2) ~= 0
+        error('The length of signals x and y must be an even number');
+    end
+    
+    
     fs = 1/dt/n*(0:n/2);
     
     fftx = fft(x, n);

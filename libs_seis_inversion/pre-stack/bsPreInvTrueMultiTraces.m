@@ -49,14 +49,17 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
         
         % create folder to save the intermediate results
         try
-            warning('off');
             if ~isfield(method, 'load') || strcmpi(method.load.mode, 'off') || (ischar(method.load.fileName) && ~exist(method.load.fileName, 'file') && ~exist(matFileName, 'file'))
+                warning('off');
                 mkdir([GInvParam.modelSavePath, methodName, '/mat_results/']);
                 mkdir([GInvParam.modelSavePath, methodName, '/sgy_results/']);
+                warning('on');
             end
-            warning('on');
         catch
-
+            warning('off');
+            mkdir([GInvParam.modelSavePath, methodName, '/mat_results/']);
+            mkdir([GInvParam.modelSavePath, methodName, '/sgy_results/']);
+            warning('on');
         end
         
         % try loading the results from mat or segy file
