@@ -10,7 +10,7 @@ function f1 = bsSmoothByGST3D(f, refData, options, S, blur)
 % Programmed by: Bin She (Email: bin.stepbystep@gmail.com)
 % Programming dates: Sep 2020
 % -------------------------------------------------------------------------
-
+    
     if nargin <= 3 || isempty(S)
         if isempty(refData)
     %         bf = blur(f, 0.1);

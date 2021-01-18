@@ -19,6 +19,12 @@ function invResults = bsSmoothInvResults(invResults, refData, fcn, varargin)
         return;
     end
     
+    rangeInline = [min(invResults{1}.inIds), max(invResults{1}.inIds)];
+    rangeCrossline = [min(invResults{1}.crossIds), max(invResults{1}.crossIds)];
+    
+    nCrossline = rangeCrossline(2) - rangeCrossline(1) + 1;
+    nInline = rangeInline(2) - rangeInline(1) + 1;
+    
     if isempty(fcn)
         fcn = @bsSmoothByGST2D;
     end
@@ -35,7 +41,14 @@ function invResults = bsSmoothInvResults(invResults, refData, fcn, varargin)
                 [invResults{i}.data, weightInfo] = bsNLMByRef(data, refData, ...
                     'weightInfo', weightInfo, varargin{:});
             else
+                if length(invResults{i}.inIds) > 10000
+                    % 表明这是一个3D数据
+                    data = bsReshapeDataAs3D(data, nInline, nCrossline);
+                    tmp = fcn(data, refData, varargin{:});
+                    invResults{i}.data = bsReshapeDataAs2D(tmp);
+                else
                     [invResults{i}.data] = fcn(data, refData, varargin{:});
+                end
             end
             
         else
@@ -45,7 +58,16 @@ function invResults = bsSmoothInvResults(invResults, refData, fcn, varargin)
                     [invResults{i}.data{j}, weightInfo] = bsNLMByRef(data{j}, refData, ...
                         'weightInfo', weightInfo, varargin{:});
                 else
-                    [invResults{i}.data{j}] = fcn(data{j}, refData, varargin{:});
+                    if length(invResults{i}.inIds) > 20000
+                        % 表明这是一个3D数据
+                        tmp1 = bsReshapeDataAs3D(data{j}, nInline, nCrossline);
+                        tmp = fcn(tmp1, refData, varargin{:});
+                        invResults{i}.data{j} = bsReshapeDataAs2D(tmp);
+                    else
+                        [invResults{i}.data{j}] = fcn(data{j}, refData, varargin{:});
+                    end
+                
+                    
                 end
             end
         end

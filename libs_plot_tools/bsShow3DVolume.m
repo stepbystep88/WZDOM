@@ -99,6 +99,8 @@ function [houts, horizonSlices] = bsShow3DVolume(data, dt, clim, xslices, yslice
     addParameter(p, 'scaleFactor', 1);
     addParameter(p, 'view', [-49.3414   37.6342]);
     
+    addParameter(p, 'zlabel_str', 'Time (s)');
+    
     p.parse(dt, clim, varargin{:});  
     params = p.Results;
     
@@ -251,13 +253,16 @@ function [houts, horizonSlices] = bsShow3DVolume(data, dt, clim, xslices, yslice
     end
     
     
-    annotation(gcf,'textbox',[0.47 0.95 0.32 0.05],...
+    annotation(gcf,'textbox',[0.1 0.95 0.8 0.05],...
         'String',{params.attributeName},...
         'LineStyle','none',...
+        'HorizontalAlignment', 'center', ...
         'FontWeight', params.fontweight,...
         'FontSize',  params.fontsize,...
         'FontName', params.fontname,...
         'FitBoxToText','off', 'EdgeColor',[0.94 0.94 0.94]);
+    
+%     title(params.attributeName);
     
     if params.isShading
         shading interp;
@@ -280,12 +285,12 @@ function [houts, horizonSlices] = bsShow3DVolume(data, dt, clim, xslices, yslice
 %     colormap(params.colormap);
     
     
-    colorbar('location', 'southoutside', 'position', [0.092 0.039 0.88 0.02]);
+    colorbar('location', 'southoutside', 'position', [0.092 0.06 0.88 0.02]);
     
     set(gca,'zdir','reverse');
-    xlabel('Inline', 'fontsize', params.fontsize,'fontweight', params.fontweight, 'fontname', params.fontname);
-    ylabel('Crossline', 'fontsize', params.fontsize,'fontweight', params.fontweight, 'fontname', params.fontname);
-    zlabel('Time (s)', 'fontsize', params.fontsize,'fontweight', params.fontweight, 'fontname', params.fontname);
+    xlabel('Inline', 'fontsize', params.fontsize,'fontweight', params.fontweight, 'fontname', 'Times New Roman');
+    ylabel('Crossline', 'fontsize', params.fontsize,'fontweight', params.fontweight, 'fontname', 'Times New Roman');
+    zlabel(params.zlabel_str, 'fontsize', params.fontsize,'fontweight', params.fontweight, 'fontname', params.fontname);
     set(gca , 'fontsize', params.fontsize,'fontweight', params.fontweight, 'fontname', params.fontname);    
     
     set(gca, 'zlim', [min(params.startTime(:)) max(params.startTime(:))+sampNum*dt]/1000);

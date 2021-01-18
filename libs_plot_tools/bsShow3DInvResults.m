@@ -1,16 +1,16 @@
-function bsShow3DInvResults(GInvParam, GShowProfileParam, invResult, iAtt, mode, shift, varargin)
+function bsShow3DInvResults(GInvParam, GShowProfileParam, invResult, iAtt, options, varargin)
     
     if isempty(iAtt)
         iAtt = 1;
     end
     
-    if isempty(shift)
-        shift = 0;
-    end
+    [~, options] = bsGetFieldsWithDefaults(options, {'mode', 2; 'shift', 0; 'xslices', []; 'yslices', []; 'zslices', []});
     
-%     if isempty(rangeInline) && isempty(rangeCrossline)
-%         [rangeInline, rangeCrossline] = bsGetWorkAreaRangeByParam(GInvParam);
-%     end
+    mode = options.mode;
+    shift = options.mode;
+    xslices = options.xslices;
+    yslices = options.yslices;
+    zslices = options.zslices;
     
     rangeInline = [min(invResult.inIds), max(invResult.inIds)];
     rangeCrossline = [min(invResult.crossIds), max(invResult.crossIds)];
@@ -39,15 +39,27 @@ function bsShow3DInvResults(GInvParam, GShowProfileParam, invResult, iAtt, mode,
     
     switch mode
         case 1
-            xslices = rangeInline;
-            yslices = rangeCrossline;
-            zslices = [2202, 2200+(sampNum-3)*GInvParam.dt];
+            if isempty(xslices)
+                xslices = rangeInline;
+            end
+            if isempty(yslices)
+                yslices = rangeCrossline;
+            end
+            if isempty(zslices)
+                zslices = [2202, 2200+(sampNum-3)*GInvParam.dt];
+            end
+            
             horiozons = [];
             startTime = ones(nInline, nCrossline) * 2200;
             
         case 2
-            xslices = rangeInline(1);
-            yslices = rangeCrossline(1);
+            if isempty(xslices)
+                xslices = rangeInline(1);
+            end
+            if isempty(yslices)
+                yslices = rangeCrossline(1);
+            end
+            
             startTime = permute(reshape(invResult.horizon, nCrossline, nInline), [2, 1]) - GInvParam.dt*GInvParam.upNum;
             startTime = bsSmoothByGST2D(startTime, [], bsCreateGSTParam(2, 'sigma', 10));
             
@@ -57,52 +69,96 @@ function bsShow3DInvResults(GInvParam, GShowProfileParam, invResult, iAtt, mode,
             
 %             view_s = [121.6586   38.2342];
         case 3
-            xslices = round(0.5 * (rangeInline(1) + rangeInline(end)));
-            yslices = round(0.5 * (rangeCrossline(1) + rangeCrossline(end)));
-            zslices = 2200+sampNum/2*GInvParam.dt  + shift;
+            if isempty(xslices)
+                xslices = round(0.5 * (rangeInline(1) + rangeInline(end)));
+            end
+            if isempty(yslices)
+                yslices = round(0.5 * (rangeCrossline(1) + rangeCrossline(end)));
+            end
+            if isempty(zslices)
+                zslices = 2200+sampNum/2*GInvParam.dt  + shift;
+            end
+            
             horiozons = [];
             startTime = ones(nInline, nCrossline) * 2200;
         case 4
-            xslices = round(0.5 * (rangeInline(1) + rangeInline(end)));
-            yslices = round(0.5 * (rangeCrossline(1) + rangeCrossline(end)));
+            if isempty(xslices)
+                xslices = round(0.5 * (rangeInline(1) + rangeInline(end)));
+            end
+            if isempty(yslices)
+                yslices = round(0.5 * (rangeCrossline(1) + rangeCrossline(end)));
+            end
+            if isempty(zslices)
+                zslices = [];
+            end
+            
             startTime = permute(reshape(invResult.horizon, nCrossline, nInline), [2, 1]) - GInvParam.dt*GInvParam.upNum;
             startTime = bsSmoothByGST2D(startTime, [], bsCreateGSTParam(2, 'sigma', 10));
             
-            zslices = [];
             horiozons(1).horizon = startTime;
             horiozons(1).shift = (sampNum - 10) * GInvParam.dt + shift;
            
         case 5 
-            GInvParam.dt = 1000;
-            xslices = [rangeInline(1), round((rangeInline(1)*0.6 + rangeInline(2)*0.4))];
-            yslices = rangeCrossline(1);
-%             startTime = permute(reshape(invResult.horizon, nCrossline, nInline), [2, 1]) - GInvParam.dt*GInvParam.upNum;
-%             minTime = min(startTime(:));
             minTime = 1;
-%             zslices = [minTime, minTime+(sampNum-3)*GInvParam.dt/2, minTime+(sampNum-3)*GInvParam.dt];
-            zslices = [minTime+shift*GInvParam.dt, minTime+(sampNum-3)*GInvParam.dt];
+            if isempty(xslices)
+                xslices = [rangeInline(1), round((rangeInline(1)*0.6 + rangeInline(2)*0.4))];
+            end
+            if isempty(yslices)
+                yslices = rangeCrossline(1);
+            end
+            if isempty(zslices)
+                zslices = [minTime+shift*GInvParam.dt, minTime+(sampNum-3)*GInvParam.dt];
+            end
+            
+            GInvParam.dt = 1000;
+
             horiozons = [];
             startTime = ones(nInline, nCrossline) * minTime;
             
         case 6
-            GInvParam.dt = 1000;
-            xslices = [round((rangeInline(1)*0.2 + rangeInline(2)*0.8)), rangeInline(2)];
-            yslices = rangeCrossline(1);
-%             startTime = permute(reshape(invResult.horizon, nCrossline, nInline), [2, 1]) - GInvParam.dt*GInvParam.upNum;
-%             minTime = min(startTime(:));
             minTime = 1;
-%             zslices = [minTime, minTime+(sampNum-3)*GInvParam.dt/2, minTime+(sampNum-3)*GInvParam.dt];
-            zslices = [minTime+shift*GInvParam.dt, minTime+(sampNum-3)*GInvParam.dt];
+            if isempty(xslices)
+                xslices = [round((rangeInline(1)*0.2 + rangeInline(2)*0.8)), rangeInline(2)];
+            end
+            if isempty(yslices)
+                yslices = rangeCrossline(1);
+            end
+            if isempty(zslices)
+                zslices = [minTime+shift*GInvParam.dt, minTime+(sampNum-3)*GInvParam.dt];
+            end
+            
+            GInvParam.dt = 1000;
+            
             horiozons = [];
             startTime = ones(nInline, nCrossline) * minTime;
+        
+        case 8
+            if isempty(xslices)
+                xslices = rangeInline(1) + [round(0.2*nInline), round(0.8*nInline)];
+            end
+            if isempty(yslices)
+                yslices = rangeCrossline(1) + [round(0.2*nCrossline), round(0.8*nCrossline)];
+            end
+            if isempty(zslices)
+                zslices = [];
+            end
             
-        otherwise
-            xslices = rangeInline(1);
-            yslices = rangeCrossline(1);
             startTime = permute(reshape(invResult.horizon, nCrossline, nInline), [2, 1]) - GInvParam.dt*GInvParam.upNum;
             startTime = bsSmoothByGST2D(startTime, [], bsCreateGSTParam(2, 'sigma', 10));
             
-            zslices = [];
+            horiozons(1).horizon = startTime;
+            horiozons(1).shift = (sampNum - 10) * GInvParam.dt + shift;
+            
+        otherwise
+            if isempty(xslices)
+                xslices = rangeInline(1);
+            end
+            if isempty(yslices)
+                yslices = rangeCrossline(1);
+            end
+
+            startTime = permute(reshape(invResult.horizon, nCrossline, nInline), [2, 1]) - GInvParam.dt*GInvParam.upNum;
+            startTime = bsSmoothByGST2D(startTime, [], bsCreateGSTParam(2, 'sigma', 10));
             horiozons(1).horizon = startTime + GInvParam.dt*GInvParam.upNum;
             horiozons(1).shift = shift;
     end
