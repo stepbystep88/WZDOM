@@ -132,6 +132,7 @@ function [vp, vs, rho] = bsPreInvMultiTracesByCSR_GST(GInvParam, neiboors, ds, G
 %         fprintf("第%d次迭代：稀疏重构\n", iter);
         if nBlock == 1
             parfor iTrace = 1 : traceNum
+                out = [];
                 switch nDic
                     case 3
                         [out, ~] = bsSparseRebuildOneTrace(GSParam, {vp(:, iTrace), vs(:, iTrace), rho(:, iTrace)}, gamma, inIds(iTrace), crossIds(iTrace));
