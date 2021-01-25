@@ -7,7 +7,7 @@ function bsShow3DInvResults(GInvParam, GShowProfileParam, invResult, iAtt, optio
     [~, options] = bsGetFieldsWithDefaults(options, {'mode', 2; 'shift', 0; 'xslices', []; 'yslices', []; 'zslices', []});
     
     mode = options.mode;
-    shift = options.mode;
+    shift = options.shift;
     xslices = options.xslices;
     yslices = options.yslices;
     zslices = options.zslices;
@@ -100,6 +100,8 @@ function bsShow3DInvResults(GInvParam, GShowProfileParam, invResult, iAtt, optio
            
         case 5 
             minTime = 1;
+            GInvParam.dt = 1000;
+            
             if isempty(xslices)
                 xslices = [rangeInline(1), round((rangeInline(1)*0.6 + rangeInline(2)*0.4))];
             end
@@ -110,13 +112,15 @@ function bsShow3DInvResults(GInvParam, GShowProfileParam, invResult, iAtt, optio
                 zslices = [minTime+shift*GInvParam.dt, minTime+(sampNum-3)*GInvParam.dt];
             end
             
-            GInvParam.dt = 1000;
+            
 
             horiozons = [];
             startTime = ones(nInline, nCrossline) * minTime;
             
         case 6
             minTime = 1;
+            GInvParam.dt = 1000;
+            
             if isempty(xslices)
                 xslices = [round((rangeInline(1)*0.2 + rangeInline(2)*0.8)), rangeInline(2)];
             end
@@ -124,10 +128,10 @@ function bsShow3DInvResults(GInvParam, GShowProfileParam, invResult, iAtt, optio
                 yslices = rangeCrossline(1);
             end
             if isempty(zslices)
-                zslices = [minTime+shift*GInvParam.dt, minTime+(sampNum-3)*GInvParam.dt];
+                zslices = [minTime+shift*GInvParam.dt, minTime+(sampNum-10)*GInvParam.dt];
             end
             
-            GInvParam.dt = 1000;
+            
             
             horiozons = [];
             startTime = ones(nInline, nCrossline) * minTime;

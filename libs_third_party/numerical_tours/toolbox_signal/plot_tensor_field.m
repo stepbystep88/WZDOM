@@ -50,7 +50,8 @@ H(:,:,1,1) = a;
 
 hold on;
 if ~isempty(M)
-    imageplot(rescale(M)); drawnow;
+%     imageplot(rescale(M)); drawnow;
+    imagesc(M); drawnow;
     colormap(options.colormap);
 %     colorbar;
 end
@@ -174,18 +175,18 @@ mm = mmin(Txx+Tyy);
 [S1, S2] = size(U);
 Colormap = zeros(S2, S1, 3);
 % Map = colormap(jet(256));
-Map = jet(256);
+% Map = jet(256);
 % Map = colormap(repmat(Map(1, :), 256, 1));
-Map = colormap(repmat([0 1 0], 256, 1));
+% Map = colormap(repmat([0 1 0], 256, 1));
 
-for k =1:npoints
-    Colormap(k,:,1) = Map(floor(255*(Txx(:)+Tyy(:)-mm)/(MM-mm)) + 1, 1);
-    Colormap(k,:,2) = Map(floor(255*(Txx(:)+Tyy(:)-mm)/(MM-mm)) + 1, 2);
-    Colormap(k,:,3) = Map(floor(255*(Txx(:)+Tyy(:)-mm)/(MM-mm)) + 1, 3);
-%     Colormap(k,:,1) = 1;
-%     Colormap(k,:,2) = 0;
-%     Colormap(k,:,3) = 1;
-end
+% for k =1:npoints
+%     Colormap(k,:,1) = Map(floor(255*(Txx(:)+Tyy(:)-mm)/(MM-mm)) + 1, 1);
+%     Colormap(k,:,2) = Map(floor(255*(Txx(:)+Tyy(:)-mm)/(MM-mm)) + 1, 2);
+%     Colormap(k,:,3) = Map(floor(255*(Txx(:)+Tyy(:)-mm)/(MM-mm)) + 1, 3);
+% %     Colormap(k,:,1) = 1;
+% %     Colormap(k,:,2) = 0;
+% %     Colormap(k,:,3) = 1;
+% end
 %-----------
 % h = fill(U',V',Colormap,'EdgeColor',color,options{:});
 

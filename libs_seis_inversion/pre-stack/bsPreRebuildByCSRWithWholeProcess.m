@@ -28,6 +28,8 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
     % 相邻多个块同时稀疏表示的个数
     addParameter(p, 'nMultipleTrace', 1);
     addParameter(p, 'isInterpolation', 0);
+    addParameter(p, 'invDataAtWellLocation', []);
+    
     if is3D
         addParameter(p, 'gst_options', bsCreateGSTParam(3));
     else
@@ -53,28 +55,39 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
     
     [wellPos, wellIndex, wellNames] = bsFindWellLocation(wellLogs, invResult.inIds, invResult.crossIds);
     
-    names = join(wellNames, ',');
-    try
-        fprintf('反演结果中检测到共%d道过井，分别为:\n\tinIds:%s...\n\tcrossIds:%s\n\twellNames=%s\n', ...
-            length(wellPos), ...
-            mat2str(invResult.inIds(wellPos)), ...
-            mat2str(invResult.crossIds(wellPos)), ...
-            names{1});
+    if isempty(options.invDataAtWellLocation)
         
-        wellLogs = wellLogs(wellIndex);
-    catch
-        error('There is no wells in the inverted data!!!');
-    end
-    
-    
-    try
-        set_diff = setdiff(1:length(wellPos), options.exception);
-        train_ids = bsRandSeq(set_diff, options.trainNum);
-        train_ids = unique([train_ids, options.mustInclude]);
+        names = join(wellNames, ',');
+        try
+            fprintf('反演结果中检测到共%d道过井，分别为:\n\tinIds:%s...\n\tcrossIds:%s\n\twellNames=%s\n', ...
+                length(wellPos), ...
+                mat2str(invResult.inIds(wellPos)), ...
+                mat2str(invResult.crossIds(wellPos)), ...
+                names{1});
+
+            wellLogs = wellLogs(wellIndex);
+        catch
+            error('There is no wells in the inverted data!!!');
+        end
+
+
+        try
+            set_diff = setdiff(1:length(wellPos), options.exception);
+            train_ids = bsRandSeq(set_diff, options.trainNum);
+            train_ids = unique([train_ids, options.mustInclude]);
+
+        catch
+            options.trainNum = length(wellPos);
+            train_ids = 1 : length(wellPos);
+        end
+    else
+        % 相反，则直接运用给定的options.invDataAtWellLocation来训练字典
+        options.trainNum = length(wellLogs);
+        train_ids = 1 : length(wellLogs);
         
-    catch
-        options.trainNum = length(wellPos);
-        train_ids = 1 : length(wellPos);
+        assert(size(options.invDataAtWellLocation.data{1}, 2) == length(wellLogs), '训练井的数量应该与其对应的反演结果道数一致');
+%         [outLogs] = bsGetPairOfInvAndWell(GInvParam, timeLine, wellLogs, options.invDataAtWellLocation, GInvParam.indexInWellData.ip, options);
+        
     end
     
     outResult = bsSetFields(invResult, {'name', name});
@@ -105,8 +118,12 @@ function outResult = bsPreRebuildByCSRWithWholeProcess(GInvParam, timeLine, well
         end
         
         
+        if isempty(options.invDataAtWellLocation)
+            [outLogs] = bsGetPairOfInvAndWell(GInvParam, timeLine, wellLogs, invResult.data{iData}(:, wellPos), dataIndex, options);
+        else
+            [outLogs] = bsGetPairOfInvAndWell(GInvParam, timeLine, wellLogs, options.invDataAtWellLocation.data{iData}, dataIndex, options);
+        end
         
-        [outLogs] = bsGetPairOfInvAndWell(GInvParam, timeLine, wellLogs, invResult.data{iData}(:, wellPos), dataIndex, options);
         fprintf('训练联合字典中...\n');
         [DIC, train_ids, rangeCoef, output] = bsTrainDics(GTrainDICParam, outLogs, train_ids, [ 1, 2]);
         GInvWellSparse = bsCreateGSparseInvParam(DIC, GTrainDICParam, ...

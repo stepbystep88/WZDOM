@@ -172,10 +172,13 @@ function [invResults] = bsPostInvTrueMultiTraces(GInvParam, inIds, crossIds, tim
         % save mat file
         if isfield(method, 'isSaveMat') && method.isSaveMat && ~strcmp(res.source, 'mat')
             fprintf('Writing mat file:%s...\n', matFileName);
+            tmethod.name = method.name;
+            tmethod.flag = method.flag;
+            
             try
-                save(matFileName, 'data', 'res', 'horizonTimes', 'inIds', 'crossIds', 'method');
+                save(matFileName, 'data', 'res', 'horizonTimes', 'inIds', 'crossIds', 'tmethod');
             catch
-                save(matFileName, 'data', 'res', 'horizonTimes', 'inIds', 'crossIds', 'method', '-v7.3');
+                save(matFileName, 'data', 'res', 'horizonTimes', 'inIds', 'crossIds', 'tmethod', '-v7.3');
             end
             fprintf('Write mat file:%s successfully!\n', matFileName);
         end

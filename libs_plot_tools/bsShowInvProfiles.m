@@ -147,7 +147,7 @@ function bsShowInvProfiles(GInvParam, GShowProfileParam, profiles, wellLogs, tim
         
         % show the filled data by using imagesc
         bsShowHorizonedData(GShowProfileParam, basicInfo, newProfileData, minTime, ...
-            profile.name, range, dataColorTbl, wellData)
+            profile.name, range, dataColorTbl, wellData, wellTime)
 
         % set attribute name of colorbar
         if ~isSameColorbar
@@ -480,7 +480,7 @@ end
 
 
 function bsShowHorizonedData(GShowProfileParam, basicInfo, profileData, minTime, ...
-    name, range, colorTbl, wellData)
+    name, range, colorTbl, wellData, wellTime)
     
     [sampNum, traceNum] = size(profileData);
 %     min_val = min(min(profileData));
@@ -549,9 +549,11 @@ function bsShowHorizonedData(GShowProfileParam, basicInfo, profileData, minTime,
             ipos = GShowProfileParam.scaleFactor * basicInfo.wellPos(i);
             offset = GShowProfileParam.scaleFactor*GShowProfileParam.showWellOffset;
             x = normalize(wellData{i}, 'range', [ipos-offset, ipos+offset]); 
-            y = (-basicInfo.upNum : basicInfo.downNum-1)*basicInfo.dt + basicInfo.horizon(ipos);
             
-            y = 1 + (y - minTime) / basicInfo.newDt;
+            
+%             y = (-basicInfo.upNum : basicInfo.downNum-1)*basicInfo.dt + basicInfo.newHorizon(ipos);
+            y = (wellTime{i}-minTime)/basicInfo.newDt;
+%             y = 1 + (y - minTime) / basicInfo.newDt;
             
             plot(x, y, 'k-', 'linewidth', 2);
         end

@@ -104,9 +104,9 @@ function [S, org_S, e1, e2, lambda1,lambda2, blur] = bsGetStructureTensor2D(f, o
 %     options.sub = 16;
     if options.show_mid_results
         figure;
-        
+        subplot('position', [0 0 1 1]);
         plot_tensor_field(rotate(T(f, options.sigma)), f, options);
-        title(['\sigma=' num2str(options.sigma)]);
+%         title(['\sigma=' num2str(options.sigma)]);
     end
 
     %% Eigen-decomposition and Anisotropy
