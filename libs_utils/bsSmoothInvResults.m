@@ -61,6 +61,10 @@ function invResults = bsSmoothInvResults(invResults, refData, fcn, varargin)
                     if length(invResults{i}.inIds) > 20000
                         % 表明这是一个3D数据
                         tmp1 = bsReshapeDataAs3D(data{j}, nInline, nCrossline);
+                        if ~isempty(refData) && length(size(refData)) < 3
+                            refData = bsReshapeDataAs3D(refData, nInline, nCrossline);
+                        end
+                        
                         tmp = fcn(tmp1, refData, varargin{:});
                         invResults{i}.data{j} = bsReshapeDataAs2D(tmp);
                     else

@@ -65,7 +65,7 @@ function bsShow3DInvResults(GInvParam, GShowProfileParam, invResult, iAtt, optio
             
             zslices = [];
             horiozons(1).horizon = startTime;
-            horiozons(1).shift = (sampNum - 10) * GInvParam.dt + shift;
+            horiozons(1).shift = (sampNum - 10) * GInvParam.dt + GInvParam.dt*shift;
             
 %             view_s = [121.6586   38.2342];
         case 3
@@ -76,7 +76,7 @@ function bsShow3DInvResults(GInvParam, GShowProfileParam, invResult, iAtt, optio
                 yslices = round(0.5 * (rangeCrossline(1) + rangeCrossline(end)));
             end
             if isempty(zslices)
-                zslices = 2200+sampNum/2*GInvParam.dt  + shift;
+                zslices = 2200+sampNum/2*GInvParam.dt  + GInvParam.dt*shift;
             end
             
             horiozons = [];
@@ -96,7 +96,7 @@ function bsShow3DInvResults(GInvParam, GShowProfileParam, invResult, iAtt, optio
             startTime = bsSmoothByGST2D(startTime, [], bsCreateGSTParam(2, 'sigma', 10));
             
             horiozons(1).horizon = startTime;
-            horiozons(1).shift = (sampNum - 10) * GInvParam.dt + shift;
+            horiozons(1).shift = (sampNum - 10) * GInvParam.dt + GInvParam.dt*shift;
            
         case 5 
             minTime = 1;
@@ -151,7 +151,7 @@ function bsShow3DInvResults(GInvParam, GShowProfileParam, invResult, iAtt, optio
             startTime = bsSmoothByGST2D(startTime, [], bsCreateGSTParam(2, 'sigma', 10));
             
             horiozons(1).horizon = startTime;
-            horiozons(1).shift = (sampNum - 10) * GInvParam.dt + shift;
+            horiozons(1).shift = (sampNum - 10) * GInvParam.dt + GInvParam.dt*shift;
             
         otherwise
             if isempty(xslices)
@@ -164,7 +164,7 @@ function bsShow3DInvResults(GInvParam, GShowProfileParam, invResult, iAtt, optio
             startTime = permute(reshape(invResult.horizon, nCrossline, nInline), [2, 1]) - GInvParam.dt*GInvParam.upNum;
             startTime = bsSmoothByGST2D(startTime, [], bsCreateGSTParam(2, 'sigma', 10));
             horiozons(1).horizon = startTime + GInvParam.dt*GInvParam.upNum;
-            horiozons(1).shift = shift;
+            horiozons(1).shift = GInvParam.dt*shift;
     end
     
     

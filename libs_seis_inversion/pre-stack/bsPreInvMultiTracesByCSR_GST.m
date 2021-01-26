@@ -49,6 +49,7 @@ function [vp, vs, rho] = bsPreInvMultiTracesByCSR_GST(GInvParam, neiboors, ds, G
     else
         if is3D
             gst_options = bsCreateGSTParam(3);
+            gst_options.iterNum = 20;
         else
             gst_options = bsCreateGSTParam(2);
         end
@@ -66,7 +67,7 @@ function [vp, vs, rho] = bsPreInvMultiTracesByCSR_GST(GInvParam, neiboors, ds, G
     
     % 计算结构张量信息
     if is3D
-        gst_options.iterNum = 20;
+        
         shiftedData = bsSmoothByGST3D(bsReshapeDataAs3D(shiftedData, GSParam.nInline, GSParam.nCrossline), [], gst_options);
         
         [S, ~, blur] = bsGetStructureTensor3D(shiftedData, gst_options);
@@ -92,7 +93,7 @@ function [vp, vs, rho] = bsPreInvMultiTracesByCSR_GST(GInvParam, neiboors, ds, G
 %             b(:, i) = b(:, i) + Gs{i}' * ds(:, i);
 %         end
 %     end
-    gst_options.iterNum = options.innerIter;
+%     gst_options.iterNum = options.innerIter;
     for iter = 1 : options.maxIter
         pbm.title = sprintf("The %d/%d-th iteration: regular inversion.", iter, options.maxIter);
 %         b = bsB(xs_org, xs);

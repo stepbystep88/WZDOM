@@ -13,6 +13,8 @@ function bsShowSliceOf3DData(GInvParam, GShowProfileParam, invResult, iAtt, vara
     addParameter(p, 'avg_type', 'RMS');
     addParameter(p, 'shift', 0);
     addParameter(p, 'clim', []);
+    addParameter(p, 'smooth_fcn', []);
+    addParameter(p, 'normalize_fcn', []);
     
     p.parse(varargin{:});  
     options = p.Results;
@@ -62,6 +64,13 @@ function bsShowSliceOf3DData(GInvParam, GShowProfileParam, invResult, iAtt, vara
     end
     
     slice_data = squeeze(avg_slice);
+    if ~isempty(options.smooth_fcn)
+        slice_data = options.smooth_fcn(slice_data);
+    end
+    if ~isempty(options.normalize_fcn)
+        slice_data = options.normalize_fcn(slice_data);
+    end
+    
     imagesc(rangeCrossline, rangeInline, slice_data/scale);
     
     
@@ -72,10 +81,12 @@ function bsShowSliceOf3DData(GInvParam, GShowProfileParam, invResult, iAtt, vara
     set(gca,'DataAspectRatio',[ratio(1) ratio(2) 1]);
     
     title(sprintf('Offset [%d %d]ms', options.shift-avg_num*GInvParam.dt, options.shift+avg_num*GInvParam.dt), 'fontweight', 'bold');
-    if isempty(options.clim)
-        clim = [prctile(slice_data(:), 5), prctile(slice_data(:), 95)];
-    else
+    if ~isempty(options.clim)
         clim = options.clim;
+    elseif ~isempty(range)
+        clim = range;
+    else
+        clim = [prctile(slice_data(:), 5), prctile(slice_data(:), 95)];
     end
     
     set(gca, 'colormap', dataColorTbl);
@@ -84,12 +95,14 @@ function bsShowSliceOf3DData(GInvParam, GShowProfileParam, invResult, iAtt, vara
     ylabel('Inline');
     xlabel('Crossline');
     
-    hc = colorbar( 'EastOutside', ...
+    hc = colorbar( 'SouthOutside', ...
             'fontsize', GPlotParam.fontsize,...
             'fontweight', 'bold', ...
             'fontname', GPlotParam.fontname);
-    hc.Position = hc.Position .* [1.0 1 0.5 1] + [0.03 0 0 0];
-
+%     hc.Position = hc.Position .* [1.0 1 0.5 1] + [0.03 0 0 0];
+    hc.Position = hc.Position .* [1.0 1 1 0.5] + [0 -0.03 0 0];
+    hc.Position(2) = 0.05;
+    
 %     ylabel(hc, attName, ...
 %         'fontsize', GPlotParam.fontsize, ...
 %         'fontweight', 'bold', ...

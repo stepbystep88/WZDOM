@@ -122,7 +122,7 @@ function [invResults] = bsPreInvTrueMultiTraces(GInvParam, inIds, crossIds, time
                     try
                         % from mat file
                         if isfield(loadInfo, 'fileName') && ~isempty(loadInfo.fileName)
-                            load_mat = load(GInvParam.load.fileName);
+                            load_mat = load(loadInfo.fileName);
                         else
                             load_mat = load(matFileName);
                         end
