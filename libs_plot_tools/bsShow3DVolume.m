@@ -207,13 +207,25 @@ function [houts, horizonSlices] = bsShow3DVolume(data, dt, clim, xslices, yslice
         zh.zd = zeros(nInline, nCrossline);
         
         for i = 1 : nInline
-            for j = 1 : nCrossline
-                zh.xd(i, j) = i + firstInline - 1;
-                zh.yd(i, j) = j + firstCrossline - 1;
-                zh.zd(i, j) = (horizons(iHorizon).horizon(i, j) ...
-                    + horizons(iHorizon).shift) / 1000;
-            end
+                for j = 1 : nCrossline
+                    zh.xd(i, j) = i + firstInline - 1;
+                    zh.yd(i, j) = j + firstCrossline - 1;
+                    zh.zd(i, j) = (horizons(iHorizon).horizon(i, j) ...
+                            + horizons(iHorizon).shift) / 1000;
+                end
         end
+            
+        residual = horizons(iHorizon).horizon - params.startTime;
+        if max(residual(:)) == min(residual(:))
+            % 层位与起始时间一致
+            zh.horizonSameAsStartime = 1;
+            k = round((residual(1) + horizons(iHorizon).shift) / params.dt);
+            zh.data = squeeze(data(k, :, :));
+        else
+            % 层位与起始时间不一致
+            zh.horizonSameAsStartime = 0;
+        end
+        
         zHorizons{iHorizon} = zh;
     end
     
@@ -229,7 +241,14 @@ function [houts, horizonSlices] = bsShow3DVolume(data, dt, clim, xslices, yslice
         yd = interp2(xx,yy,(zHorizons{iHorizon}.yd)',x2,y2);
         zd = interp2(xx,yy,(zHorizons{iHorizon}.zd'),x2,y2);
         
-        horizonSlices{iHorizon} = slice(x3, y3, z3, p_V, xd, yd, zd, 'linear');
+        if zHorizons{iHorizon}.horizonSameAsStartime
+%             surf(xd, yd, zd);
+            tmp = repmat(zHorizons{iHorizon}.data', 1, 1, newSampNum);
+            horizonSlices{iHorizon} = slice(x3, y3, z3, tmp, xd, yd, zd, 'cubic');
+        else
+            horizonSlices{iHorizon} = slice(x3, y3, z3, p_V, xd, yd, zd, 'cubic');
+        end
+        
     end
     
     %% show the titles of all crossed well

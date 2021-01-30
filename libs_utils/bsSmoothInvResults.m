@@ -64,7 +64,6 @@ function invResults = bsSmoothInvResults(invResults, refData, fcn, varargin)
                         if ~isempty(refData) && length(size(refData)) < 3
                             refData = bsReshapeDataAs3D(refData, nInline, nCrossline);
                         end
-                        
                         tmp = fcn(tmp1, refData, varargin{:});
                         invResults{i}.data{j} = bsReshapeDataAs2D(tmp);
                     else
