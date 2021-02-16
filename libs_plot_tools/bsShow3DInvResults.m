@@ -61,7 +61,7 @@ function bsShow3DInvResults(GInvParam, GShowProfileParam, invResult, iAtt, optio
             end
             
             startTime = permute(reshape(invResult.horizon, nCrossline, nInline), [2, 1]) - GInvParam.dt*GInvParam.upNum;
-%             startTime = bsSmoothByGST2D(startTime, [], bsCreateGSTParam(2, 'sigma', 10, 'iterNum', 100));
+            startTime = bsSmoothByGST2D(startTime, [], bsCreateGSTParam(2, 'sigma', 10, 'iterNum', 100));
             
             zslices = [];
             horiozons(1).horizon = startTime;
