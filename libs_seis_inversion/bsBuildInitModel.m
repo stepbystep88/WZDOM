@@ -105,6 +105,11 @@ function [inIds, crossIds, GInvParam, dstFileNames, segyInfo, options] = bsBuild
         data = bsInterpolate3DData(nTrace, wellData, weights, indexies);
 %         newData = bsLateralSmoothData(data);
         newData = data;
+        
+%         if nTrace < 10000
+%             newData = bsFilterProfileData(newData, 0.1, 1);
+%         end
+        
         dstFileName = bsGetDstFileName(type{i}, options);
         bsWriteInvResultIntoSegyFile(res, newData, fileName, segyInfo, dstFileName, 1);
     end

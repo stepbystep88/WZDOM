@@ -44,12 +44,12 @@ function [vp, vs, rho] = bsPreInvMultiTracesByCSR_GST(GInvParam, neiboors, ds, G
             GInvParam.isPrintBySavingFile);
         
     %% 结构张量相关
-    if isfield(GSParam, 'gst_options')
-        gst_options = GSParam.gst_options;
+    if isfield(options, 'gst_options')
+        gst_options = options.gst_options;
     else
         if is3D
             gst_options = bsCreateGSTParam(3);
-            gst_options.iterNum = 20;
+%             gst_options.iterNum = 20;
         else
             gst_options = bsCreateGSTParam(2);
         end
@@ -121,9 +121,9 @@ function [vp, vs, rho] = bsPreInvMultiTracesByCSR_GST(GInvParam, neiboors, ds, G
             vs = bsReshapeDataAs2D(bsSmoothByGST3D(bsReshapeDataAs3D(vs, GSParam.nInline, GSParam.nCrossline), [], gst_options, S, blur));
             rho = bsReshapeDataAs2D(bsSmoothByGST3D(bsReshapeDataAs3D(rho, GSParam.nInline, GSParam.nCrossline), [], gst_options, S, blur));
         else
-            vp = bsSmoothByGST2D(vp, [], gst_options, S, blur);
-            vs = bsSmoothByGST2D(vs, [], gst_options, S, blur);
-            rho = bsSmoothByGST2D(rho, [], gst_options, S, blur);
+            vp = bsSmoothByGST2D(vp, shiftedData, gst_options, S, blur);
+            vs = bsSmoothByGST2D(vs, shiftedData, gst_options, S, blur);
+            rho = bsSmoothByGST2D(rho, shiftedData, gst_options, S, blur);
         end
 %         end
         
